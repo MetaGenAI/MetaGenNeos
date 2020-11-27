@@ -2,44 +2,13 @@
   "version": 3,
   "targets": {
     ".NETFramework,Version=v4.7.2": {
-      "Accord/3.8.2-alpha": {
+      "SharpAvi/2.1.2": {
         "type": "package",
         "compile": {
-          "lib/net462/Accord.dll": {}
+          "lib/net45/SharpAvi.dll": {}
         },
         "runtime": {
-          "lib/net462/Accord.dll": {}
-        },
-        "build": {
-          "build/Accord.targets": {}
-        }
-      },
-      "Accord.Video/3.8.2-alpha": {
-        "type": "package",
-        "dependencies": {
-          "Accord": "3.8.2-alpha"
-        },
-        "compile": {
-          "lib/net462/Accord.Video.dll": {}
-        },
-        "runtime": {
-          "lib/net462/Accord.Video.dll": {}
-        }
-      },
-      "Accord.Video.FFMPEG/3.8.0": {
-        "type": "package",
-        "dependencies": {
-          "Accord": "3.8.0",
-          "Accord.Video": "3.8.0"
-        },
-        "compile": {
-          "lib/net462/Accord.Video.FFMPEG.dll": {}
-        },
-        "runtime": {
-          "lib/net462/Accord.Video.FFMPEG.dll": {}
-        },
-        "build": {
-          "build/Accord.Video.FFMPEG.targets": {}
+          "lib/net45/SharpAvi.dll": {}
         }
       },
       "System.Buffers/4.5.1": {
@@ -100,101 +69,19 @@
     }
   },
   "libraries": {
-    "Accord/3.8.2-alpha": {
-      "sha512": "g/EKYGdeMKTMJt7XtB65f+RyVW5ALfU1f1T1dpIGXOqzBtaaNK+OGB6pFY9RFrjKPQNUlnKUWF2jwH5knM+X7A==",
+    "SharpAvi/2.1.2": {
+      "sha512": "SC30yBgMnRH3tz3sokTK0tn0N6ReuATUGLAUxmxMmBQrkfiPDXwPIFkSpA1eWUl/AXlEe7tbM9U38EVSic3ezg==",
       "type": "package",
-      "path": "accord/3.8.2-alpha",
+      "path": "sharpavi/2.1.2",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
-        "accord.3.8.2-alpha.nupkg.sha512",
-        "accord.nuspec",
-        "build/Accord.dll.config",
-        "build/Accord.targets",
-        "lib/net35-unity full v3.5/Accord.dll",
-        "lib/net35-unity full v3.5/Accord.xml",
-        "lib/net35-unity micro v3.5/Accord.dll",
-        "lib/net35-unity micro v3.5/Accord.xml",
-        "lib/net35-unity subset v3.5/Accord.dll",
-        "lib/net35-unity subset v3.5/Accord.xml",
-        "lib/net35-unity web v3.5/Accord.dll",
-        "lib/net35-unity web v3.5/Accord.xml",
-        "lib/net35/Accord.dll",
-        "lib/net35/Accord.xml",
-        "lib/net40/Accord.dll",
-        "lib/net40/Accord.xml",
-        "lib/net45/Accord.dll",
-        "lib/net45/Accord.xml",
-        "lib/net46/Accord.dll",
-        "lib/net46/Accord.xml",
-        "lib/net462/Accord.dll",
-        "lib/net462/Accord.xml",
-        "lib/netstandard1.4/Accord.dll",
-        "lib/netstandard1.4/Accord.xml",
-        "lib/netstandard2.0/Accord.dll",
-        "lib/netstandard2.0/Accord.xml"
-      ]
-    },
-    "Accord.Video/3.8.2-alpha": {
-      "sha512": "c/GnGUEbNBTy5pbiYFnD89VSvYW01JGnBQccZkLxFCYAqoNlWjwo46yvpEf6Gwiyypdh3T6+Ts3ns0S+payrKw==",
-      "type": "package",
-      "path": "accord.video/3.8.2-alpha",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "accord.video.3.8.2-alpha.nupkg.sha512",
-        "accord.video.nuspec",
-        "lib/net35-unity full v3.5/Accord.Video.dll",
-        "lib/net35-unity full v3.5/Accord.Video.xml",
-        "lib/net35-unity micro v3.5/Accord.Video.dll",
-        "lib/net35-unity micro v3.5/Accord.Video.xml",
-        "lib/net35-unity subset v3.5/Accord.Video.dll",
-        "lib/net35-unity subset v3.5/Accord.Video.xml",
-        "lib/net35-unity web v3.5/Accord.Video.dll",
-        "lib/net35-unity web v3.5/Accord.Video.xml",
-        "lib/net35/Accord.Video.dll",
-        "lib/net35/Accord.Video.xml",
-        "lib/net40/Accord.Video.dll",
-        "lib/net40/Accord.Video.xml",
-        "lib/net45/Accord.Video.dll",
-        "lib/net45/Accord.Video.xml",
-        "lib/net46/Accord.Video.dll",
-        "lib/net46/Accord.Video.xml",
-        "lib/net462/Accord.Video.dll",
-        "lib/net462/Accord.Video.xml",
-        "lib/netstandard2.0/Accord.Video.dll",
-        "lib/netstandard2.0/Accord.Video.xml"
-      ]
-    },
-    "Accord.Video.FFMPEG/3.8.0": {
-      "sha512": "so18O2AdHnwGz8+yyUG7uVuBRqymqB0pVwDSTNCwG7Qq9SgnpvkZCTKMbRGGy9B1r3nbqSSHsQNeWP9k6LNWOw==",
-      "type": "package",
-      "path": "accord.video.ffmpeg/3.8.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "accord.video.ffmpeg.3.8.0.nupkg.sha512",
-        "accord.video.ffmpeg.nuspec",
-        "build/Accord.Video.FFMPEG.targets",
-        "build/FFMPEG-README.txt",
-        "build/avcodec-57.dll",
-        "build/avdevice-57.dll",
-        "build/avfilter-6.dll",
-        "build/avformat-57.dll",
-        "build/avutil-55.dll",
-        "build/postproc-54.dll",
-        "build/swresample-2.dll",
-        "build/swscale-4.dll",
-        "lib/net35/Accord.Video.FFMPEG.dll",
-        "lib/net35/Accord.Video.FFMPEG.xml",
-        "lib/net40/Accord.Video.FFMPEG.dll",
-        "lib/net40/Accord.Video.FFMPEG.xml",
-        "lib/net45/Accord.Video.FFMPEG.dll",
-        "lib/net45/Accord.Video.FFMPEG.xml",
-        "lib/net46/Accord.Video.FFMPEG.dll",
-        "lib/net46/Accord.Video.FFMPEG.xml",
-        "lib/net462/Accord.Video.FFMPEG.dll",
-        "lib/net462/Accord.Video.FFMPEG.xml"
+        "lib/net35-client/SharpAvi.XML",
+        "lib/net35-client/SharpAvi.dll",
+        "lib/net45/SharpAvi.XML",
+        "lib/net45/SharpAvi.dll",
+        "sharpavi.2.1.2.nupkg.sha512",
+        "sharpavi.nuspec"
       ]
     },
     "System.Buffers/4.5.1": {
@@ -330,9 +217,7 @@
   },
   "projectFileDependencyGroups": {
     ".NETFramework,Version=v4.7.2": [
-      "Accord >= 3.8.2-alpha",
-      "Accord.Video >= 3.8.2-alpha",
-      "Accord.Video.FFMPEG >= 3.8.0",
+      "SharpAvi >= 2.1.2",
       "System.Memory >= 4.5.4"
     ]
   },
@@ -382,17 +267,9 @@
       "net472": {
         "targetAlias": "net472",
         "dependencies": {
-          "Accord": {
+          "SharpAvi": {
             "target": "Package",
-            "version": "[3.8.2-alpha, )"
-          },
-          "Accord.Video": {
-            "target": "Package",
-            "version": "[3.8.2-alpha, )"
-          },
-          "Accord.Video.FFMPEG": {
-            "target": "Package",
-            "version": "[3.8.0, )"
+            "version": "[2.1.2, )"
           },
           "System.Memory": {
             "target": "Package",

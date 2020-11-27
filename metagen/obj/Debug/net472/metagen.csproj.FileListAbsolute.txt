@@ -2,20 +2,8 @@ D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.csprojAssemblyReference.ca
 D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.AssemblyInfoInputs.cache
 D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.AssemblyInfo.cs
 D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.csproj.CoreCompileInputs.cache
-D:\code\neos\metagen\metagen\bin\Debug\net472\avcodec-57.dll
-D:\code\neos\metagen\metagen\bin\Debug\net472\avdevice-57.dll
-D:\code\neos\metagen\metagen\bin\Debug\net472\avfilter-6.dll
-D:\code\neos\metagen\metagen\bin\Debug\net472\avformat-57.dll
-D:\code\neos\metagen\metagen\bin\Debug\net472\avutil-55.dll
-D:\code\neos\metagen\metagen\bin\Debug\net472\postproc-54.dll
-D:\code\neos\metagen\metagen\bin\Debug\net472\swresample-2.dll
-D:\code\neos\metagen\metagen\bin\Debug\net472\swscale-4.dll
-D:\code\neos\metagen\metagen\bin\Debug\net472\Accord.dll.config
 D:\code\neos\metagen\metagen\bin\Debug\net472\metagen.dll
 D:\code\neos\metagen\metagen\bin\Debug\net472\metagen.pdb
-D:\code\neos\metagen\metagen\bin\Debug\net472\Accord.dll
-D:\code\neos\metagen\metagen\bin\Debug\net472\Accord.Video.dll
-D:\code\neos\metagen\metagen\bin\Debug\net472\Accord.Video.FFMPEG.dll
 D:\code\neos\metagen\metagen\bin\Debug\net472\System.Buffers.dll
 D:\code\neos\metagen\metagen\bin\Debug\net472\System.Memory.dll
 D:\code\neos\metagen\metagen\bin\Debug\net472\System.Numerics.Vectors.dll
@@ -148,3 +136,4 @@ D:\code\neos\metagen\metagen\bin\Debug\net472\TwitchLib.Api.Core.Models.dll
 D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.csproj.CopyComplete
 D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.dll
 D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.pdb
+D:\code\neos\metagen\metagen\bin\Debug\net472\SharpAvi.dll

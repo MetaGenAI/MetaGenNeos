@@ -1,12 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "L3Om6amBKPlkzpmffKLMgaqnj2gY87siIdJFXdMr+Xg9eFo6vi5kE/Vaxih1+Qh6W/XXIHXMPPuujdgGi442Kg==",
+  "dgSpecHash": "ylyqZ9qz9CFGCL9c1EA6pkQ+gcIy+KjdCJu3yVfNhZf7wVKaFd7DRGfkdAyx1SqD7xDLiJOBf7jVFxblnNUz1g==",
   "success": true,
   "projectFilePath": "D:\\code\\neos\\metagen\\metagen\\metagen.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Guillermo Valle\\.nuget\\packages\\accord\\3.8.2-alpha\\accord.3.8.2-alpha.nupkg.sha512",
-    "C:\\Users\\Guillermo Valle\\.nuget\\packages\\accord.video\\3.8.2-alpha\\accord.video.3.8.2-alpha.nupkg.sha512",
-    "C:\\Users\\Guillermo Valle\\.nuget\\packages\\accord.video.ffmpeg\\3.8.0\\accord.video.ffmpeg.3.8.0.nupkg.sha512",
+    "C:\\Users\\Guillermo Valle\\.nuget\\packages\\sharpavi\\2.1.2\\sharpavi.2.1.2.nupkg.sha512",
     "C:\\Users\\Guillermo Valle\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
     "C:\\Users\\Guillermo Valle\\.nuget\\packages\\system.memory\\4.5.4\\system.memory.4.5.4.nupkg.sha512",
     "C:\\Users\\Guillermo Valle\\.nuget\\packages\\system.numerics.vectors\\4.5.0\\system.numerics.vectors.4.5.0.nupkg.sha512",
