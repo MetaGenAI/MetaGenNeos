@@ -5,6 +5,10 @@
     <Platforms>AnyCPU;x86</Platforms>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Libraries\</OutputPath>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="SharpAvi" Version="2.1.2" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
@@ -21,10 +25,16 @@
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\CodeX.dll</HintPath>
     </Reference>
     <Reference Include="FrooxEngine">
-      <HintPath>..\..\NeosVR\Neos_Data\Managed\FrooxEngine.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\FrooxEngine.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\System.Threading.Tasks.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\UnityEngine.dll</HintPath>
