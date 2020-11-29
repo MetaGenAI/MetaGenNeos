@@ -54,15 +54,19 @@ namespace FrooxEngine.LogiX
 
             //avatarManager = new metagen.AvatarManager();
             //Recorder and Player for the pose data of the users
-            streamRecorder = new PoseStreamRecorder();
-            streamPlayer = new PoseStreamPlayer();
 
             //System.IO.File.WriteAllText(@"C:\Users\Public\TestFolder\WriteText.txt", this.Engine.CompatibilityHash);
-            string compatibilityHash = "zXTWhGf44euiFzsWH5HFCQ==";
-            var t = typeof(Engine);
-            t.GetProperty("CompatibilityHash").SetValue(this.Engine, compatibilityHash, null);
-            //Job<Slot> awaiter = this.Slot.TransferToWorld(Userspace.UserspaceWorld).GetAwaiter();
-            //awaiter.GetResult();
+
+            //ASDF.asdf(this.Engine);
+            Job<Slot> awaiter = SlotHelper.TransferToWorld(this.Slot,Userspace.UserspaceWorld).GetAwaiter();
+            awaiter.GetResult();
+            UniLog.Log("Transferred to userspace");
+        }
+        protected override void OnPaste()
+        {
+            base.OnPaste();
+            streamRecorder = new PoseStreamRecorder();
+            streamPlayer = new PoseStreamPlayer();
         }
         protected override void OnCommonUpdate()
         {
@@ -70,10 +74,14 @@ namespace FrooxEngine.LogiX
             //Start/Stop recording
             if (this.Input.GetKeyDown(Key.R))
             {
+                UniLog.Log("Start/Stop recording");
                 recording_streams = !recording_streams;
                 if (!recording_streams)
                 {
                     streamRecorder.StopRecording();
+                } else
+                {
+                    streamRecorder.StartRecording();
                 }
                 recording_audio = !recording_audio;
                 if (!recording_audio)
@@ -115,10 +123,14 @@ namespace FrooxEngine.LogiX
             //Start/Stop playing
             if (this.Input.GetKeyDown(Key.P))
             {
+                UniLog.Log("Start/Stop playing");
                 playing_streams = !playing_streams;
                 if (!playing_streams)
                 {
                     streamPlayer.StopPlaying();
+                } else
+                {
+                    streamPlayer.StartPlaying();
                 }
             }
 
@@ -129,16 +141,19 @@ namespace FrooxEngine.LogiX
             {
                 if (recording_streams)
                 {
+                    UniLog.Log("recording streams");
                     streamRecorder.RecordStreams(deltaT);
                 }
 
                 if (recording_video)
                 {
-                        RecordVideo();
+                    UniLog.Log("recording video");
+                    RecordVideo();
                 }
                 utcNow = DateTime.UtcNow;
                 if (playing_streams)
                 {
+                    UniLog.Log("playing streams");
                     streamPlayer.PlayStreams();
                 }
             }

@@ -39,7 +39,7 @@ namespace metagen
         }
         public void FileWriterLoop()
         {
-            writer = new AviWriter("test.avi")
+            writer = new AviWriter(fileName)
             {
                 FramesPerSecond = frameRate,
                 // Emitting AVI v1 index in addition to OpenDML index (AVI v2)

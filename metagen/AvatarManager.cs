@@ -19,30 +19,78 @@ namespace metagen
         public AvatarManager()
         {
             World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
-            slot = currentWorld.AddSlot("Holder");
-            avatar_template = SpawnDefaultAvatar();
+            //slot = currentWorld.AddSlot("Holder");
+            UniLog.Log("Adding holder slot");
+            currentWorld.RunSynchronously(() =>
+            {
+                //this.slot = currentWorld.AddLocalSlot("Holder");
+                this.slot = currentWorld.AddSlot("Holder");
+            });
+            UniLog.Log("Added");
+            //Slot slot1 = Userspace.UserspaceWorld.AddSlot("Holder");
+            //Job<Slot> awaiter = SlotHelper.TransferToWorld(slot1,currentWorld).GetAwaiter();
+            //slot = awaiter.GetResult();
         }
-        public Slot GetAvatar()
+        public async Task<Slot> GetAvatar()
         {
-            return avatar_template.Duplicate();
+            TaskAwaiter<Slot> awaiter;
+            if (avatar_template == null)
+            {
+                //Job<Slot> awaiter = SpawnDefaultAvatar().GetAwaiter();
+                //awaiter.Wait();
+                //avatar_template = awaiter.GetResult();
+
+                Task<Slot> task = Task.Run(async () =>
+                {
+                    Slot slot = await SpawnDefaultAvatar();
+                    avatar_template = slot;
+                    return slot;
+                });
+
+                return await task;
+            }
+                return avatar_template;
+            //Job<Slot> awaiter2 = DuplicateAvatarTemplate().GetAwaiter();
+            //awaiter2.Wait();
+            //return awaiter2.GetResult();
         }
-        public Slot SpawnDefaultAvatar()
+        public Job<Slot> DuplicateAvatarTemplate()
         {
-            return SpawnAvatar("neosdb:///3992605ec9c401672dd54ff388cce3bd6483313699e4e45642b3abe80941d98b.7zbson");
+            World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
+            Job<Slot> task = new Job<Slot>();
+            currentWorld.RunSynchronously(() =>
+            {
+                Slot slot = avatar_template.Duplicate();
+                task.SetResultAndFinish(slot);
+            });
+            return task;
         }
-        public Slot SpawnAvatar(String neosdb)
+        public async Task<Slot> SpawnDefaultAvatar()
         {
-            Engine engine = FrooxEngine.Engine.Current;
-            Uri uri = new Uri(neosdb);
-            //await slot.LoadObjectAsync(uri, (Slot)null, (ReferenceTranslator)null);
-            ValueTaskAwaiter<string> gatherAwaiter = engine.AssetManager.RequestGather(uri, Priority.Urgent).GetAwaiter();
-            string nodeString = gatherAwaiter.GetResult();
-            DataTreeDictionary node = DataTreeConverter.Load(nodeString, uri);
-            slot.LoadObject(node);
-            slot = slot.GetComponent<InventoryItem>((Predicate<InventoryItem>)null, false)?.Unpack((List<Slot>)null) ?? slot;
-            //avatars.Add(slot);
-            //avatars[avatars.Count - 1].AttachComponent<AvatarPuppeteer>();
-            return slot;
+            return await SpawnAvatar("neosdb:///3992605ec9c401672dd54ff388cce3bd6483313699e4e45642b3abe80941d98b.7zbson");
+        }
+        public async Task<Slot> SpawnAvatar(String neosdb)
+        {
+            World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
+            //Job<Slot> task = new Job<Slot>();
+            TaskCompletionSource<Slot> task = new TaskCompletionSource<Slot>();
+            currentWorld.RunSynchronously(() => { 
+                Engine engine = FrooxEngine.Engine.Current;
+                Uri uri = new Uri(neosdb);
+                //await slot.LoadObjectAsync(uri, (Slot)null, (ReferenceTranslator)null);
+                ValueTaskAwaiter<string> gatherAwaiter = engine.AssetManager.RequestGather(uri, Priority.Urgent).GetAwaiter();
+                string nodeString = gatherAwaiter.GetResult();
+                DataTreeDictionary node = DataTreeConverter.Load(nodeString, uri);
+                UniLog.Log("slot");
+                UniLog.Log(slot.ToString());
+                slot.LoadObject(node);
+                slot = slot.GetComponent<InventoryItem>((Predicate<InventoryItem>)null, false)?.Unpack((List<Slot>)null) ?? slot;
+                //task.SetResultAndFinish(slot);
+                task.SetResult(slot);
+                //avatars.Add(slot);
+                //avatars[avatars.Count - 1].AttachComponent<AvatarPuppeteer>();
+            });
+            return await task.Task.ConfigureAwait(false);
         }
     }
 }

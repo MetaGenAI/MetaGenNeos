@@ -18,6 +18,7 @@ namespace metagen
         public Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>>();
         public Dictionary<RefID, Slot> avatars = new Dictionary<RefID, Slot>();
         metagen.AvatarManager avatarManager;
+        Task avatar_loading_task;
         //TODO
         public PoseStreamPlayer()
         {
@@ -25,82 +26,105 @@ namespace metagen
         }
         public void PlayStreams()
         {
-            //TODO: Need this function to not depend on users being present! Just gave the info from the recorded data!!
-            Dictionary<RefID, User>.ValueCollection users = FrooxEngine.Engine.Current.WorldManager.FocusedWorld.AllUsers;
-            foreach (User user in users)
+            if (!avatar_loading_task.IsCompleted) return;
+            World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
+            currentWorld.RunSynchronously(() =>
             {
-                RefID user_id = user.ReferenceID;
-                if (!output_readers.ContainsKey(user_id))
+                //TODO: Need this function to not depend on users being present! Just gave the info from the recorded data!!
+                Dictionary<RefID, User>.ValueCollection users = FrooxEngine.Engine.Current.WorldManager.FocusedWorld.AllUsers;
+                foreach (User user in users)
                 {
-                    output_fss[user_id] = new FileStream(user_id.ToString() + "_streams.dat", FileMode.Open, FileAccess.Read);
-                    BitReaderStream bitstream = new BitReaderStream(output_fss[user_id]);
-                    output_readers[user_id] = new BitBinaryReaderX(bitstream);
-                    avatar_pose_nodes[user_id] = new List<Tuple<BodyNode, IAvatarObject>>();
-                    Slot avatar = avatarManager.GetAvatar();
-                    avatars[user_id] = avatar;
-                    List<IAvatarObject> components = avatar.GetComponentsInChildren<IAvatarObject>();
+                    RefID user_id = user.ReferenceID;
 
-                    //READ absolute time
-                    output_readers[user_id].ReadSingle();
-                    //READ number of body nodes
-                    int numBodyNodes = output_readers[user_id].ReadInt32();
-                    for (int i = 0; i < numBodyNodes; i++)
+                    //Decode the streams
+                    BinaryReaderX reader = output_readers[user_id];
+
+                    //READ deltaT
+                    float deltaT = reader.ReadSingle();
+                    foreach (var item in avatar_pose_nodes[user_id])
                     {
-                        int nodeInt = output_readers[user_id].ReadInt32();
-                        BodyNode bodyNodeType = (BodyNode)nodeInt;
+                        BodyNode node = item.Item1;
+                        //UniLog.Log(node.ToString());
+                        IAvatarObject comp = item.Item2;
+                        Slot slot = comp.Slot;
+                        //READ transform
 
-                        bool node_found = false;
-                        foreach (IAvatarObject comp in components)
-                        {
-                            if (comp.Node == bodyNodeType)
-                            {
-                                avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
-                                node_found = true;
-                            }
-                        }
-                        if (!node_found) throw new Exception("Node " + bodyNodeType.ToString() + " not found in avatar!");
+                        //Scale stream
+                        float x = reader.ReadSingle();
+                        float y = reader.ReadSingle();
+                        float z = reader.ReadSingle();
+                        slot.LocalScale = new float3(x, y, z);
+                        //Position stream
+                        x = reader.ReadSingle();
+                        y = reader.ReadSingle();
+                        z = reader.ReadSingle();
+                        slot.LocalPosition = new float3(x, y, z);
+                        //Rotation stream
+                        x = reader.ReadSingle();
+                        y = reader.ReadSingle();
+                        z = reader.ReadSingle();
+                        float w = reader.ReadSingle();
+                        slot.LocalRotation = new floatQ(x, y, z, w);
+                        //UniLog.Log(x.ToString());
+                        //UniLog.Log(y.ToString());
+                        //UniLog.Log(z.ToString());
+                        //UniLog.Log(w.ToString());
                     }
                 }
 
-                //Decode the streams
-                BinaryReaderX reader = output_readers[user_id];
+            });
 
-                //READ deltaT
-                float deltaT = reader.ReadSingle();
-                foreach (var item in avatar_pose_nodes[user_id])
-                {
-                    BodyNode node = item.Item1;
-                    //UniLog.Log(node.ToString());
-                    IAvatarObject comp = item.Item2;
-                    Slot slot = comp.Slot;
-                    //READ transform
 
-                    //Scale stream
-                    float x = reader.ReadSingle();
-                    float y = reader.ReadSingle();
-                    float z = reader.ReadSingle();
-                    slot.LocalScale = new float3(x, y, z);
-                    //Position stream
-                    x = reader.ReadSingle();
-                    y = reader.ReadSingle();
-                    z = reader.ReadSingle();
-                    slot.LocalPosition = new float3(x, y, z);
-                    //Rotation stream
-                    x = reader.ReadSingle();
-                    y = reader.ReadSingle();
-                    z = reader.ReadSingle();
-                    float w = reader.ReadSingle();
-                    slot.LocalRotation = new floatQ(x, y, z, w);
-                    //UniLog.Log(x.ToString());
-                    //UniLog.Log(y.ToString());
-                    //UniLog.Log(z.ToString());
-                    //UniLog.Log(w.ToString());
-                }
-            }
 
         }
         public void StartPlaying()
         {
+
+            avatar_loading_task = Task.Run(StartPlayingInternal);
+
+        }
+        private async void StartPlayingInternal()
+        {
+            Dictionary<RefID, User>.ValueCollection users = FrooxEngine.Engine.Current.WorldManager.FocusedWorld.AllUsers;
+            foreach (User user in users)
+            {
+                RefID user_id = user.ReferenceID;
+                //if (!output_readers.ContainsKey(user_id))
+                //{
+                output_fss[user_id] = new FileStream(user_id.ToString() + "_streams.dat", FileMode.Open, FileAccess.Read);
+                BitReaderStream bitstream = new BitReaderStream(output_fss[user_id]);
+                output_readers[user_id] = new BitBinaryReaderX(bitstream);
+                avatar_pose_nodes[user_id] = new List<Tuple<BodyNode, IAvatarObject>>();
+                Slot avatar = await avatarManager.GetAvatar();
+                UniLog.Log("AVATAR");
+                UniLog.Log(avatar.ToString());
+                avatars[user_id] = avatar;
+                List<IAvatarObject> components = avatar.GetComponentsInChildren<IAvatarObject>();
+
+                //READ absolute time
+                output_readers[user_id].ReadSingle();
+                //READ number of body nodes
+                int numBodyNodes = output_readers[user_id].ReadInt32();
+                for (int i = 0; i < numBodyNodes; i++)
+                {
+                    int nodeInt = output_readers[user_id].ReadInt32();
+                    BodyNode bodyNodeType = (BodyNode)nodeInt;
+
+                    bool node_found = false;
+                    foreach (IAvatarObject comp in components)
+                    {
+                        UniLog.Log(comp.Name);
+                        if (comp.Node == bodyNodeType)
+                        {
+                            avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
+                            node_found = true;
+                            break;
+                        }
+                    }
+                    if (!node_found) throw new Exception("Node " + bodyNodeType.ToString() + " not found in avatar!");
+                }
+                //}
+            }
 
         }
         public void StopPlaying()
