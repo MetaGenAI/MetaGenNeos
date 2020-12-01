@@ -15,10 +15,13 @@ namespace metagen
         private DateTime utcNow;
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
         public Dictionary<RefID, BitBinaryReaderX> output_readers = new Dictionary<RefID, BitBinaryReaderX>();
-        public Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>>();
+        //public Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>>();
+        public Dictionary<RefID, List<Tuple<BodyNode,AvatarObjectSlot>>> fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode,AvatarObjectSlot>>>();
+        public Dictionary<RefID, Dictionary<BodyNode,Tuple<bool,bool,bool>>> avatar_stream_channels = new Dictionary<RefID, Dictionary<BodyNode,Tuple<bool,bool,bool>>>();
         public Dictionary<RefID, Slot> avatars = new Dictionary<RefID, Slot>();
         metagen.AvatarManager avatarManager;
         Task avatar_loading_task;
+        bool avatars_finished_loading = false;
         //TODO
         public PoseStreamPlayer()
         {
@@ -26,7 +29,7 @@ namespace metagen
         }
         public void PlayStreams()
         {
-            if (!avatar_loading_task.IsCompleted) return;
+            if (!avatars_finished_loading) return;
             World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
             currentWorld.RunSynchronously(() =>
             {
@@ -41,34 +44,40 @@ namespace metagen
 
                     //READ deltaT
                     float deltaT = reader.ReadSingle();
-                    foreach (var item in avatar_pose_nodes[user_id])
+                    foreach (var item in fake_proxies[user_id])
                     {
                         BodyNode node = item.Item1;
-                        //UniLog.Log(node.ToString());
-                        IAvatarObject comp = item.Item2;
+                        var available_streams = avatar_stream_channels[user_id][node];
+                        AvatarObjectSlot comp = item.Item2;
                         Slot slot = comp.Slot;
-                        //READ transform
 
+                        //READ transform
+                        float x, y, z, w;
                         //Scale stream
-                        float x = reader.ReadSingle();
-                        float y = reader.ReadSingle();
-                        float z = reader.ReadSingle();
-                        slot.LocalScale = new float3(x, y, z);
+                        if (available_streams.Item1)
+                        {
+                            x = reader.ReadSingle();
+                            y = reader.ReadSingle();
+                            z = reader.ReadSingle();
+                            slot.LocalScale = new float3(x, y, z);
+                        }
                         //Position stream
-                        x = reader.ReadSingle();
-                        y = reader.ReadSingle();
-                        z = reader.ReadSingle();
-                        slot.LocalPosition = new float3(x, y, z);
+                        if (available_streams.Item2)
+                        {
+                            x = reader.ReadSingle();
+                            y = reader.ReadSingle();
+                            z = reader.ReadSingle();
+                            slot.LocalPosition = new float3(x, y, z);
+                        }
                         //Rotation stream
-                        x = reader.ReadSingle();
-                        y = reader.ReadSingle();
-                        z = reader.ReadSingle();
-                        float w = reader.ReadSingle();
-                        slot.LocalRotation = new floatQ(x, y, z, w);
-                        //UniLog.Log(x.ToString());
-                        //UniLog.Log(y.ToString());
-                        //UniLog.Log(z.ToString());
-                        //UniLog.Log(w.ToString());
+                        if (available_streams.Item3)
+                        {
+                            x = reader.ReadSingle();
+                            y = reader.ReadSingle();
+                            z = reader.ReadSingle();
+                            w = reader.ReadSingle();
+                            slot.LocalRotation = new floatQ(x, y, z, w);
+                        }
                     }
                 }
 
@@ -94,7 +103,8 @@ namespace metagen
                 output_fss[user_id] = new FileStream(user_id.ToString() + "_streams.dat", FileMode.Open, FileAccess.Read);
                 BitReaderStream bitstream = new BitReaderStream(output_fss[user_id]);
                 output_readers[user_id] = new BitBinaryReaderX(bitstream);
-                avatar_pose_nodes[user_id] = new List<Tuple<BodyNode, IAvatarObject>>();
+                fake_proxies[user_id] = new List<Tuple<BodyNode, AvatarObjectSlot>>();
+                avatar_stream_channels[user_id] = new Dictionary<BodyNode, Tuple<bool, bool, bool>>();
                 Slot avatar = await avatarManager.GetAvatar();
                 UniLog.Log("AVATAR");
                 UniLog.Log(avatar.ToString());
@@ -107,7 +117,14 @@ namespace metagen
                 int numBodyNodes = output_readers[user_id].ReadInt32();
                 for (int i = 0; i < numBodyNodes; i++)
                 {
+                    //READ body node type
                     int nodeInt = output_readers[user_id].ReadInt32();
+                    //READ if scale stream exists
+                    bool scale_exists = output_readers[user_id].ReadBoolean();
+                    //READ if position stream exists
+                    bool pos_exists = output_readers[user_id].ReadBoolean();
+                    //READ if rotation stream exists
+                    bool rot_exists = output_readers[user_id].ReadBoolean();
                     BodyNode bodyNodeType = (BodyNode)nodeInt;
 
                     bool node_found = false;
@@ -116,15 +133,19 @@ namespace metagen
                         UniLog.Log(comp.Name);
                         if (comp.Node == bodyNodeType)
                         {
-                            avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
+                            AvatarObjectSlot connected_comp = comp.EquippingSlot;
+                            fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, connected_comp));
+                            //avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
                             node_found = true;
                             break;
                         }
                     }
                     if (!node_found) throw new Exception("Node " + bodyNodeType.ToString() + " not found in avatar!");
+                    avatar_stream_channels[user_id][bodyNodeType] = new Tuple<bool, bool, bool>(scale_exists,pos_exists,rot_exists);
                 }
                 //}
             }
+            avatars_finished_loading = true;
 
         }
         public void StopPlaying()
@@ -135,6 +156,8 @@ namespace metagen
             }
             output_fss = new Dictionary<RefID, FileStream>();
             output_readers = new Dictionary<RefID, BitBinaryReaderX>();
+            fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>>();
+            avatar_stream_channels = new Dictionary<RefID, Dictionary<BodyNode, Tuple<bool, bool, bool>>>();
         }
     }
 }

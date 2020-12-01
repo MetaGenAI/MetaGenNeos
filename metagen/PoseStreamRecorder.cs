@@ -13,7 +13,6 @@ namespace metagen
 {
     class PoseStreamRecorder
     {
-        private DateTime utcNow;
         public Dictionary<RefID, BitBinaryWriterX> output_writers = new Dictionary<RefID, BitBinaryWriterX>();
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
         public Dictionary<RefID, List<Tuple<BodyNode,TransformStreamDriver>>> avatar_object_slots = new Dictionary<RefID, List<Tuple<BodyNode,TransformStreamDriver>>>();
@@ -34,7 +33,6 @@ namespace metagen
                     List<AvatarObjectSlot> components = user.Root.Slot.GetComponentsInChildren<AvatarObjectSlot>();
                     //WRITE the absolute time
                     output_writers[user_id].Write((float)DateTimeOffset.Now.ToUnixTimeMilliseconds()); //absolute time
-                    //WRITE the number of body nodes
                     int numValidNodes = 0;
                     foreach(AvatarObjectSlot comp in components)
                     {
@@ -50,10 +48,19 @@ namespace metagen
                         }
                         numValidNodes += 1;
                     }
+                    //WRITE the number of body nodes
                     output_writers[user_id].Write(numValidNodes); //int
                     foreach(var item in avatar_object_slots[user_id])
                     {
+                        TransformStreamDriver driver = item.Item2;
+                        //WRITE the the body node types
                         output_writers[user_id].Write((int)item.Item1);
+                        //WRITE whether scaleStream is set
+                        output_writers[user_id].Write(driver.ScaleStream.Target != null);
+                        //WRITE whether positionStream is set
+                        output_writers[user_id].Write(driver.PositionStream.Target != null);
+                        //WRITE whether rotationStream is set
+                        output_writers[user_id].Write(driver.RotationStream.Target != null);
                     }
                     deltaT = 0f; //for the initial step written to the file, the deltaT is 0
                 } 
@@ -74,35 +81,27 @@ namespace metagen
                     if (driver.ScaleStream.Target != null)
                     {
                         float3 scale = driver.TargetScale;
-                        writer.Write((float) (0.004*scale.x));
-                        writer.Write((float) (0.004*scale.y));
-                        writer.Write((float) (0.004*scale.z));
-                    } else
-                    {
-                        writer.Write((float) 1.0f);
-                        writer.Write((float) 1.0f);
-                        writer.Write((float) 1.0f);
+                        writer.Write((float) (scale.x));
+                        writer.Write((float) (scale.y));
+                        writer.Write((float) (scale.z));
                     }
                     //position stream;
-                    float3 position = driver.TargetPosition;
-                    if (node == BodyNode.Root)
+                    if (driver.PositionStream.Target != null)
                     {
+                        float3 position = driver.TargetPosition;
                         writer.Write(position.x);
                         writer.Write(position.y);
                         writer.Write(position.z);
-                    } else
-                    {
-                        writer.Write((float) (position.x/0.004));
-                        writer.Write((float) (position.y/0.004));
-                        writer.Write((float) (position.z/0.004));
                     }
                     //rotation stream;
-                    floatQ rotation = driver.TargetRotation;
-                    writer.Write(rotation.x);
-                    writer.Write(rotation.y);
-                    writer.Write(rotation.z);
-                    writer.Write(rotation.w);
-                    //UniLog.Log(rotation.ToString());
+                    if (driver.RotationStream.Target != null)
+                    {
+                        floatQ rotation = driver.TargetRotation;
+                        writer.Write(rotation.x);
+                        writer.Write(rotation.y);
+                        writer.Write(rotation.z);
+                        writer.Write(rotation.w);
+                    }
                 }
             }
 

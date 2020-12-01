@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using FrooxEngine;
 using System.Runtime.CompilerServices;
 using BaseX;
+using FrooxEngine.CommonAvatar;
 
 namespace metagen
 {
@@ -85,7 +86,28 @@ namespace metagen
                 UniLog.Log(slot.ToString());
                 slot.LoadObject(node);
                 slot = slot.GetComponent<InventoryItem>((Predicate<InventoryItem>)null, false)?.Unpack((List<Slot>)null) ?? slot;
-                //task.SetResultAndFinish(slot);
+                List<IAvatarObject> components = slot.GetComponentsInChildren<IAvatarObject>();
+                //AvatarRoot root = slot.GetComponentInChildren<AvatarRoot>();
+                Slot fake_root = currentWorld.AddSlot("Fake Root");
+                foreach (IAvatarObject comp in components)
+                {
+                    AvatarObjectSlot comp2;
+                    if (comp.Node == BodyNode.Root)
+                    {
+                        comp2 = fake_root.AttachComponent<AvatarObjectSlot>();
+                        comp2.Node.Value = comp.Node;
+                        comp2.Equipped.Target = comp;
+                        comp.Equip(comp2);
+                    } else
+                    {
+                        Slot new_proxy = fake_root.AddSlot(comp.Name);
+                        comp2 = new_proxy.AttachComponent<AvatarObjectSlot>();
+                        comp2.Node.Value = comp.Node;
+                        comp2.Equipped.Target = comp;
+                        comp.Equip(comp2);
+                    }
+                }
+                slot.SetParent(fake_root);
                 task.SetResult(slot);
                 //avatars.Add(slot);
                 //avatars[avatars.Count - 1].AttachComponent<AvatarPuppeteer>();
