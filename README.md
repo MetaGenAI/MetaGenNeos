@@ -1,0 +1,1 @@
+The plugin adds a new logix node, just equip the node with the logix tip, and double press primary to spawn it. You won't see anything because the node autotransfer itself to userspace, so that you can use the plugin on any world you jump into afterwards.
