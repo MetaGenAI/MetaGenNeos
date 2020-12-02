@@ -18,7 +18,9 @@ namespace metagen
         //public Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>>();
         public Dictionary<RefID, List<Tuple<BodyNode,AvatarObjectSlot>>> fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode,AvatarObjectSlot>>>();
         public Dictionary<RefID, Dictionary<BodyNode,Tuple<bool,bool,bool>>> avatar_stream_channels = new Dictionary<RefID, Dictionary<BodyNode,Tuple<bool,bool,bool>>>();
+        public Dictionary<RefID, FingerPlayerSource> finger_sources = new Dictionary<RefID, FingerPlayerSource>();
         public Dictionary<RefID, Slot> avatars = new Dictionary<RefID, Slot>();
+        public Dictionary<RefID, bool> hands_are_tracked = new Dictionary<RefID, bool>();
         metagen.AvatarManager avatarManager;
         Task avatar_loading_task;
         bool avatars_finished_loading = false;
@@ -60,6 +62,7 @@ namespace metagen
                             y = reader.ReadSingle();
                             z = reader.ReadSingle();
                             slot.LocalScale = new float3(x, y, z);
+                            UniLog.Log(slot.LocalScale.ToString());
                         }
                         //Position stream
                         if (available_streams.Item2)
@@ -68,6 +71,7 @@ namespace metagen
                             y = reader.ReadSingle();
                             z = reader.ReadSingle();
                             slot.LocalPosition = new float3(x, y, z);
+                            UniLog.Log(slot.LocalPosition.ToString());
                         }
                         //Rotation stream
                         if (available_streams.Item3)
@@ -77,7 +81,42 @@ namespace metagen
                             z = reader.ReadSingle();
                             w = reader.ReadSingle();
                             slot.LocalRotation = new floatQ(x, y, z, w);
+                            UniLog.Log(slot.LocalRotation.ToString());
                         }
+                    }
+                    //READ finger pose
+                    if (hands_are_tracked[user_id])
+                    {
+                        FingerPlayerSource finger_source = finger_sources[user_id];
+                        if (finger_source != null)
+                        {
+                            float x, y, z, w;
+                            //Left Hand
+                            for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
+                            {
+                                BodyNode node = (BodyNode)(18 + index);
+                                //READ whether finger data was obtained
+                                bool was_succesful = reader.ReadBoolean();
+                                x = reader.ReadSingle();
+                                y = reader.ReadSingle();
+                                z = reader.ReadSingle();
+                                w = reader.ReadSingle();
+                                finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
+                            }
+                            //Right Hand
+                            for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
+                            {
+                                BodyNode node = (BodyNode)(47 + index);
+                                //READ whether finger data was obtained
+                                bool was_succesful = reader.ReadBoolean();
+                                x = reader.ReadSingle();
+                                y = reader.ReadSingle();
+                                z = reader.ReadSingle();
+                                w = reader.ReadSingle();
+                                finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
+                            }
+                        }
+
                     }
                 }
 
@@ -98,8 +137,6 @@ namespace metagen
             foreach (User user in users)
             {
                 RefID user_id = user.ReferenceID;
-                //if (!output_readers.ContainsKey(user_id))
-                //{
                 output_fss[user_id] = new FileStream(user_id.ToString() + "_streams.dat", FileMode.Open, FileAccess.Read);
                 BitReaderStream bitstream = new BitReaderStream(output_fss[user_id]);
                 output_readers[user_id] = new BitBinaryReaderX(bitstream);
@@ -143,7 +180,11 @@ namespace metagen
                     if (!node_found) throw new Exception("Node " + bodyNodeType.ToString() + " not found in avatar!");
                     avatar_stream_channels[user_id][bodyNodeType] = new Tuple<bool, bool, bool>(scale_exists,pos_exists,rot_exists);
                 }
-                //}
+                //READ whether hands are being tracked
+                hands_are_tracked[user_id] = output_readers[user_id].ReadBoolean();
+                //READ whether metacarpals are being tracked
+                output_readers[user_id].ReadBoolean();
+                finger_sources[user_id] = avatar.GetComponentInChildren<FingerPlayerSource>();
             }
             avatars_finished_loading = true;
 
@@ -158,6 +199,7 @@ namespace metagen
             output_readers = new Dictionary<RefID, BitBinaryReaderX>();
             fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>>();
             avatar_stream_channels = new Dictionary<RefID, Dictionary<BodyNode, Tuple<bool, bool, bool>>>();
+            hands_are_tracked = new Dictionary<RefID, bool>();
         }
     }
 }

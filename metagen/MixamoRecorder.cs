@@ -23,7 +23,7 @@ namespace FrooxEngine.LogiX
     [NodeName("MetaGenMixamo")]
     public class MixamoRecorder : LogixNode
     {
-
+        //Obsolete class to record the positions of all the bones, even if they are not being tracked
         //public SpinQueue<SyncMessage> messagesToTransmit;
         public Dictionary<User, List<Slot>> joint_slots = new Dictionary<User, List<Slot>>();
         public BinaryWriter writer;

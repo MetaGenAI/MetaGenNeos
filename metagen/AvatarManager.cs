@@ -89,6 +89,9 @@ namespace metagen
                 List<IAvatarObject> components = slot.GetComponentsInChildren<IAvatarObject>();
                 //AvatarRoot root = slot.GetComponentInChildren<AvatarRoot>();
                 Slot fake_root = currentWorld.AddSlot("Fake Root");
+                //TODO: find a way to do this without a custom component, because this won't work in normal sessions as it is!
+                FingerPlayerSource player_source = fake_root.AttachComponent<FingerPlayerSource>();
+                List<HandPoser> handPosers = slot.GetComponentsInChildren<HandPoser>();
                 foreach (IAvatarObject comp in components)
                 {
                     AvatarObjectSlot comp2;
@@ -107,8 +110,12 @@ namespace metagen
                         comp.Equip(comp2);
                     }
                 }
+                foreach(HandPoser handPoser in handPosers)
+                {
+                    handPoser.PoseSource.Target = player_source;
+                }
                 slot.SetParent(fake_root);
-                task.SetResult(slot);
+                task.SetResult(fake_root);
                 //avatars.Add(slot);
                 //avatars[avatars.Count - 1].AttachComponent<AvatarPuppeteer>();
             });

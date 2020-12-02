@@ -15,7 +15,8 @@ namespace metagen
     {
         public Dictionary<RefID, BitBinaryWriterX> output_writers = new Dictionary<RefID, BitBinaryWriterX>();
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
-        public Dictionary<RefID, List<Tuple<BodyNode,TransformStreamDriver>>> avatar_object_slots = new Dictionary<RefID, List<Tuple<BodyNode,TransformStreamDriver>>>();
+        public Dictionary<RefID, List<Tuple<BodyNode,TransformStreamDriver>>> avatar_stream_drivers = new Dictionary<RefID, List<Tuple<BodyNode,TransformStreamDriver>>>();
+        public Dictionary<RefID, FingerPoseStreamManager> finger_stream_drivers =  new Dictionary<RefID, FingerPoseStreamManager>();
         //TODO
         public void RecordStreams(float deltaT)
         {
@@ -24,13 +25,15 @@ namespace metagen
             foreach (User user in users)
             {
                 RefID user_id = user.ReferenceID;
+                //Check if there is a new user
                 if (!output_writers.ContainsKey(user_id))
                 {
                     output_fss[user_id] = new FileStream(user_id.ToString() + "_streams.dat", FileMode.Create, FileAccess.ReadWrite);
                     BitWriterStream bitstream = new BitWriterStream(output_fss[user_id]);
                     output_writers[user_id] = new BitBinaryWriterX(bitstream);
-                    avatar_object_slots[user_id] = new List<Tuple<BodyNode, TransformStreamDriver>>();
+                    avatar_stream_drivers[user_id] = new List<Tuple<BodyNode, TransformStreamDriver>>();
                     List<AvatarObjectSlot> components = user.Root.Slot.GetComponentsInChildren<AvatarObjectSlot>();
+                    finger_stream_drivers[user_id] = user.Root.Slot.GetComponent<FingerPoseStreamManager>();
                     //WRITE the absolute time
                     output_writers[user_id].Write((float)DateTimeOffset.Now.ToUnixTimeMilliseconds()); //absolute time
                     int numValidNodes = 0;
@@ -40,17 +43,17 @@ namespace metagen
                         TransformStreamDriver driver = comp.Slot.Parent.GetComponent<TransformStreamDriver>();
                         if (driver != null)
                         {
-                            avatar_object_slots[user_id].Add(new Tuple<BodyNode, TransformStreamDriver>(comp.Node.Value, driver));
+                            avatar_stream_drivers[user_id].Add(new Tuple<BodyNode, TransformStreamDriver>(comp.Node.Value, driver));
                         } else //if the driver is not in the parent, then it is in the slot (which is what happens for the root)
                         {
                             driver = comp.Slot.GetComponent<TransformStreamDriver>();
-                            avatar_object_slots[user_id].Add(new Tuple<BodyNode, TransformStreamDriver>(comp.Node.Value, driver));
+                            avatar_stream_drivers[user_id].Add(new Tuple<BodyNode, TransformStreamDriver>(comp.Node.Value, driver));
                         }
                         numValidNodes += 1;
                     }
                     //WRITE the number of body nodes
                     output_writers[user_id].Write(numValidNodes); //int
-                    foreach(var item in avatar_object_slots[user_id])
+                    foreach(var item in avatar_stream_drivers[user_id])
                     {
                         TransformStreamDriver driver = item.Item2;
                         //WRITE the the body node types
@@ -62,6 +65,17 @@ namespace metagen
                         //WRITE whether rotationStream is set
                         output_writers[user_id].Write(driver.RotationStream.Target != null);
                     }
+                    //WRITE whether hands are being tracked
+                    output_writers[user_id].Write(finger_stream_drivers[user_id] != null);
+                    //WRITE whether metacarpals are tracked (just used as metadata)
+                    if (finger_stream_drivers[user_id] != null)
+                    {
+                        output_writers[user_id].Write(finger_stream_drivers[user_id].TracksMetacarpals);
+                    } else
+                    {
+                        output_writers[user_id].Write(false);
+                    }
+
                     deltaT = 0f; //for the initial step written to the file, the deltaT is 0
                 } 
 
@@ -71,7 +85,7 @@ namespace metagen
 
                 //WRITE deltaT
                 writer.Write(deltaT); //float
-                foreach(var item in avatar_object_slots[user_id])
+                foreach(var item in avatar_stream_drivers[user_id])
                 {
                     BodyNode node = item.Item1;
                     TransformStreamDriver driver = item.Item2;
@@ -103,6 +117,39 @@ namespace metagen
                         writer.Write(rotation.w);
                     }
                 }
+                //WRITE finger pose
+                if (finger_stream_drivers[user_id] != null)
+                {
+                    //Left Hand
+                    for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
+                    {
+                        BodyNode node = (BodyNode)(18 + index);
+                        float3 position;
+                        floatQ rotation;
+                        bool was_succesful = finger_stream_drivers[user_id].TryGetFingerData(node, out position, out rotation);
+                        //WRITE whether finger data was obtained
+                        writer.Write(was_succesful);
+                        writer.Write(rotation.x);
+                        writer.Write(rotation.y);
+                        writer.Write(rotation.z);
+                        writer.Write(rotation.w);
+                    }
+                    //Right Hand
+                    for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
+                    {
+                        BodyNode node = (BodyNode)(47 + index);
+                        float3 position;
+                        floatQ rotation;
+                        bool was_succesful = finger_stream_drivers[user_id].TryGetFingerData(node, out position, out rotation);
+                        //WRITE whether finger data was obtained
+                        writer.Write(was_succesful);
+                        writer.Write(rotation.x);
+                        writer.Write(rotation.y);
+                        writer.Write(rotation.z);
+                        writer.Write(rotation.w);
+                    }
+
+                }
             }
 
         }
@@ -122,6 +169,7 @@ namespace metagen
             }
             output_writers = new Dictionary<RefID, BitBinaryWriterX>();
             output_fss = new Dictionary<RefID, FileStream>();
+            avatar_stream_drivers = new Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>>();
         }
     }
 }
