@@ -36,7 +36,7 @@ namespace metagen
                     comp.StartTask((Func<Task>)(async () =>
                     {
                         Bitmap2D bmp = await cameras[user_id].RenderToBitmap(camera_resolution);
-                        visual_recorders[user_id].WriteFrame(bmp.ConvertTo(CodeX.TextureFormat.RGBA32).RawData);
+                        visual_recorders[user_id].WriteFrame(bmp.ConvertTo(CodeX.TextureFormat.BGRA32).RawData);
                     }));
                 }
                 else
@@ -60,6 +60,7 @@ namespace metagen
                     RefID user_id = user.ReferenceID;
                     FrooxEngine.Camera camera = user.Root.HeadSlot.AttachComponent<FrooxEngine.Camera>();
                     camera.GetRenderSettings(camera_resolution);
+                    camera.NearClipping.Value = 0.15f;
                     cameras[user_id] = camera;
                     visual_recorders[user_id] = new VideoRecorder(saving_folder + "/" + user_id.ToString() + "_video.avi", camera_resolution.x, camera_resolution.y, 30);
                 }
