@@ -16,7 +16,7 @@ using System.Drawing;
 
 namespace metagen
 {
-    class VisualRecorder
+    class VideoRecorder
     {
         public AviWriter writer;
         public int width;
@@ -27,7 +27,7 @@ namespace metagen
         private ConcurrentQueue<byte[]> framesQueue;
         private bool should_finish = false;
         private bool loop_finished = false;
-        public VisualRecorder(String fileName, int width, int height, int frameRate)
+        public VideoRecorder(String fileName, int width, int height, int frameRate)
         {
             this.width = width;
             this.height = height;
@@ -89,7 +89,7 @@ namespace metagen
         {
             should_finish = true;
             while (!loop_finished) { }
-            writtingTask.Dispose();
+            //writtingTask.Dispose();
         }
         public Bitmap ToBitmap(byte[] byteArrayIn)
         {

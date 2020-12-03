@@ -62,7 +62,7 @@ namespace metagen
                             y = reader.ReadSingle();
                             z = reader.ReadSingle();
                             slot.LocalScale = new float3(x, y, z);
-                            UniLog.Log(slot.LocalScale.ToString());
+                            //UniLog.Log(slot.LocalScale.ToString());
                         }
                         //Position stream
                         if (available_streams.Item2)
@@ -71,7 +71,7 @@ namespace metagen
                             y = reader.ReadSingle();
                             z = reader.ReadSingle();
                             slot.LocalPosition = new float3(x, y, z);
-                            UniLog.Log(slot.LocalPosition.ToString());
+                            //UniLog.Log(slot.LocalPosition.ToString());
                         }
                         //Rotation stream
                         if (available_streams.Item3)
@@ -81,7 +81,7 @@ namespace metagen
                             z = reader.ReadSingle();
                             w = reader.ReadSingle();
                             slot.LocalRotation = new floatQ(x, y, z, w);
-                            UniLog.Log(slot.LocalRotation.ToString());
+                            //UniLog.Log(slot.LocalRotation.ToString());
                         }
                     }
                     //READ finger pose
