@@ -63,7 +63,7 @@ namespace metagen
                     camera.GetRenderSettings(camera_resolution);
                     camera.NearClipping.Value = 0.15f;
                     cameras[user_id] = camera;
-                    visual_recorders[user_id] = new VideoRecorder(saving_folder + "/" + user_id.ToString() + "_video.avi", camera_resolution.x, camera_resolution.y, 30);
+                    visual_recorders[user_id] = new VideoRecorder(saving_folder + "/" + user_id.ToString() + "_video.avi", camera_resolution.x, camera_resolution.y, 30, metagen_comp);
                 }
                 UniLog.Log("Made visual recorder");
                 isRecording = true;
@@ -72,22 +72,22 @@ namespace metagen
 
         public void StopRecording()
         {
-            World currentWorld = metagen_comp.World;
-            currentWorld.RunSynchronously(() =>
+            //World currentWorld = metagen_comp.World;
+            //currentWorld.RunSynchronously(() =>
+            //{
+            foreach (var item in visual_recorders)
             {
-                foreach (var item in visual_recorders)
-                {
-                    item.Value.Close();
-                    //TODO: check recording several videos consequtively. It doesn't seem to be working
-                }
-                foreach (var item in cameras)
-                {
-                    item.Value.Slot.RemoveComponent(item.Value);
-                }
-                cameras = new Dictionary<RefID, FrooxEngine.Camera>();
-                visual_recorders = new Dictionary<RefID, VideoRecorder>();
-                isRecording = false;
-            });
+                item.Value.Close();
+                //TODO: check recording several videos consequtively. It doesn't seem to be working
+            }
+            foreach (var item in cameras)
+            {
+                item.Value.Slot.RemoveComponent(item.Value);
+            }
+            cameras = new Dictionary<RefID, FrooxEngine.Camera>();
+            visual_recorders = new Dictionary<RefID, VideoRecorder>();
+            isRecording = false;
+            //});
         }
     }
 }

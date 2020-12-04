@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Drawing;
 using System.Collections.Concurrent;
@@ -23,19 +24,29 @@ namespace metagen
         public int height;
         public int frameRate;
         public String fileName;
-        private Task writtingTask;
+        //private Task writtingTask;
+        private Thread writtingThread;
         private ConcurrentQueue<byte[]> framesQueue;
+        private ManualResetEventSlim writtingThreadFinnishEvent = new ManualResetEventSlim();
         private bool should_finish = false;
-        private bool loop_finished = false;
-        public VideoRecorder(String fileName, int width, int height, int frameRate)
+        //private bool loop_finished = false;
+        MetaGen metagen_comp;
+        public VideoRecorder(String fileName, int width, int height, int frameRate, MetaGen component)
         {
+            metagen_comp = component;
             this.width = width;
             this.height = height;
             this.frameRate = frameRate;
             this.fileName = fileName;
             framesQueue = new ConcurrentQueue<byte[]>();
             UniLog.Log("Starting writerloop");
-            writtingTask = Task.Run(FileWriterLoop);
+            //writtingTask = metagen_comp.StartTask(async ()=>await Task.Run(FileWriterLoop));
+            //writtingTask = Task.Run(FileWriterLoop);
+            writtingThread = new Thread(FileWriterLoop);
+            writtingThread.IsBackground = true;
+            writtingThread.Priority = ThreadPriority.AboveNormal;
+            writtingThread.Name = "Video frame writting thread";
+            writtingThread.Start();
         }
         public void FileWriterLoop()
         {
@@ -56,6 +67,11 @@ namespace metagen
             while (true)
             {
                 //UniLog.Log("writerloop");
+                if (should_finish)
+                {
+                    writer.Close();
+                    break;
+                }
                 if (framesQueue.TryDequeue(out frame))
                 {
                     //Bitmap bmp = ToBitmap(frame);
@@ -73,13 +89,9 @@ namespace metagen
                     //bitmap.UnlockBits(bits2);
                     stream.WriteFrame(true,frame,0,frame.Length);
                 }
-                if (should_finish)
-                {
-                    writer.Close();
-                    break;
-                }
             }
-            loop_finished = true;
+            //loop_finished = true;
+            writtingThreadFinnishEvent.Set();
         }
         public void WriteFrame(byte[] frame)
         {
@@ -88,7 +100,9 @@ namespace metagen
         public void Close()
         {
             should_finish = true;
-            while (!loop_finished) { }
+            //while (!loop_finished) { }
+            writtingThreadFinnishEvent.Wait();
+            //writtingTask.Wait();
             //writtingTask.Dispose();
         }
         public Bitmap ToBitmap(byte[] byteArrayIn)
