@@ -18,12 +18,9 @@ using System.Runtime.InteropServices;
 using FrooxEngine.CommonAvatar;
 
 
-namespace FrooxEngine.LogiX
+namespace metagen
 {
-
-    [Category("LogiX/AAAA")]
-    [NodeName("MetaGen")]
-    public class MetaGen : LogixNode
+    public class MetaGen : FrooxEngine.Component
     {
         public bool recording = false;
         private DateTime utcNow;
@@ -53,41 +50,29 @@ namespace FrooxEngine.LogiX
         protected override void OnAttach()
         {
             base.OnAttach();
-
-            //TODO: refactor the audiolistener
-            //TODO: make below work in VR mode too
-
-            //This records the audio from an audiolistener. Unfortunately we can only have one audiolistener in an Unity scene:/
-            //It starts/stops recording upon pressing the key R.
-            //UniLog.Log("Adding Audio Listener");
-            //GameObject gameObject = GameObject.Find("AudioListener");
-            //UnityNeos.AudioRecorderNeos recorder = gameObject.AddComponent<UnityNeos.AudioRecorderNeos>();
-
-            ASDF.asdf(this.Engine);
-            Job<Slot> awaiter = SlotHelper.TransferToWorld(this.Slot,Userspace.UserspaceWorld).GetAwaiter();
-            awaiter.GetResult();
-        }
-        protected override void OnPaste()
-        {
-            base.OnPaste();
-            UniLog.Log("Transferred to userspace");
-            //Remember that onPasting this component is reinitialized
-            //so that changes made in the previous OnAttach won't be saved!
             recording_streams = true;
             recording_voice = true;
             recording_vision = true;
             utcNow = DateTime.UtcNow;
             recordingBeginTime = DateTime.UtcNow;
-            dataManager = new DataManager();
+            dataManager = this.Slot.AttachComponent<DataManager>();
             dataManager.StartRecordingSession();
-            streamRecorder = new PoseStreamRecorder();
+            streamRecorder = new PoseStreamRecorder(this);
             voiceRecorder = new VoiceRecorder(this);
             visionRecorder = new VisionRecorder(camera_resolution, this);
-            streamPlayer = new PoseStreamPlayer();
+            streamPlayer = new PoseStreamPlayer(dataManager, this);
+            StartRecording();
+        }
+        protected override void OnDispose()
+        {
+            base.OnDispose();
+            StopRecording();
         }
         protected override void OnCommonUpdate()
         {
             base.OnCommonUpdate();
+            World currentWorld = this.World;
+            UniLog.Log("HI from " + currentWorld.CorrespondingWorldId);
 
             //Start/Stop recording
             if (this.Input.GetKeyDown(Key.R))
@@ -133,13 +118,13 @@ namespace FrooxEngine.LogiX
             float deltaT = (float)(DateTime.UtcNow - utcNow).TotalMilliseconds;
             if (deltaT > 33.3333)
             {
-                if (recording && streamRecorder.isRecording)
+                if (recording && streamRecorder==null? false : streamRecorder.isRecording)
                 {
                     //UniLog.Log("recording streams");
                     streamRecorder.RecordStreams(deltaT);
                 }
 
-                if (recording && visionRecorder.isRecording)
+                if (recording && visionRecorder==null? false : visionRecorder.isRecording)
                 {
                     //UniLog.Log("recording vision");
                     visionRecorder.RecordVision();
@@ -156,7 +141,7 @@ namespace FrooxEngine.LogiX
         protected override void OnAudioUpdate()
         {
             base.OnAudioUpdate();
-            if (recording && voiceRecorder.isRecording)
+            if (recording && voiceRecorder==null? false : voiceRecorder.isRecording)
             {
                 //UniLog.Log("recording voice");
                 voiceRecorder.RecordAudio();
@@ -214,6 +199,8 @@ namespace FrooxEngine.LogiX
             //VIDEO
             if (visionRecorder.isRecording)
                 visionRecorder.StopRecording();
+
+            dataManager.StopSection();
         }
 
         public void ToggleRecording()

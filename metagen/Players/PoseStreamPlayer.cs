@@ -24,19 +24,23 @@ namespace metagen
         metagen.AvatarManager avatarManager;
         Task avatar_loading_task;
         bool avatars_finished_loading = false;
+        DataManager dataManager;
+        MetaGen metagen_comp;
         //TODO
-        public PoseStreamPlayer()
+        public PoseStreamPlayer(DataManager dataMan, MetaGen component)
         {
             avatarManager = new metagen.AvatarManager();
+            dataManager = dataMan;
+            metagen_comp = component;
         }
         public void PlayStreams()
         {
             if (!avatars_finished_loading) return;
-            World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
+            World currentWorld = metagen_comp.World;
             currentWorld.RunSynchronously(() =>
             {
                 //TODO: Need this function to not depend on users being present! Just gave the info from the recorded data!!
-                Dictionary<RefID, User>.ValueCollection users = FrooxEngine.Engine.Current.WorldManager.FocusedWorld.AllUsers;
+                Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
                 foreach (User user in users)
                 {
                     RefID user_id = user.ReferenceID;
@@ -133,7 +137,8 @@ namespace metagen
         }
         private async void StartPlayingInternal()
         {
-            Dictionary<RefID, User>.ValueCollection users = FrooxEngine.Engine.Current.WorldManager.FocusedWorld.AllUsers;
+            Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
+            string reading_directory = dataManager.reading_folder;
             foreach (User user in users)
             {
                 RefID user_id = user.ReferenceID;

@@ -20,6 +20,11 @@ namespace metagen
         public List<RefID> current_users = new List<RefID>();
         public bool isRecording = false;
         public string saving_folder;
+        private MetaGen metagen_comp;
+        public PoseStreamRecorder(MetaGen component)
+        {
+            metagen_comp = component;
+        }
         public void RecordStreams(float deltaT)
         {
             foreach (RefID user_id in current_users)
@@ -100,7 +105,7 @@ namespace metagen
         }
         public void StartRecording()
         {
-            Dictionary<RefID, User>.ValueCollection users = FrooxEngine.Engine.Current.WorldManager.FocusedWorld.AllUsers;
+            Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
             foreach (User user in users)
             {
                 RefID user_id = user.ReferenceID;

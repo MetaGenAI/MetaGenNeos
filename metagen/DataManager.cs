@@ -5,6 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using FrooxEngine;
 using System.IO;
+using CsvHelper;
+using System.Globalization;
+using BaseX;
 
 namespace metagen
 {
@@ -12,6 +15,7 @@ namespace metagen
     {
         private bool have_users_changed = false;
         private string _saving_folder = @"./data";
+        //public readonly string last_saving_folder;
         private string root_saving_folder = @"./data";
         private string session_saving_folder = "";
         private int section = 0;
@@ -20,6 +24,17 @@ namespace metagen
             get
             {
                 return this._saving_folder;
+            }
+        }
+        public string last_saving_folder
+        {
+            get; private set;
+        }
+        public string reading_folder
+        {
+            get
+            {
+                return last_saving_folder;
             }
         }
 
@@ -34,7 +49,15 @@ namespace metagen
         public void StartRecordingSession()
         {
             Guid g = Guid.NewGuid();
-            session_saving_folder = g.ToString();
+            World currentWorld = this.World;
+            UniLog.Log(currentWorld.CorrespondingWorldId);
+            UniLog.Log(currentWorld.SessionId);
+            string escaped_world_id = currentWorld.CorrespondingWorldId.Replace(@":", @"_").Replace(@"-", @"_");
+            if (!Directory.Exists(root_saving_folder+"/"+escaped_world_id))
+            {
+                Directory.CreateDirectory(root_saving_folder + "/" + escaped_world_id);
+            }
+            session_saving_folder = escaped_world_id+"/"+currentWorld.SessionId+"_"+g.ToString();
             section = 0;
             _saving_folder = root_saving_folder + "/" + session_saving_folder;
             Directory.CreateDirectory(saving_folder);
@@ -47,6 +70,11 @@ namespace metagen
             _saving_folder = root_saving_folder + "/" + session_saving_folder + "/" + section.ToString();
             Directory.CreateDirectory(saving_folder);
             have_users_changed = false;
+            WriteUserMetadata();
+        }
+        public void StopSection()
+        {
+            last_saving_folder = _saving_folder;
         }
 
         public override void OnUserLeft(User user)
@@ -67,6 +95,27 @@ namespace metagen
             bool result = have_users_changed;
             //we reset the indicator of whether a user has left or joined
             return result;
+        }
+        private void WriteUserMetadata()
+        {
+            Dictionary<RefID, User>.ValueCollection users = this.World.AllUsers;
+            List<UserMetadata> user_metadatas = new List<UserMetadata>();
+            foreach(User user in users)
+            {
+                user_metadatas.Add(new UserMetadata
+                {
+                    userId = user.ReferenceID.ToString(),
+                    headDevice = user.HeadDevice.ToString(),
+                    platform = user.Platform.ToString(),
+                    bodyNodes = String.Join(",",user.BodyNodes.Select(n => n.ToString())),
+                    devices = String.Join(",", user.Devices.Where<SyncVar>((Func<SyncVar, bool>)(i => i.IsDictionary)).Select(d => d["Type"].GetValue<string>(true))),
+                });
+            }
+            using (var writer = new StreamWriter(saving_folder+"/user_metadata.csv"))
+            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            {
+                csv.WriteRecords(user_metadatas);
+            }
         }
 
     }

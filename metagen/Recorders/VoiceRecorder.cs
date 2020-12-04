@@ -17,11 +17,11 @@ namespace metagen
         private Dictionary<RefID, AudioRecorder> audio_recorders = new Dictionary<RefID, AudioRecorder>();
         public bool isRecording = false;
         public string saving_folder;
-        private MetaGen comp;
+        private MetaGen metagen_comp;
 
         public VoiceRecorder(MetaGen component)
         {
-            comp = component;
+            metagen_comp = component;
         }
 
         //Record one chunk from the voice audio of each user
@@ -34,36 +34,40 @@ namespace metagen
                 RefID user_id = item.Key;
                 if (audio_output != null)
                 {
-                    float[] buffer = new float[comp.Engine.AudioSystem.BufferSize];
-                    buffer.EnsureSize<float>(comp.Engine.AudioSystem.BufferSize, false);
-                    audio_output.Source.Target.Read(buffer.AsMonoBuffer());
-                    audio_recorders[user_id].ConvertAndWrite(buffer);
+                    float[] buffer = new float[metagen_comp.Engine.AudioSystem.BufferSize];
+                    buffer.EnsureSize<float>(metagen_comp.Engine.AudioSystem.BufferSize, false);
+                    if (audio_output.Source.Target != null)
+                    {
+                        audio_output.Source.Target.Read(buffer.AsMonoBuffer());
+                        audio_recorders[user_id].ConvertAndWrite(buffer);
+                    } else
+                    {
+                        StopRecording();
+                        StartRecording();
+                    }
                 }
             }
         }
 
         public void StartRecording()
         {
-            Dictionary<RefID, User>.ValueCollection users = FrooxEngine.Engine.Current.WorldManager.FocusedWorld.AllUsers;
+            Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
             foreach (User user in users)
             {
                 RefID user_id = user.ReferenceID;
-                if (!audio_outputs.ContainsKey(user_id))
+                AvatarAudioOutputManager comp = user.Root.Slot.GetComponentInChildren<AvatarAudioOutputManager>();
+                AudioOutput audio_output = comp.AudioOutput.Target;
+                audio_outputs[user_id] = audio_output;
+                if (audio_outputs[user_id] == null)
                 {
-                    AvatarAudioOutputManager comp = user.Root.Slot.GetComponentInChildren<AvatarAudioOutputManager>();
-                    AudioOutput audio_output = comp.AudioOutput.Target;
-                    audio_outputs[user_id] = audio_output;
-                    if (audio_outputs[user_id] == null)
-                    {
-                        UniLog.Log("OwO: Audio output for user " + user_id.ToString() + " is null!");
-                    }
-                    else
-                    {
-                        UniLog.Log("Sample rate");
-                        UniLog.Log(comp.Engine.AudioSystem.Connector.SampleRate.ToString());
-                        audio_recorders[user_id] = new AudioRecorder(saving_folder + "/" + user_id.ToString() + "_audio", comp.Engine.AudioSystem.BufferSize, 1, comp.Engine.AudioSystem.SampleRate, 1);
-                        audio_recorders[user_id].StartWriting();
-                    }
+                    UniLog.Log("OwO: Audio output for user " + user_id.ToString() + " is null!");
+                }
+                else
+                {
+                    UniLog.Log("Sample rate");
+                    UniLog.Log(metagen_comp.Engine.AudioSystem.Connector.SampleRate.ToString());
+                    audio_recorders[user_id] = new AudioRecorder(saving_folder + "/" + user_id.ToString() + "_audio", metagen_comp.Engine.AudioSystem.BufferSize, 1, metagen_comp.Engine.AudioSystem.SampleRate, 1);
+                    audio_recorders[user_id].StartWriting();
                 }
             }
             isRecording = true;

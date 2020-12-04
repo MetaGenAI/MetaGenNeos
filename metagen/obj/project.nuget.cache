@@ -1,14 +1,17 @@
 {
   "version": 2,
-  "dgSpecHash": "ylyqZ9qz9CFGCL9c1EA6pkQ+gcIy+KjdCJu3yVfNhZf7wVKaFd7DRGfkdAyx1SqD7xDLiJOBf7jVFxblnNUz1g==",
+  "dgSpecHash": "rQj6Gfsgo7ZrCp65F8megsv2yfRCt4XLQgxeVMFW+DyNxqZxGiKFV4zJy5byilDu7OqUug9g5DqYMesotIxkvA==",
   "success": true,
   "projectFilePath": "D:\\code\\neos\\metagen\\metagen\\metagen.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Guillermo Valle\\.nuget\\packages\\csvhelper\\17.0.1\\csvhelper.17.0.1.nupkg.sha512",
+    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder\\microsoft.csharp\\4.5.0\\microsoft.csharp.4.5.0.nupkg.sha512",
     "C:\\Users\\Guillermo Valle\\.nuget\\packages\\sharpavi\\2.1.2\\sharpavi.2.1.2.nupkg.sha512",
     "C:\\Users\\Guillermo Valle\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
     "C:\\Users\\Guillermo Valle\\.nuget\\packages\\system.memory\\4.5.4\\system.memory.4.5.4.nupkg.sha512",
     "C:\\Users\\Guillermo Valle\\.nuget\\packages\\system.numerics.vectors\\4.5.0\\system.numerics.vectors.4.5.0.nupkg.sha512",
-    "C:\\Users\\Guillermo Valle\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\4.5.3\\system.runtime.compilerservices.unsafe.4.5.3.nupkg.sha512"
+    "C:\\Users\\Guillermo Valle\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\4.5.3\\system.runtime.compilerservices.unsafe.4.5.3.nupkg.sha512",
+    "C:\\Users\\Guillermo Valle\\.nuget\\packages\\system.valuetuple\\4.4.0\\system.valuetuple.4.4.0.nupkg.sha512"
   ],
   "logs": []
 }

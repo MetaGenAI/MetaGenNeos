@@ -17,11 +17,11 @@ namespace metagen
         public int2 camera_resolution;
         public bool isRecording = false;
         public string saving_folder;
-        private FrooxEngine.LogiX.MetaGen comp;
-        public VisionRecorder(int2 resolution, FrooxEngine.LogiX.MetaGen component)
+        private MetaGen metagen_comp;
+        public VisionRecorder(int2 resolution, MetaGen component)
         {
             camera_resolution = resolution;
-            comp = component;
+            metagen_comp = component;
         }
 
         //Record one frame of the head camera for each user
@@ -33,7 +33,7 @@ namespace metagen
                 VideoRecorder videoRecorder = item.Value;
                 if (videoRecorder != null && cameras[user_id] != null)
                 {
-                    comp.StartTask((Func<Task>)(async () =>
+                    metagen_comp.StartTask((Func<Task>)(async () =>
                     {
                         Bitmap2D bmp = await cameras[user_id].RenderToBitmap(camera_resolution);
                         visual_recorders[user_id].WriteFrame(bmp.ConvertTo(CodeX.TextureFormat.BGRA32).RawData);
@@ -51,14 +51,15 @@ namespace metagen
         }
         public void StartRecording()
         {
-            World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
+            World currentWorld = metagen_comp.World;
             Dictionary<RefID, User>.ValueCollection users = currentWorld.AllUsers;
             currentWorld.RunSynchronously(() =>
             {
                 foreach (User user in users)
                 {
                     RefID user_id = user.ReferenceID;
-                    FrooxEngine.Camera camera = user.Root.HeadSlot.AttachComponent<FrooxEngine.Camera>();
+                    Slot localSlot = user.Root.HeadSlot.AddLocalSlot("vision recorder camera");
+                    FrooxEngine.Camera camera = localSlot.AttachComponent<FrooxEngine.Camera>();
                     camera.GetRenderSettings(camera_resolution);
                     camera.NearClipping.Value = 0.15f;
                     cameras[user_id] = camera;
@@ -71,7 +72,7 @@ namespace metagen
 
         public void StopRecording()
         {
-            World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
+            World currentWorld = metagen_comp.World;
             currentWorld.RunSynchronously(() =>
             {
                 foreach (var item in visual_recorders)

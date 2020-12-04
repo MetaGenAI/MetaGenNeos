@@ -23,15 +23,15 @@
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.Fallback.config"
         ],
         "originalTargetFrameworks": [
-          "net472"
+          "net462"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net472": {
-            "targetAlias": "net472",
+          "net462": {
+            "targetAlias": "net462",
             "projectReferences": {}
           }
         },
@@ -42,9 +42,13 @@
         }
       },
       "frameworks": {
-        "net472": {
-          "targetAlias": "net472",
+        "net462": {
+          "targetAlias": "net462",
           "dependencies": {
+            "CsvHelper": {
+              "target": "Package",
+              "version": "[17.0.1, )"
+            },
             "SharpAvi": {
               "target": "Package",
               "version": "[2.1.2, )"
