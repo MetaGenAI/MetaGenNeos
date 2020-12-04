@@ -25,7 +25,8 @@ namespace metagen
             currentWorld.RunSynchronously(() =>
             {
                 //this.slot = currentWorld.AddLocalSlot("Holder");
-                this.slot = currentWorld.AddSlot("Holder");
+                //TODO: in some worlds the global coordinate of recording vs playback is not correct! (e.g. Victorian appartment by Enverex)
+                this.slot = currentWorld.LocalUser.Root.Slot.Parent.AddSlot("Holder");
             });
             UniLog.Log("Added");
             //Slot slot1 = Userspace.UserspaceWorld.AddSlot("Holder");

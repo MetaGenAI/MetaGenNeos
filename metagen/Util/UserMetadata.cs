@@ -8,6 +8,7 @@ namespace metagen
 {
     class UserMetadata
     {
+        public string userRefId { get; set; }
         public string userId { get; set; }
         public string headDevice { get; set; }
         public string platform { get; set; }

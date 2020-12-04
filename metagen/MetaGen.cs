@@ -22,10 +22,15 @@ namespace metagen
 {
     public class MetaGen : FrooxEngine.Component
     {
+        public bool playing = false;
         public bool recording = false;
         private DateTime utcNow;
         private DateTime recordingBeginTime;
+        private DateTime playingBeginTime;
         private DataManager dataManager;
+
+        private bool recording_hearing = false;
+        public User recording_hearing_user;
 
         private bool recording_voice = false;
         private VoiceRecorder voiceRecorder;
@@ -35,10 +40,11 @@ namespace metagen
         private VisionRecorder visionRecorder;
 
         public bool recording_streams = false;
-        public bool playing_streams = false;
         private PoseStreamRecorder streamRecorder;
         private PoseStreamPlayer streamPlayer;
         private metagen.AvatarManager avatarManager;
+        public UnityNeos.AudioRecorderNeos hearingRecorder;
+        int frame_index = 0;
         private float recording_time
         {
             get
@@ -52,16 +58,16 @@ namespace metagen
             base.OnAttach();
             recording_streams = true;
             recording_voice = true;
+            recording_hearing = true;
             recording_vision = true;
             utcNow = DateTime.UtcNow;
             recordingBeginTime = DateTime.UtcNow;
             dataManager = this.Slot.AttachComponent<DataManager>();
-            dataManager.StartRecordingSession();
             streamRecorder = new PoseStreamRecorder(this);
             voiceRecorder = new VoiceRecorder(this);
             visionRecorder = new VisionRecorder(camera_resolution, this);
             streamPlayer = new PoseStreamPlayer(dataManager, this);
-            StartRecording();
+            //StartRecording();
         }
         protected override void OnDispose()
         {
@@ -72,7 +78,7 @@ namespace metagen
         {
             base.OnCommonUpdate();
             World currentWorld = this.World;
-            UniLog.Log("HI from " + currentWorld.CorrespondingWorldId);
+            //UniLog.Log("HI from " + currentWorld.CorrespondingWorldId);
 
             //Start/Stop recording
             if (this.Input.GetKeyDown(Key.R))
@@ -96,16 +102,7 @@ namespace metagen
             //Start/Stop playing
             if (this.Input.GetKeyDown(Key.P))
             {
-                UniLog.Log("Start/Stop playing");
-                playing_streams = !playing_streams;
-                if (!playing_streams)
-                {
-                    streamPlayer.StopPlaying();
-                }
-                else
-                {
-                    streamPlayer.StartPlaying();
-                }
+                TogglePlaying();
             }
 
             //TODO: make cameras for vision recording local to not affect the performance of others
@@ -118,19 +115,34 @@ namespace metagen
             float deltaT = (float)(DateTime.UtcNow - utcNow).TotalMilliseconds;
             if (deltaT > 33.3333)
             {
-                if (recording && streamRecorder==null? false : streamRecorder.isRecording)
+                bool streams_ok = (streamRecorder == null ? false : streamRecorder.isRecording) || !recording_streams;
+                bool vision_ok = (visionRecorder == null ? false : visionRecorder.isRecording) || !recording_vision;
+                bool hearing_ok = (hearingRecorder == null ? false : hearingRecorder.isRecording) || !recording_hearing;
+                bool voice_ok = (voiceRecorder == null ? false : (voiceRecorder.isRecording && voiceRecorder.audio_sources_ready)) || !recording_voice;
+                //bool all_ready = voice_ok && streams_ok && vision_ok && hearing_ok;
+                bool all_ready = hearing_ok;
+                if (recording && all_ready && streamRecorder==null? false : streamRecorder.isRecording)
                 {
                     //UniLog.Log("recording streams");
                     streamRecorder.RecordStreams(deltaT);
                 }
 
-                if (recording && visionRecorder==null? false : visionRecorder.isRecording)
+                if (recording && all_ready && visionRecorder==null? false : visionRecorder.isRecording)
                 {
                     //UniLog.Log("recording vision");
+                    if (frame_index == 30)
+                        hearingRecorder.videoStartedRecording = true;
                     visionRecorder.RecordVision();
                 }
+
+                if (recording && all_ready && recording_hearing_user != null && hearingRecorder==null? false : hearingRecorder.isRecording)
+                {
+                    hearingRecorder.UpdatePosition(recording_hearing_user.Root.Slot.GlobalPosition);
+                }
+                frame_index += 1;
+
                 utcNow = DateTime.UtcNow;
-                if (playing_streams)
+                if (playing)
                 {
                     //UniLog.Log("playing streams");
                     streamPlayer.PlayStreams();
@@ -151,9 +163,12 @@ namespace metagen
         public void StartRecording()
         {
             UniLog.Log("Start recording");
+            if (!dataManager.have_started_recording_session)
+                dataManager.StartRecordingSession();
             if (!recording)
                 dataManager.StartSection();
             recording = true;
+            frame_index = 0;
             //Set the recordings time to now
             utcNow = DateTime.UtcNow;
             recordingBeginTime = DateTime.UtcNow;
@@ -172,6 +187,13 @@ namespace metagen
             {
                 voiceRecorder.saving_folder = dataManager.saving_folder;
                 voiceRecorder.StartRecording();
+            }
+
+            //HEARING
+            if (recording_hearing && !hearingRecorder.isRecording)
+            {
+                hearingRecorder.saving_folder = dataManager.saving_folder;
+                hearingRecorder.StartRecording();
             }
 
             //VIDEO
@@ -196,6 +218,10 @@ namespace metagen
             if (voiceRecorder.isRecording)
                 voiceRecorder.StopRecording();
 
+            //HEARING
+            if (hearingRecorder.isRecording)
+                hearingRecorder.StopRecording();
+
             //VIDEO
             if (visionRecorder.isRecording)
                 visionRecorder.StopRecording();
@@ -208,6 +234,35 @@ namespace metagen
             //UniLog.Log("Start/Stop recording");
             if (recording) StopRecording();
             else StartRecording();
+        }
+        public void StartPlaying()
+        {
+            UniLog.Log("Start playing");
+            playing = true;
+            frame_index = 0;
+            //Set the recordings time to now
+            utcNow = DateTime.UtcNow;
+            recordingBeginTime = DateTime.UtcNow;
+            if (!streamPlayer.isPlaying)
+                streamPlayer.StartPlaying();
+        }
+        public void StopPlaying()
+        {
+            UniLog.Log("Stop playing");
+            playing = false;
+            if (streamPlayer.isPlaying)
+                streamPlayer.StopPlaying();
+        }
+        public void TogglePlaying()
+        {
+            if (playing)
+            {
+                StopPlaying();
+            } else
+            {
+                StartPlaying();
+            }
+
         }
 
 

@@ -19,6 +19,7 @@ namespace metagen
         private string root_saving_folder = @"./data";
         private string session_saving_folder = "";
         private int section = 0;
+        public bool have_started_recording_session = false;
         public string saving_folder
         {
             get
@@ -46,13 +47,17 @@ namespace metagen
             }
 
         }
+        public string scapeWorldID(string worldID)
+        {
+            return worldID.Replace(@":", @"_").Replace(@"-", @"_");
+        }
         public void StartRecordingSession()
         {
             Guid g = Guid.NewGuid();
             World currentWorld = this.World;
             UniLog.Log(currentWorld.CorrespondingWorldId);
             UniLog.Log(currentWorld.SessionId);
-            string escaped_world_id = currentWorld.CorrespondingWorldId.Replace(@":", @"_").Replace(@"-", @"_");
+            string escaped_world_id = scapeWorldID(currentWorld.CorrespondingWorldId);
             if (!Directory.Exists(root_saving_folder+"/"+escaped_world_id))
             {
                 Directory.CreateDirectory(root_saving_folder + "/" + escaped_world_id);
@@ -104,7 +109,8 @@ namespace metagen
             {
                 user_metadatas.Add(new UserMetadata
                 {
-                    userId = user.ReferenceID.ToString(),
+                    userRefId = user.ReferenceID.ToString(),
+                    userId = user.UserID,
                     headDevice = user.HeadDevice.ToString(),
                     platform = user.Platform.ToString(),
                     bodyNodes = String.Join(",",user.BodyNodes.Select(n => n.ToString())),
@@ -115,6 +121,35 @@ namespace metagen
             using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
             {
                 csv.WriteRecords(user_metadatas);
+            }
+        }
+        public string LastRecordingForWorld(World world)
+        {
+            string path = root_saving_folder + "/" + scapeWorldID(world.CorrespondingWorldId);
+            if (!Directory.Exists(path)) return null;
+            var di = new DirectoryInfo(path);
+            List<string> subfolders = di.EnumerateDirectories()
+                              .OrderBy(d => d.CreationTime)
+                              .Select(d=>d.FullName)
+                              .ToList();
+            if (subfolders.Count > 0)
+            {
+                di = new DirectoryInfo(subfolders[subfolders.Count - 1]);
+                subfolders = di.EnumerateDirectories()
+                                  .OrderBy(d => d.CreationTime)
+                                  .Select(d=>d.FullName)
+                                  .ToList();
+                if (subfolders.Count > 0)
+                {
+                    return subfolders[subfolders.Count - 1];
+                }
+                else
+                {
+                    return null;
+                }
+            } else
+            {
+                return null;
             }
         }
 

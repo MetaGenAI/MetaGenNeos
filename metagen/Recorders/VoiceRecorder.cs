@@ -18,6 +18,7 @@ namespace metagen
         public bool isRecording = false;
         public string saving_folder;
         private MetaGen metagen_comp;
+        public bool audio_sources_ready = false;
 
         public VoiceRecorder(MetaGen component)
         {
@@ -38,10 +39,12 @@ namespace metagen
                     buffer.EnsureSize<float>(metagen_comp.Engine.AudioSystem.BufferSize, false);
                     if (audio_output.Source.Target != null)
                     {
+                        audio_sources_ready = true;
                         audio_output.Source.Target.Read(buffer.AsMonoBuffer());
                         audio_recorders[user_id].ConvertAndWrite(buffer);
                     } else
                     {
+                        UniLog.Log("Restarting audio recording coz audio output source target was null!");
                         StopRecording();
                         StartRecording();
                     }

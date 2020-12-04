@@ -63,7 +63,8 @@ namespace metagen
                     camera.GetRenderSettings(camera_resolution);
                     camera.NearClipping.Value = 0.15f;
                     cameras[user_id] = camera;
-                    visual_recorders[user_id] = new VideoRecorder(saving_folder + "/" + user_id.ToString() + "_video.avi", camera_resolution.x, camera_resolution.y, 30, metagen_comp);
+                    int fps = 30;
+                    visual_recorders[user_id] = new VideoRecorder(saving_folder + "/" + user_id.ToString() + "_video.avi", camera_resolution.x, camera_resolution.y, fps, metagen_comp);
                 }
                 UniLog.Log("Made visual recorder");
                 isRecording = true;
