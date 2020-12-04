@@ -55,6 +55,7 @@ namespace FrooxEngine.LogiX
             {
                 MetaGen metagen = item.Value;
                 metagen.StopRecording();
+                metagen.StopPlaying();
             }
             current_session_id = world.SessionId;
             AddWorld(world);

@@ -33,7 +33,6 @@ namespace metagen
         //TODO
         public PoseStreamPlayer(DataManager dataMan, MetaGen component)
         {
-            avatarManager = new metagen.AvatarManager();
             dataManager = dataMan;
             metagen_comp = component;
         }
@@ -144,6 +143,7 @@ namespace metagen
         private async void StartPlayingInternal()
         {
             //Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
+            avatarManager = new metagen.AvatarManager();
             string reading_directory = dataManager.LastRecordingForWorld(metagen_comp.World);
             if (reading_directory == null) return;
             List<UserMetadata> userMetadatas;
@@ -204,7 +204,7 @@ namespace metagen
                 hands_are_tracked[user_id] = output_readers[user_id].ReadBoolean();
                 //READ whether metacarpals are being tracked
                 output_readers[user_id].ReadBoolean();
-                finger_sources[user_id] = avatar.GetComponentInChildren<FingerPlayerSource>();
+                finger_sources[user_id] = avatar.GetComponentInChildren<FingerPlayerSource>(null, true);
             }
             avatars_finished_loading = true;
             isPlaying = true;
@@ -221,6 +221,14 @@ namespace metagen
             avatar_stream_channels = new Dictionary<RefID, Dictionary<BodyNode, Tuple<bool, bool, bool>>>();
             hands_are_tracked = new Dictionary<RefID, bool>();
             user_ids = new List<RefID>();
+            avatarManager.avatar_template = null;
+            foreach (var item in avatars)
+            {
+                Slot slot = item.Value;
+                slot.Destroy();
+
+            }
+            avatars = new Dictionary<RefID, Slot>();
             isPlaying = false;
         }
     }

@@ -15,7 +15,7 @@ namespace metagen
     {
         Slot slot;
         //List<Slot> avatars = new List<Slot>();
-        Slot avatar_template;
+        public Slot avatar_template;
 
         public AvatarManager()
         {
@@ -35,14 +35,15 @@ namespace metagen
         }
         public async Task<Slot> GetAvatar()
         {
-            TaskAwaiter<Slot> awaiter;
+            //TaskAwaiter<Slot> awaiter;
+            Task<Slot> task;
             if (avatar_template == null)
             {
                 //Job<Slot> awaiter = SpawnDefaultAvatar().GetAwaiter();
                 //awaiter.Wait();
                 //avatar_template = awaiter.GetResult();
 
-                Task<Slot> task = Task.Run(async () =>
+                task = Task.Run(async () =>
                 {
                     Slot slot = await SpawnDefaultAvatar();
                     avatar_template = slot;
@@ -51,21 +52,24 @@ namespace metagen
 
                 return await task;
             }
-                return avatar_template;
+            return await DuplicateAvatarTemplate();
             //Job<Slot> awaiter2 = DuplicateAvatarTemplate().GetAwaiter();
             //awaiter2.Wait();
             //return awaiter2.GetResult();
         }
-        public Job<Slot> DuplicateAvatarTemplate()
+        public async Task<Slot> DuplicateAvatarTemplate()
         {
             World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
-            Job<Slot> task = new Job<Slot>();
-            currentWorld.RunSynchronously(() =>
-            {
+            //Job<Slot> task = new Task<Slot>();
+            //currentWorld.RunSynchronously(() =>
+            //{
+            TaskCompletionSource<Slot> task = new TaskCompletionSource<Slot>();
+            currentWorld.RunSynchronously(() => { 
                 Slot slot = avatar_template.Duplicate();
-                task.SetResultAndFinish(slot);
+                //    task.SetResultAndFinish(slot);
+                task.SetResult(slot);
             });
-            return task;
+            return await task.Task.ConfigureAwait(false);
         }
         public async Task<Slot> SpawnDefaultAvatar()
         {
@@ -90,8 +94,10 @@ namespace metagen
                 List<IAvatarObject> components = slot.GetComponentsInChildren<IAvatarObject>();
                 //AvatarRoot root = slot.GetComponentInChildren<AvatarRoot>();
                 Slot fake_root = currentWorld.AddSlot("Fake Root");
+                Slot hidden_slot = fake_root.AddLocalSlot("hand poser local slot");
                 //TODO: find a way to do this without a custom component, because this won't work in normal sessions as it is!
-                FingerPlayerSource player_source = fake_root.AttachComponent<FingerPlayerSource>();
+                FingerPlayerSource player_source = hidden_slot.AttachComponent<FingerPlayerSource>();
+                //FingerPlayerSource player_source = fake_root.AttachComponent<FingerPlayerSource>();
                 List<HandPoser> handPosers = slot.GetComponentsInChildren<HandPoser>();
                 foreach (IAvatarObject comp in components)
                 {
@@ -113,8 +119,40 @@ namespace metagen
                 }
                 foreach(HandPoser handPoser in handPosers)
                 {
-                    handPoser.PoseSource.Target = player_source;
+                    //handPoser.PoseSource.Target = player_source;
+                    Slot new_hidden_slot = hidden_slot.AddLocalSlot("hand local slot");
+                    new_hidden_slot.Parent = handPoser.Slot.Parent;
+                    HandPoser new_hand_poser = new_hidden_slot.AttachComponent<HandPoser>();
+                    new_hand_poser.Side.Value = handPoser.Side.Value;
+                    new_hand_poser.HandRoot.Target = handPoser.Slot;
+                    BipedRig rig = handPoser.FindCompatibleRig();
+                    handPoser.Slot.RemoveComponent(handPoser);
+                    new_hand_poser.AssignFingers(rig);
+                    BodyNode side1 = BodyNode.LeftThumb_Metacarpal.GetSide((Chirality)new_hand_poser.Side);
+                    BodyNode side2 = BodyNode.LeftPinky_Tip.GetSide((Chirality)new_hand_poser.Side);
+                    for (BodyNode nodee = side1; nodee <= side2; ++nodee)
+                    {
+                        int index = nodee - side1;
+                        FingerType fingerType = nodee.GetFingerType();
+                        FingerSegmentType fingerSegmentType = nodee.GetFingerSegmentType();
+                        HandPoser.FingerSegment fingerSegment = new_hand_poser[fingerType][fingerSegmentType];
+                        if (fingerSegment != null && fingerSegment.RotationDrive.IsLinkValid)
+                        {
+                            fingerSegment.RotationDrive.Target.ReleaseLink(fingerSegment.RotationDrive.Target.DirectLink);
+                        }
+                    }
+                            //HandPoser new_hand_poser = new_hidden_slot.CopyComponent<HandPoser>(handPoser);
+                            //new_hand_poser.HandRoot.Target = handPoser.Slot;
+                            //new_hand_poser.CopyProperties(handPoser);
+                            //new_hand_poser.CopyValues(handPoser);
+                            //new_hand_poser.Side.Value = handPoser.Side.Value;
+                            //handPoser.Enabled = false;
+                            new_hand_poser.PoseSource.Target = player_source;
                 }
+                //foreach (HandPoser handPoser in handPosers)
+                //{
+                //    handPoser.Slot.RemoveComponent(handPoser);
+                //}
                 slot.SetParent(fake_root);
                 task.SetResult(fake_root);
                 //avatars.Add(slot);
