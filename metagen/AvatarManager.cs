@@ -117,38 +117,41 @@ namespace metagen
                         comp.Equip(comp2);
                     }
                 }
-                foreach(HandPoser handPoser in handPosers)
-                {
+                //foreach(HandPoser handPoser in handPosers)
+                //{
                     //handPoser.PoseSource.Target = player_source;
-                    Slot new_hidden_slot = hidden_slot.AddLocalSlot("hand local slot");
-                    new_hidden_slot.Parent = handPoser.Slot.Parent;
-                    HandPoser new_hand_poser = new_hidden_slot.AttachComponent<HandPoser>();
-                    new_hand_poser.Side.Value = handPoser.Side.Value;
-                    new_hand_poser.HandRoot.Target = handPoser.Slot;
-                    BipedRig rig = handPoser.FindCompatibleRig();
-                    handPoser.Slot.RemoveComponent(handPoser);
-                    new_hand_poser.AssignFingers(rig);
-                    BodyNode side1 = BodyNode.LeftThumb_Metacarpal.GetSide((Chirality)new_hand_poser.Side);
-                    BodyNode side2 = BodyNode.LeftPinky_Tip.GetSide((Chirality)new_hand_poser.Side);
-                    for (BodyNode nodee = side1; nodee <= side2; ++nodee)
-                    {
-                        int index = nodee - side1;
-                        FingerType fingerType = nodee.GetFingerType();
-                        FingerSegmentType fingerSegmentType = nodee.GetFingerSegmentType();
-                        HandPoser.FingerSegment fingerSegment = new_hand_poser[fingerType][fingerSegmentType];
-                        if (fingerSegment != null && fingerSegment.RotationDrive.IsLinkValid)
-                        {
-                            fingerSegment.RotationDrive.Target.ReleaseLink(fingerSegment.RotationDrive.Target.DirectLink);
-                        }
-                    }
+
+                    //Slot new_hidden_slot = hidden_slot.AddLocalSlot("hand local slot");
+                    //new_hidden_slot.Parent = handPoser.Slot.Parent;
+                    //HandPoser new_hand_poser = new_hidden_slot.AttachComponent<HandPoser>();
+                    //new_hand_poser.Side.Value = handPoser.Side.Value;
+                    //new_hand_poser.HandRoot.Target = handPoser.Slot;
+                    //BipedRig rig = handPoser.FindCompatibleRig();
+                    //handPoser.Slot.RemoveComponent(handPoser);
+                    //new_hand_poser.AssignFingers(rig);
+
+                    //BodyNode side1 = BodyNode.LeftThumb_Metacarpal.GetSide((Chirality)new_hand_poser.Side);
+                    //BodyNode side2 = BodyNode.LeftPinky_Tip.GetSide((Chirality)new_hand_poser.Side);
+                    //for (BodyNode nodee = side1; nodee <= side2; ++nodee)
+                    //{
+                    //    int index = nodee - side1;
+                    //    FingerType fingerType = nodee.GetFingerType();
+                    //    FingerSegmentType fingerSegmentType = nodee.GetFingerSegmentType();
+                    //    HandPoser.FingerSegment fingerSegment = new_hand_poser[fingerType][fingerSegmentType];
+                    //    if (fingerSegment != null && fingerSegment.RotationDrive.IsLinkValid)
+                    //    {
+                    //        fingerSegment.RotationDrive.Target.ReleaseLink(fingerSegment.RotationDrive.Target.DirectLink);
+                    //    }
+                    //}
                             //HandPoser new_hand_poser = new_hidden_slot.CopyComponent<HandPoser>(handPoser);
                             //new_hand_poser.HandRoot.Target = handPoser.Slot;
                             //new_hand_poser.CopyProperties(handPoser);
                             //new_hand_poser.CopyValues(handPoser);
                             //new_hand_poser.Side.Value = handPoser.Side.Value;
                             //handPoser.Enabled = false;
-                            new_hand_poser.PoseSource.Target = player_source;
-                }
+
+                    //new_hand_poser.PoseSource.Target = player_source;
+                //}
                 //foreach (HandPoser handPoser in handPosers)
                 //{
                 //    handPoser.Slot.RemoveComponent(handPoser);

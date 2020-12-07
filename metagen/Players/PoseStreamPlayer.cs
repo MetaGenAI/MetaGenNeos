@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FrooxEngine;
 using BaseX;
+using CodeX;
 using System.IO;
 using FrooxEngine.CommonAvatar;
 using CsvHelper;
@@ -20,13 +21,15 @@ namespace metagen
         //public Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>>();
         public Dictionary<RefID, List<Tuple<BodyNode,AvatarObjectSlot>>> fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode,AvatarObjectSlot>>>();
         public Dictionary<RefID, Dictionary<BodyNode,Tuple<bool,bool,bool>>> avatar_stream_channels = new Dictionary<RefID, Dictionary<BodyNode,Tuple<bool,bool,bool>>>();
-        public Dictionary<RefID, FingerPlayerSource> finger_sources = new Dictionary<RefID, FingerPlayerSource>();
+        //public Dictionary<RefID, FingerPlayerSource> finger_sources = new Dictionary<RefID, FingerPlayerSource>();
+        public Dictionary<RefID, Dictionary<BodyNode, RelayRef<IValue<floatQ>>>> finger_rotations = new Dictionary<RefID, Dictionary<BodyNode, RelayRef<IValue<floatQ>>>>();
         public Dictionary<RefID, Slot> avatars = new Dictionary<RefID, Slot>();
         public Dictionary<RefID, bool> hands_are_tracked = new Dictionary<RefID, bool>();
         List<RefID> user_ids = new List<RefID>();
         metagen.AvatarManager avatarManager;
         Task avatar_loading_task;
         bool avatars_finished_loading = false;
+        World World;
         public bool isPlaying;
         DataManager dataManager;
         MetaGen metagen_comp;
@@ -35,13 +38,14 @@ namespace metagen
         {
             dataManager = dataMan;
             metagen_comp = component;
+            World = component.World;
         }
         public void PlayStreams()
         {
             if (!avatars_finished_loading) return;
             World currentWorld = metagen_comp.World;
-            currentWorld.RunSynchronously(() =>
-            {
+            //currentWorld.RunSynchronously(() =>
+            //{
                 //TODO: Need this function to not depend on users being present! Just gave the info from the recorded data!!
                 try
                 {
@@ -91,45 +95,51 @@ namespace metagen
                             }
                         }
                         //READ finger pose
+                        var finger_rotation = finger_rotations[user_id];
                         if (hands_are_tracked[user_id])
                         {
-                            FingerPlayerSource finger_source = finger_sources[user_id];
-                            if (finger_source != null)
+                            //FingerPlayerSource finger_source = finger_sources[user_id];
+                            float x, y, z, w;
+                            //Left Hand
+                            for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
                             {
-                                float x, y, z, w;
-                                //Left Hand
-                                for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
-                                {
-                                    BodyNode node = (BodyNode)(18 + index);
-                                    //READ whether finger data was obtained
-                                    bool was_succesful = reader.ReadBoolean();
-                                    x = reader.ReadSingle();
-                                    y = reader.ReadSingle();
-                                    z = reader.ReadSingle();
-                                    w = reader.ReadSingle();
-                                    finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
-                                }
-                                //Right Hand
-                                for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
-                                {
-                                    BodyNode node = (BodyNode)(47 + index);
-                                    //READ whether finger data was obtained
-                                    bool was_succesful = reader.ReadBoolean();
-                                    x = reader.ReadSingle();
-                                    y = reader.ReadSingle();
-                                    z = reader.ReadSingle();
-                                    w = reader.ReadSingle();
-                                    finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
-                                }
-                            }
-
+                                BodyNode node = (BodyNode)(18 + index);
+                                //READ whether finger data was obtained
+                                bool was_succesful = reader.ReadBoolean();
+                                x = reader.ReadSingle();
+                                y = reader.ReadSingle();
+                                z = reader.ReadSingle();
+                                w = reader.ReadSingle();
+                            //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
+                            if (finger_rotation.ContainsKey(node))
+                                finger_rotation[node].Target.Value = new floatQ(x, y, z, w);
+                            //else
+                            //    UniLog.Log("hand poser doesn't contain " + node.ToString());
+                        }
+                            //Right Hand
+                            for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
+                            {
+                                BodyNode node = (BodyNode)(47 + index);
+                                //READ whether finger data was obtained
+                                bool was_succesful = reader.ReadBoolean();
+                                x = reader.ReadSingle();
+                                y = reader.ReadSingle();
+                                z = reader.ReadSingle();
+                                w = reader.ReadSingle();
+                            //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
+                            if (finger_rotation.ContainsKey(node))
+                                finger_rotation[node].Target.Value = new floatQ(x, y, z, w);
+                            //else
+                            //    UniLog.Log("hand poser doesn't contain " + node.ToString());
                         }
                     }
-                } catch
+                    }
+                } catch (Exception e)
                 {
+                UniLog.Log(e.Message);
                     StopPlaying();
                 }
-            });
+            //});
 
 
 
@@ -138,76 +148,126 @@ namespace metagen
         {
 
             avatar_loading_task = Task.Run(StartPlayingInternal);
-
         }
         private async void StartPlayingInternal()
         {
-            //Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
-            avatarManager = new metagen.AvatarManager();
-            string reading_directory = dataManager.LastRecordingForWorld(metagen_comp.World);
-            if (reading_directory == null) return;
-            List<UserMetadata> userMetadatas;
-            using (var reader = new StreamReader(reading_directory + "/user_metadata.csv"))
-            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            try
             {
-                userMetadatas = csv.GetRecords<UserMetadata>().ToList();
-            }
-            foreach (UserMetadata user in userMetadatas)
-            {
-                RefID user_id = RefID.Parse(user.userRefId);
-                UniLog.Log(user_id.ToString());
-                user_ids.Add(user_id);
-                output_fss[user_id] = new FileStream(reading_directory+"/"+user_id.ToString() + "_streams.dat", FileMode.Open, FileAccess.Read);
-                BitReaderStream bitstream = new BitReaderStream(output_fss[user_id]);
-                output_readers[user_id] = new BitBinaryReaderX(bitstream);
-                fake_proxies[user_id] = new List<Tuple<BodyNode, AvatarObjectSlot>>();
-                avatar_stream_channels[user_id] = new Dictionary<BodyNode, Tuple<bool, bool, bool>>();
-                Slot avatar = await avatarManager.GetAvatar();
-                UniLog.Log("AVATAR");
-                UniLog.Log(avatar.ToString());
-                avatars[user_id] = avatar;
-                List<IAvatarObject> components = avatar.GetComponentsInChildren<IAvatarObject>();
-
-                //READ absolute time
-                output_readers[user_id].ReadSingle();
-                //READ number of body nodes
-                int numBodyNodes = output_readers[user_id].ReadInt32();
-                for (int i = 0; i < numBodyNodes; i++)
+                //Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
+                avatarManager = new metagen.AvatarManager();
+                string reading_directory = dataManager.LastRecordingForWorld(metagen_comp.World);
+                if (reading_directory == null) return;
+                List<UserMetadata> userMetadatas;
+                using (var reader = new StreamReader(reading_directory + "/user_metadata.csv"))
+                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
-                    //READ body node type
-                    int nodeInt = output_readers[user_id].ReadInt32();
-                    //READ if scale stream exists
-                    bool scale_exists = output_readers[user_id].ReadBoolean();
-                    //READ if position stream exists
-                    bool pos_exists = output_readers[user_id].ReadBoolean();
-                    //READ if rotation stream exists
-                    bool rot_exists = output_readers[user_id].ReadBoolean();
-                    BodyNode bodyNodeType = (BodyNode)nodeInt;
+                    userMetadatas = csv.GetRecords<UserMetadata>().ToList();
+                }
+                foreach (UserMetadata user in userMetadatas)
+                {
+                    RefID user_id = RefID.Parse(user.userRefId);
+                    UniLog.Log(user_id.ToString());
+                    user_ids.Add(user_id);
+                    output_fss[user_id] = new FileStream(reading_directory + "/" + user_id.ToString() + "_streams.dat", FileMode.Open, FileAccess.Read);
+                    BitReaderStream bitstream = new BitReaderStream(output_fss[user_id]);
+                    output_readers[user_id] = new BitBinaryReaderX(bitstream);
+                    fake_proxies[user_id] = new List<Tuple<BodyNode, AvatarObjectSlot>>();
+                    avatar_stream_channels[user_id] = new Dictionary<BodyNode, Tuple<bool, bool, bool>>();
+                    Slot avatar = await avatarManager.GetAvatar();
+                    UniLog.Log("AVATAR");
+                    UniLog.Log(avatar.ToString());
+                    avatars[user_id] = avatar;
+                    List<IAvatarObject> components = avatar.GetComponentsInChildren<IAvatarObject>();
 
-                    bool node_found = false;
-                    foreach (IAvatarObject comp in components)
+                    //READ absolute time
+                    output_readers[user_id].ReadSingle();
+                    //READ number of body nodes
+                    int numBodyNodes = output_readers[user_id].ReadInt32();
+                    for (int i = 0; i < numBodyNodes; i++)
                     {
-                        UniLog.Log(comp.Name);
-                        if (comp.Node == bodyNodeType)
+                        //READ body node type
+                        int nodeInt = output_readers[user_id].ReadInt32();
+                        //READ if scale stream exists
+                        bool scale_exists = output_readers[user_id].ReadBoolean();
+                        //READ if position stream exists
+                        bool pos_exists = output_readers[user_id].ReadBoolean();
+                        //READ if rotation stream exists
+                        bool rot_exists = output_readers[user_id].ReadBoolean();
+                        BodyNode bodyNodeType = (BodyNode)nodeInt;
+
+                        bool node_found = false;
+                        foreach (IAvatarObject comp in components)
                         {
-                            AvatarObjectSlot connected_comp = comp.EquippingSlot;
-                            fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, connected_comp));
-                            //avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
-                            node_found = true;
-                            break;
+                            UniLog.Log(comp.Name);
+                            if (comp.Node == bodyNodeType)
+                            {
+                                AvatarObjectSlot connected_comp = comp.EquippingSlot;
+                                fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, connected_comp));
+                                //avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
+                                node_found = true;
+                                break;
+                            }
+                        }
+                        if (!node_found) throw new Exception("Node " + bodyNodeType.ToString() + " not found in avatar!");
+                        avatar_stream_channels[user_id][bodyNodeType] = new Tuple<bool, bool, bool>(scale_exists, pos_exists, rot_exists);
+                    }
+                    //READ whether hands are being tracked
+                    hands_are_tracked[user_id] = output_readers[user_id].ReadBoolean();
+                    //READ whether metacarpals are being tracked
+                    output_readers[user_id].ReadBoolean();
+                    //finger_sources[user_id] = avatar.GetComponentInChildren<FingerPlayerSource>(null, true);
+                    List<HandPoser> hand_posers = avatar.GetComponentsInChildren<HandPoser>(null, excludeDisabled: false, includeLocal: true);
+                    UniLog.Log("getting finger rotation vars");
+                    finger_rotations[user_id] = new Dictionary<BodyNode, RelayRef<IValue<floatQ>>>();
+                    foreach (HandPoser hand_poser in hand_posers)
+                    {
+                        BodyNode side1 = BodyNode.LeftThumb_Metacarpal.GetSide((Chirality)hand_poser.Side);
+                        BodyNode side2 = BodyNode.LeftPinky_Tip.GetSide((Chirality)hand_poser.Side);
+                        for (BodyNode nodee = side1; nodee <= side2; ++nodee)
+                        {
+                            int index = nodee - side1;
+                            FingerType fingerType = nodee.GetFingerType();
+                            FingerSegmentType fingerSegmentType = nodee.GetFingerSegmentType();
+                            HandPoser.FingerSegment fingerSegment = hand_poser[fingerType][fingerSegmentType];
+                            if (fingerSegment != null && fingerSegment.RotationDrive.IsLinkValid)
+                            {
+                                UniLog.Log(nodee.ToString());
+                                //fingerSegment.RotationDrive.Target.ReleaseLink(fingerSegment.RotationDrive.Target.DirectLink);
+                                finger_rotations[user_id][nodee] = new RelayRef<IValue<floatQ>>();
+                                finger_rotations[user_id][nodee].TrySet(fingerSegment.RotationDrive.Target);
+                                //fingerSegment.RotationDrive.Target.Value.
+                                //fingerSegment.RotationDrive.Target = null;
+                                fingerSegment.RotationDrive.Target = (IField<floatQ>) null;
+                                fingerSegment.RotationDrive.ReleaseLink();
+                            }
                         }
                     }
-                    if (!node_found) throw new Exception("Node " + bodyNodeType.ToString() + " not found in avatar!");
-                    avatar_stream_channels[user_id][bodyNodeType] = new Tuple<bool, bool, bool>(scale_exists,pos_exists,rot_exists);
+                    UniLog.Log("got finger rotation vars");
+                    UniLog.Log("Setting up audio!");
+                    AudioOutput audio_output = avatar.GetComponentInChildren<AudioOutput>();
+                    audio_output.Volume.Value = 1f;
+                    audio_output.Enabled = true;
+                    //audio_outputs[user_id] = audio_output;
+                    //AudioX audioData = new AudioX(reading_directory + "/" + user_id.ToString() + "_audio.wav");
+                    //AssetRef<AudioClip> audioClip = new AssetRef<AudioClip>();
+                    Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(reading_directory + "/" + user_id.ToString() + "_audio.wav", LocalDB.ImportLocation.Original, (string)null);
+                    StaticAudioClip audioClip = audio_output.Slot.AttachAudioClip(uri);
+                    //UniLog.Log("audioclip set clip");
+                    //audioClip.Target.SetFromClip(audioData);
+                    AudioClipPlayer player = audio_output.Slot.AttachComponent<AudioClipPlayer>();
+                    UniLog.Log("attaching clip to player");
+                    player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
+                    UniLog.Log("attaching player to audio output");
+                    audio_output.Source.Target = (IAudioSource) player;
+                    //TODO: refactor this stuff
+                    player.Play();
                 }
-                //READ whether hands are being tracked
-                hands_are_tracked[user_id] = output_readers[user_id].ReadBoolean();
-                //READ whether metacarpals are being tracked
-                output_readers[user_id].ReadBoolean();
-                finger_sources[user_id] = avatar.GetComponentInChildren<FingerPlayerSource>(null, true);
+                avatars_finished_loading = true;
+                isPlaying = true;
+            } catch (Exception e)
+            {
+                UniLog.Log("TwT: " + e.Message);
             }
-            avatars_finished_loading = true;
-            isPlaying = true;
         }
         public void StopPlaying()
         {
@@ -229,6 +289,7 @@ namespace metagen
 
             }
             avatars = new Dictionary<RefID, Slot>();
+            finger_rotations = new Dictionary<RefID, Dictionary<BodyNode, RelayRef<IValue<floatQ>>>>();
             isPlaying = false;
         }
     }
