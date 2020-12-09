@@ -22,7 +22,10 @@ namespace metagen
         public Dictionary<RefID, List<Tuple<BodyNode,AvatarObjectSlot>>> fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode,AvatarObjectSlot>>>();
         public Dictionary<RefID, Dictionary<BodyNode,Tuple<bool,bool,bool>>> avatar_stream_channels = new Dictionary<RefID, Dictionary<BodyNode,Tuple<bool,bool,bool>>>();
         //public Dictionary<RefID, FingerPlayerSource> finger_sources = new Dictionary<RefID, FingerPlayerSource>();
-        public Dictionary<RefID, Dictionary<BodyNode, RelayRef<IValue<floatQ>>>> finger_rotations = new Dictionary<RefID, Dictionary<BodyNode, RelayRef<IValue<floatQ>>>>();
+        //public Dictionary<RefID, Dictionary<BodyNode, RelayRef<IValue<floatQ>>>> finger_rotations = new Dictionary<RefID, Dictionary<BodyNode, RelayRef<IValue<floatQ>>>>();
+        public Dictionary<RefID, Dictionary<BodyNode, Slot>> finger_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
+        public Dictionary<RefID, Dictionary<Chirality, HandPoser>> hand_posers = new Dictionary<RefID, Dictionary<Chirality, HandPoser>>();
+        public Dictionary<RefID, Dictionary<BodyNode, floatQ>> finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
         public Dictionary<RefID, Slot> avatars = new Dictionary<RefID, Slot>();
         public Dictionary<RefID, bool> hands_are_tracked = new Dictionary<RefID, bool>();
         List<RefID> user_ids = new List<RefID>();
@@ -95,12 +98,15 @@ namespace metagen
                             }
                         }
                         //READ finger pose
-                        var finger_rotation = finger_rotations[user_id];
+                        var finger_slot = finger_slots[user_id];
                         if (hands_are_tracked[user_id])
                         {
+                        //UniLog.Log("UPDATING HANDS");
                             //FingerPlayerSource finger_source = finger_sources[user_id];
                             float x, y, z, w;
                             //Left Hand
+                            HandPoser hand_poser = hand_posers[user_id][Chirality.Left];
+                            floatQ lookRot = floatQ.LookRotation(hand_poser.HandForward, hand_poser.HandUp);
                             for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
                             {
                                 BodyNode node = (BodyNode)(18 + index);
@@ -110,13 +116,24 @@ namespace metagen
                                 y = reader.ReadSingle();
                                 z = reader.ReadSingle();
                                 w = reader.ReadSingle();
-                            //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
-                            if (finger_rotation.ContainsKey(node))
-                                finger_rotation[node].Target.Value = new floatQ(x, y, z, w);
-                            //else
-                            //    UniLog.Log("hand poser doesn't contain " + node.ToString());
-                        }
+                                //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
+                                UniLog.Log(x);
+                                UniLog.Log(y);
+                                UniLog.Log(z);
+                                UniLog.Log(w);
+                                if (finger_slot.ContainsKey(node))
+                                {
+                                    floatQ rot = new floatQ(x, y, z, w);
+                                    rot = lookRot * rot;
+                                    Slot root = hand_poser.HandRoot.Target ?? hand_poser.Slot;
+                                    rot = finger_slot[node].Parent.SpaceRotationToLocal(rot, root);
+                                    rot = rot * finger_compensations[user_id][node];
+                                    finger_slot[node].LocalRotation = rot;
+                                }
+                            }
                             //Right Hand
+                            hand_poser = hand_posers[user_id][Chirality.Right];
+                            lookRot = floatQ.LookRotation(hand_poser.HandForward, hand_poser.HandUp);
                             for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
                             {
                                 BodyNode node = (BodyNode)(47 + index);
@@ -126,13 +143,18 @@ namespace metagen
                                 y = reader.ReadSingle();
                                 z = reader.ReadSingle();
                                 w = reader.ReadSingle();
-                            //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
-                            if (finger_rotation.ContainsKey(node))
-                                finger_rotation[node].Target.Value = new floatQ(x, y, z, w);
-                            //else
-                            //    UniLog.Log("hand poser doesn't contain " + node.ToString());
+                                //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
+                                if (finger_slot.ContainsKey(node))
+                                {
+                                    floatQ rot = new floatQ(x, y, z, w);
+                                    rot = lookRot * rot;
+                                    Slot root = hand_poser.HandRoot.Target ?? hand_poser.Slot;
+                                    rot = finger_slot[node].Parent.SpaceRotationToLocal(rot, root);
+                                    rot = rot * finger_compensations[user_id][node];
+                                    finger_slot[node].LocalRotation = rot;
+                                }
+                            }
                         }
-                    }
                     }
                 } catch (Exception e)
                 {
@@ -216,11 +238,15 @@ namespace metagen
                     //READ whether metacarpals are being tracked
                     output_readers[user_id].ReadBoolean();
                     //finger_sources[user_id] = avatar.GetComponentInChildren<FingerPlayerSource>(null, true);
-                    List<HandPoser> hand_posers = avatar.GetComponentsInChildren<HandPoser>(null, excludeDisabled: false, includeLocal: true);
+                    List<HandPoser> these_hand_posers = avatar.GetComponentsInChildren<HandPoser>(null, excludeDisabled: false, includeLocal: false);
                     UniLog.Log("getting finger rotation vars");
-                    finger_rotations[user_id] = new Dictionary<BodyNode, RelayRef<IValue<floatQ>>>();
-                    foreach (HandPoser hand_poser in hand_posers)
+                    finger_slots[user_id] = new Dictionary<BodyNode, Slot>();
+                    hand_posers[user_id] = new Dictionary<Chirality, HandPoser>();
+                    finger_compensations[user_id] = new Dictionary<BodyNode, floatQ>();
+                    foreach (HandPoser hand_poser in these_hand_posers)
                     {
+                        UniLog.Log("HI");
+                        hand_posers[user_id][hand_poser.Side] = hand_poser;
                         BodyNode side1 = BodyNode.LeftThumb_Metacarpal.GetSide((Chirality)hand_poser.Side);
                         BodyNode side2 = BodyNode.LeftPinky_Tip.GetSide((Chirality)hand_poser.Side);
                         for (BodyNode nodee = side1; nodee <= side2; ++nodee)
@@ -229,16 +255,21 @@ namespace metagen
                             FingerType fingerType = nodee.GetFingerType();
                             FingerSegmentType fingerSegmentType = nodee.GetFingerSegmentType();
                             HandPoser.FingerSegment fingerSegment = hand_poser[fingerType][fingerSegmentType];
-                            if (fingerSegment != null && fingerSegment.RotationDrive.IsLinkValid)
+                            //UniLog.Log(fingerSegment == null ? "null" : fingerSegment.RotationDrive.IsLinkValid.ToString());
+                            //UniLog.Log(fingerSegment == null ? "null" : this.World.CorrespondingWorldId);
+                            if (fingerSegment != null && fingerSegment.Root.Target != null)//&& fingerSegment.RotationDrive.IsLinkValid)
                             {
                                 UniLog.Log(nodee.ToString());
                                 //fingerSegment.RotationDrive.Target.ReleaseLink(fingerSegment.RotationDrive.Target.DirectLink);
-                                finger_rotations[user_id][nodee] = new RelayRef<IValue<floatQ>>();
-                                finger_rotations[user_id][nodee].TrySet(fingerSegment.RotationDrive.Target);
+                                finger_slots[user_id][nodee] = fingerSegment.Root.Target;
+                                finger_compensations[user_id][nodee] = fingerSegment.CoordinateCompensation.Value;
+                                //finger_rotations[user_id][nodee] = new RelayRef<IValue<floatQ>>();
+                                //finger_rotations[user_id][nodee].TrySet(fingerSegment.Root.Target);
+                                //UniLog.Log(fingerSegment.RotationDrive.Target.Parent.ToString());
+                                fingerSegment.RotationDrive.Target = (IField<floatQ>) null;
+                                //fingerSegment.RotationDrive.ReleaseLink();
                                 //fingerSegment.RotationDrive.Target.Value.
                                 //fingerSegment.RotationDrive.Target = null;
-                                fingerSegment.RotationDrive.Target = (IField<floatQ>) null;
-                                fingerSegment.RotationDrive.ReleaseLink();
                             }
                         }
                     }
@@ -251,14 +282,16 @@ namespace metagen
                     //AudioX audioData = new AudioX(reading_directory + "/" + user_id.ToString() + "_audio.wav");
                     //AssetRef<AudioClip> audioClip = new AssetRef<AudioClip>();
                     Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(reading_directory + "/" + user_id.ToString() + "_audio.wav", LocalDB.ImportLocation.Original, (string)null);
+                    //ToWorld thing = new ToWorld();
+                    //var awaiter = thing.GetAwaiter();
+                    //awaiter.GetResult();
                     StaticAudioClip audioClip = audio_output.Slot.AttachAudioClip(uri);
-                    //UniLog.Log("audioclip set clip");
-                    //audioClip.Target.SetFromClip(audioData);
                     AudioClipPlayer player = audio_output.Slot.AttachComponent<AudioClipPlayer>();
                     UniLog.Log("attaching clip to player");
                     player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
                     UniLog.Log("attaching player to audio output");
                     audio_output.Source.Target = (IAudioSource) player;
+                    audio_output.Slot.AttachComponent<AudioMetadata>(true, (Action<AudioMetadata>)null).SetFromCurrentWorld();
                     //TODO: refactor this stuff
                     player.Play();
                 }
@@ -289,7 +322,9 @@ namespace metagen
 
             }
             avatars = new Dictionary<RefID, Slot>();
-            finger_rotations = new Dictionary<RefID, Dictionary<BodyNode, RelayRef<IValue<floatQ>>>>();
+            finger_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
+            hand_posers = new Dictionary<RefID, Dictionary<Chirality, HandPoser>>();
+            finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
             isPlaying = false;
         }
     }

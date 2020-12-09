@@ -29,10 +29,10 @@ namespace metagen
         private DateTime playingBeginTime;
         private DataManager dataManager;
 
-        private bool recording_hearing = false;
+        public bool recording_hearing = false;
         public User recording_hearing_user;
 
-        private bool recording_voice = false;
+        public bool recording_voice = false;
         private VoiceRecorder voiceRecorder;
 
         public bool recording_vision = false;

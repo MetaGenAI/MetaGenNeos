@@ -80,12 +80,13 @@ namespace metagen
             World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
             //Job<Slot> task = new Job<Slot>();
             TaskCompletionSource<Slot> task = new TaskCompletionSource<Slot>();
-            currentWorld.RunSynchronously(() => { 
+            currentWorld.RunSynchronously(async () => { 
                 Engine engine = FrooxEngine.Engine.Current;
                 Uri uri = new Uri(neosdb);
                 //await slot.LoadObjectAsync(uri, (Slot)null, (ReferenceTranslator)null);
-                ValueTaskAwaiter<string> gatherAwaiter = engine.AssetManager.RequestGather(uri, Priority.Urgent).GetAwaiter();
-                string nodeString = gatherAwaiter.GetResult();
+                //ValueTaskAwaiter<string> gatherAwaiter = engine.AssetManager.RequestGather(uri, Priority.Urgent).GetAwaiter();
+                string nodeString = await engine.AssetManager.RequestGather(uri, Priority.Urgent);
+                //string nodeString = gatherAwaiter.GetResult();
                 DataTreeDictionary node = DataTreeConverter.Load(nodeString, uri);
                 UniLog.Log("slot");
                 UniLog.Log(slot.ToString());

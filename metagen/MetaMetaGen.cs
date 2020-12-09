@@ -8,6 +8,7 @@ using metagen;
 using System.Threading;
 using BaseX;
 using UnityEngine;
+using CloudX;
 
 namespace FrooxEngine.LogiX
 {
@@ -17,6 +18,7 @@ namespace FrooxEngine.LogiX
     {
         private string current_session_id;
         private Dictionary<string, MetaGen> metagens = new Dictionary<string, MetaGen>();
+        MetaGen current_metagen;
         UnityNeos.AudioRecorderNeos hearingRecorder;
         protected override void OnAttach()
         {
@@ -48,6 +50,67 @@ namespace FrooxEngine.LogiX
             FrooxEngine.Engine.Current.WorldManager.WorldRemoved += RemoveWorld;
             //FrooxEngine.Engine.Current.WorldManager.WorldAdded += AddWorld;
             FrooxEngine.Engine.Current.WorldManager.WorldFocused += FocusedWorld;
+            FrooxEngine.Engine.Current.Cloud.Messages.OnMessageReceived += ProcessMessage;
+        }
+        private void ProcessMessage(CloudX.Shared.Message msg)
+        {
+            this.RunSynchronously(() =>
+            {
+                string content = msg.Content;
+                
+                switch (msg.MessageType)
+                {
+                    case CloudX.Shared.MessageType.Text:
+                        processCommand(content);
+                        break;
+                    default:
+                        break;
+                }
+
+            });
+        }
+        private void processCommand(string msg)
+        {
+            World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
+            currentWorld.RunSynchronously(() =>
+            {
+                List<string> msgarr = msg.Split(' ').ToList();
+                string command = msgarr[0];
+                string argument = msgarr.Count > 1 ? msgarr[1] : "";
+                switch (command)
+                {
+                    case "hearing":
+                        current_metagen.recording_hearing = argument == "y";
+                        break;
+                    case "vision":
+                        current_metagen.recording_vision = argument == "y";
+                        break;
+                    case "voice":
+                        current_metagen.recording_voice = argument == "y";
+                        break;
+                    case "movement":
+                        current_metagen.recording_streams = argument == "y";
+                        break;
+                    case "hu": //hearing user
+                        User user = FrooxEngine.Engine.Current.WorldManager.FocusedWorld.FindUser(u => u.Name == argument);
+                        SetHearingUser(user.UserID);
+                        break;
+                    case "rec": //start recording
+                        current_metagen.StartRecording();
+                        break;
+                    case "stoprec": //stop recording
+                        current_metagen.StopRecording();
+                        break;
+                    case "play": //start recording
+                        current_metagen.StartPlaying();
+                        break;
+                    case "stop": //stop playing
+                        current_metagen.StopPlaying();
+                        break;
+                }
+
+            });
+
         }
         private void FocusedWorld(World world)
         {
@@ -71,13 +134,17 @@ namespace FrooxEngine.LogiX
                 world.WorldRunning += StartMetaGen;
             }
         }
+        private void SetHearingUser(string userid)
+        {
+                hearingRecorder.userID = userid;
+        }
         private void StartMetaGen(World world)
         {
             world.RunSynchronously(() =>
             {
                 Dictionary<RefID, User>.ValueCollection users = world.AllUsers;
                 User recording_hearing_user = null;
-                foreach(User user in users)
+                foreach (User user in users)
                 {
                     if (user.IsHost)
                     {
@@ -85,7 +152,7 @@ namespace FrooxEngine.LogiX
                         break;
                     }
                 }
-                hearingRecorder.userID = recording_hearing_user.ReferenceID.ToString();
+                SetHearingUser(recording_hearing_user.ReferenceID.ToString());
                 Slot metagen_slot = world.RootSlot.Find("5013598197metagen local slot");
                 if (metagen_slot == null)
                 {
@@ -107,6 +174,7 @@ namespace FrooxEngine.LogiX
                     metagen.StartRecording();
                 }
                 metagens[current_session_id] = metagen;
+                current_metagen = metagen;
             });
         }
         private void RemoveWorld(World world)
