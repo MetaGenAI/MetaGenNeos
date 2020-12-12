@@ -276,6 +276,7 @@ namespace metagen
                     UniLog.Log("got finger rotation vars");
                     UniLog.Log("Setting up audio!");
                     AudioOutput audio_output = avatar.GetComponentInChildren<AudioOutput>();
+                    VisemeAnalyzer visemeAnalyzer = avatar.GetComponentInChildren<VisemeAnalyzer>();
                     audio_output.Volume.Value = 1f;
                     audio_output.Enabled = true;
                     //audio_outputs[user_id] = audio_output;
@@ -287,6 +288,7 @@ namespace metagen
                     //awaiter.GetResult();
                     StaticAudioClip audioClip = audio_output.Slot.AttachAudioClip(uri);
                     AudioClipPlayer player = audio_output.Slot.AttachComponent<AudioClipPlayer>();
+                    visemeAnalyzer.Source.Target = player;
                     UniLog.Log("attaching clip to player");
                     player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
                     UniLog.Log("attaching player to audio output");

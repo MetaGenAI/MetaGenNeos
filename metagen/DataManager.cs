@@ -57,7 +57,8 @@ namespace metagen
             World currentWorld = this.World;
             UniLog.Log(currentWorld.CorrespondingWorldId);
             UniLog.Log(currentWorld.SessionId);
-            string escaped_world_id = scapeWorldID(currentWorld.CorrespondingWorldId);
+            string world_id = currentWorld.CorrespondingWorldId ?? "new_world";
+            string escaped_world_id = scapeWorldID(world_id);
             if (!Directory.Exists(root_saving_folder+"/"+escaped_world_id))
             {
                 Directory.CreateDirectory(root_saving_folder + "/" + escaped_world_id);
@@ -125,7 +126,8 @@ namespace metagen
         }
         public string LastRecordingForWorld(World world)
         {
-            string path = root_saving_folder + "/" + scapeWorldID(world.CorrespondingWorldId);
+            string world_id = world.CorrespondingWorldId ?? "new_world";
+            string path = root_saving_folder + "/" + scapeWorldID(world_id);
             if (!Directory.Exists(path)) return null;
             var di = new DirectoryInfo(path);
             List<string> subfolders = di.EnumerateDirectories()

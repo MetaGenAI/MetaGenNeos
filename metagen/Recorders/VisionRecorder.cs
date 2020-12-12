@@ -7,6 +7,7 @@ using FrooxEngine;
 using BaseX;
 using CodeX;
 using UnityEngine;
+using System.IO;
 
 namespace metagen
 {
@@ -14,6 +15,7 @@ namespace metagen
     {
         private Dictionary<RefID, FrooxEngine.Camera> cameras = new Dictionary<RefID, FrooxEngine.Camera>();
         private Dictionary<RefID, VideoRecorder> visual_recorders = new Dictionary<RefID, VideoRecorder>();
+        private List<string> current_users_ids = new List<string>();
         public int2 camera_resolution;
         public bool isRecording = false;
         public string saving_folder;
@@ -58,6 +60,7 @@ namespace metagen
                 foreach (User user in users)
                 {
                     RefID user_id = user.ReferenceID;
+                    current_users_ids.Add(user_id.ToString());
                     Slot localSlot = user.Root.HeadSlot.AddLocalSlot("vision recorder camera");
                     FrooxEngine.Camera camera = localSlot.AttachComponent<FrooxEngine.Camera>();
                     camera.GetRenderSettings(camera_resolution);
@@ -88,6 +91,15 @@ namespace metagen
             cameras = new Dictionary<RefID, FrooxEngine.Camera>();
             visual_recorders = new Dictionary<RefID, VideoRecorder>();
             isRecording = false;
+            Task task = Task.Run(() =>
+            {
+                foreach (string user_id in current_users_ids)
+                {
+                    File.Move(saving_folder + "/" + user_id.ToString() + "_video.avi", saving_folder + "/" + user_id.ToString() + "_vision.avi");
+                }
+                current_users_ids = new List<string>();
+            });
+            task.Wait();
             //});
         }
     }

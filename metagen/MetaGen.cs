@@ -45,6 +45,7 @@ namespace metagen
         private metagen.AvatarManager avatarManager;
         public UnityNeos.AudioRecorderNeos hearingRecorder;
         int frame_index = 0;
+        float MAX_CHUNK_LEN_MIN = 0.3f;
         private float recording_time
         {
             get
@@ -87,7 +88,7 @@ namespace metagen
             }
 
             //Start a new chunk, if we have been recording for 30 minutes, or start a new section, if a new user has left or joined
-            if (recording && (recording_time > 30 * 60 * 1000 || dataManager.ShouldStartNewSection()))
+            if (recording && (recording_time > MAX_CHUNK_LEN_MIN * 60 * 1000 || dataManager.ShouldStartNewSection()))
             {
                 StopRecording();
                 StartRecording();
