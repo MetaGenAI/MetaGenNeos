@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <Platforms>AnyCPU;x86</Platforms>
   </PropertyGroup>
 
@@ -10,9 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="17.0.1" />
+    <PackageReference Include="CsvHelper" Version="18.0.0" />
     <PackageReference Include="SharpAvi" Version="2.1.2" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,8 +35,8 @@
     <Reference Include="System.Threading.Tasks">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\System.Threading.Tasks.dll</HintPath>
     </Reference>
-    <Reference Include="System.Threading.Tasks.Extensions">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\System.Threading.Tasks.Extensions.dll</HintPath>
+    <Reference Include="System.ValueTuple">
+      <HintPath>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\Microsoft.NET.Build.Extensions\net47\lib\System.ValueTuple.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\UnityEngine.dll</HintPath>

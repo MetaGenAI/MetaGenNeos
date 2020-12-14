@@ -14,6 +14,8 @@ namespace FrooxEngine.LogiX
 {
     [Category("LogiX/AAAA")]
     [NodeName("MetaGen")]
+    //TODO: PlayerManager and RecorderManager to abstract multi-recorders and multi-players in MetaGen
+    //TODO: create interface for players and recorders
     class MetaMetaGen : LogixNode
     {
         private string current_session_id;
@@ -175,6 +177,10 @@ namespace FrooxEngine.LogiX
                 }
                 metagens[current_session_id] = metagen;
                 current_metagen = metagen;
+
+                //attach BotLogic
+                Slot botLogicSlot = world.LocalUser.Root.Slot.AddLocalSlot("botlogic local slot");
+                BotLogic logicComp = botLogicSlot.AttachComponent<BotLogic>();
             });
         }
         private void RemoveWorld(World world)

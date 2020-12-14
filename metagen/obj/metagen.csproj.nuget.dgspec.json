@@ -23,15 +23,15 @@
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.Fallback.config"
         ],
         "originalTargetFrameworks": [
-          "net462"
+          "net472"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net462": {
-            "targetAlias": "net462",
+          "net472": {
+            "targetAlias": "net472",
             "projectReferences": {}
           }
         },
@@ -42,12 +42,12 @@
         }
       },
       "frameworks": {
-        "net462": {
-          "targetAlias": "net462",
+        "net472": {
+          "targetAlias": "net472",
           "dependencies": {
             "CsvHelper": {
               "target": "Package",
-              "version": "[17.0.1, )"
+              "version": "[18.0.0, )"
             },
             "SharpAvi": {
               "target": "Package",
@@ -56,6 +56,10 @@
             "System.Memory": {
               "target": "Package",
               "version": "[4.5.4, )"
+            },
+            "System.Threading.Tasks.Extensions": {
+              "target": "Package",
+              "version": "[4.5.3, )"
             }
           },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.100\\RuntimeIdentifierGraph.json"

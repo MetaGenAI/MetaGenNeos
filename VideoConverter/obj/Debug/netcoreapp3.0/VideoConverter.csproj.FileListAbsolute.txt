@@ -1,0 +1,13 @@
+D:\code\neos\metagen\VideoConverter\bin\Debug\netcoreapp3.0\VideoConverter.exe
+D:\code\neos\metagen\VideoConverter\bin\Debug\netcoreapp3.0\VideoConverter.deps.json
+D:\code\neos\metagen\VideoConverter\bin\Debug\netcoreapp3.0\VideoConverter.runtimeconfig.json
+D:\code\neos\metagen\VideoConverter\bin\Debug\netcoreapp3.0\VideoConverter.runtimeconfig.dev.json
+D:\code\neos\metagen\VideoConverter\bin\Debug\netcoreapp3.0\VideoConverter.dll
+D:\code\neos\metagen\VideoConverter\bin\Debug\netcoreapp3.0\VideoConverter.pdb
+D:\code\neos\metagen\VideoConverter\obj\Debug\netcoreapp3.0\VideoConverter.csprojAssemblyReference.cache
+D:\code\neos\metagen\VideoConverter\obj\Debug\netcoreapp3.0\VideoConverter.AssemblyInfoInputs.cache
+D:\code\neos\metagen\VideoConverter\obj\Debug\netcoreapp3.0\VideoConverter.AssemblyInfo.cs
+D:\code\neos\metagen\VideoConverter\obj\Debug\netcoreapp3.0\VideoConverter.csproj.CoreCompileInputs.cache
+D:\code\neos\metagen\VideoConverter\obj\Debug\netcoreapp3.0\VideoConverter.dll
+D:\code\neos\metagen\VideoConverter\obj\Debug\netcoreapp3.0\VideoConverter.pdb
+D:\code\neos\metagen\VideoConverter\obj\Debug\netcoreapp3.0\VideoConverter.genruntimeconfig.cache
