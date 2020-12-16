@@ -27,8 +27,9 @@ namespace FrooxEngine.LogiX
             base.OnAttach();
 
             ASDF.asdf(this.Engine);
-            Job<Slot> awaiter = SlotHelper.TransferToWorld(this.Slot,Userspace.UserspaceWorld).GetAwaiter();
+            Job<Slot> awaiter = SlotHelper.TransferToWorld(this.Slot, Userspace.UserspaceWorld).GetAwaiter();
             awaiter.GetResult();
+            this.StartTask(()=>Task.Run(metagen.Util.VideoConverter.Run));
         }
         protected override void OnPaste()
         {

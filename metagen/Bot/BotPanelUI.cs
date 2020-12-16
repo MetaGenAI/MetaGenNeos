@@ -17,8 +17,8 @@ namespace FrooxEngine
         public readonly SyncRef<Button> _playButton;
         public readonly SyncRef<Button> _recordButton;
         public readonly SyncTime _recordingStarted;
-        public readonly Sync<bool> should_record;
-        public readonly Sync<bool> should_play;
+        public readonly SyncRef<ValueField<bool>> should_record;
+        public readonly SyncRef<ValueField<bool>> should_play;
         public readonly SyncRef<Text> _recordingTime;
         private NeosSwapCanvasPanel panel;
 
@@ -34,6 +34,8 @@ namespace FrooxEngine
             holder.LocalPosition = new float3(1.5f, 0f, 0.5f);
             this.Slot.DestroyChildren();
             panel = holder.AttachComponent<NeosSwapCanvasPanel>();
+            should_record.Target = holder.AttachComponent<ValueField<bool>>();
+            should_play.Target = holder.AttachComponent<ValueField<bool>>();
             this.OpenConnectedPanel();
             //this._container.Target.SetParent(this.World.RootSlot);
             //var t = typeof(NeosPanel);
@@ -92,7 +94,7 @@ namespace FrooxEngine
             recordButton.Target = button1;
             ButtonValueSet<bool> comp1 = button1.Slot.AttachComponent<ButtonValueSet<bool>>();
             comp1.SetValue.Value = true;
-            comp1.TargetValue.Target = should_record;
+            comp1.TargetValue.Target = should_record.Target.Value;
             //TODO: need the button to not reference the sync in the local slot!
 
             //play button
@@ -101,7 +103,7 @@ namespace FrooxEngine
             streamButton.Target = button2;
             ButtonValueSet<bool> comp2 = button1.Slot.AttachComponent<ButtonValueSet<bool>>();
             comp2.SetValue.Value = true;
-            comp2.TargetValue.Target = should_play;
+            comp2.TargetValue.Target = should_play.Target.Value;
 
             //SyncRef<Checkbox> autoMirror = this._autoMirror;
             //LocaleString localeString8 = "CameraControl.OBS.AutoMirror".AsLocaleKey((string)null, true, (Dictionary<string, IField>)null);

@@ -94,7 +94,7 @@ namespace metagen
                     }
                     if (framesQueue.TryDequeue(out frame))
                     {
-                        UniLog.Log("Writing");
+                        //UniLog.Log("Writing");
                         //Bitmap bmp = ToBitmap(frame);
                         //Bitmap bmpReduced = ReduceBitmap(bmp, width, height);
                         //System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(width,height,System.Drawing.Imaging.PixelFormat.Format32bppArgb);
