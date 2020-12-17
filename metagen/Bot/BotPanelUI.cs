@@ -17,10 +17,16 @@ namespace FrooxEngine
         public readonly SyncRef<Button> _playButton;
         public readonly SyncRef<Button> _recordButton;
         public readonly SyncTime _recordingStarted;
-        public readonly SyncRef<ValueField<bool>> should_record;
-        public readonly SyncRef<ValueField<bool>> should_play;
+        public readonly SyncRef<Sync<bool>> record_button_pressed;
+        public readonly SyncRef<Sync<bool>> play_button_pressed;
         public readonly SyncRef<Text> _recordingTime;
+        public bool IsRecording = false;
+        public bool IsPlaying = false;
         private NeosSwapCanvasPanel panel;
+        public event Action StartRecording;
+        public event Action StopRecording;
+        public event Action StartPlaying;
+        public event Action StopPlaying;
 
         protected override void OnAttach()
         {
@@ -31,11 +37,11 @@ namespace FrooxEngine
             this.Panel.ShowHeader.Value = false;
             this.Panel.ShowHandle.Value = false;
             Slot holder = this.Slot.Parent.AddSlot("panel holder");
-            holder.LocalPosition = new float3(1.5f, 0f, 0.5f);
+            holder.LocalPosition = new float3(0f, 1.5f, 1f);
             this.Slot.DestroyChildren();
             panel = holder.AttachComponent<NeosSwapCanvasPanel>();
-            should_record.Target = holder.AttachComponent<ValueField<bool>>();
-            should_play.Target = holder.AttachComponent<ValueField<bool>>();
+            record_button_pressed.Target = holder.AttachComponent<ValueField<bool>>().Value;
+            play_button_pressed.Target = holder.AttachComponent<ValueField<bool>>().Value;
             this.OpenConnectedPanel();
             //this._container.Target.SetParent(this.World.RootSlot);
             //var t = typeof(NeosPanel);
@@ -77,7 +83,10 @@ namespace FrooxEngine
             //status.Target = text1;
 
             //Description
+            uiBuilder1.Style.MinHeight = 200f;
             Text text1 = uiBuilder1.Text("MetaGen is a project to generate a public dataset of VR experiences, for use in scientific research, and development of AI technologies");
+            text1.AutoSizeMin.Value = 24f;
+            uiBuilder1.Style.MinHeight = 32f;
 
             //recording time
             SyncRef<Text> recording_time = this._recordingTime;
@@ -94,16 +103,15 @@ namespace FrooxEngine
             recordButton.Target = button1;
             ButtonValueSet<bool> comp1 = button1.Slot.AttachComponent<ButtonValueSet<bool>>();
             comp1.SetValue.Value = true;
-            comp1.TargetValue.Target = should_record.Target.Value;
-            //TODO: need the button to not reference the sync in the local slot!
+            comp1.TargetValue.Target = record_button_pressed.Target;
 
             //play button
             SyncRef<Button> streamButton = this._playButton;
             Button button2 = uiBuilder1.Button("");
             streamButton.Target = button2;
-            ButtonValueSet<bool> comp2 = button1.Slot.AttachComponent<ButtonValueSet<bool>>();
+            ButtonValueSet<bool> comp2 = button2.Slot.AttachComponent<ButtonValueSet<bool>>();
             comp2.SetValue.Value = true;
-            comp2.TargetValue.Target = should_play.Target.Value;
+            comp2.TargetValue.Target = play_button_pressed.Target;
 
             //SyncRef<Checkbox> autoMirror = this._autoMirror;
             //LocaleString localeString8 = "CameraControl.OBS.AutoMirror".AsLocaleKey((string)null, true, (Dictionary<string, IField>)null);
@@ -111,6 +119,38 @@ namespace FrooxEngine
             //autoMirror.Target = checkbox;
             //this._autoMirror.Target.State.SyncWithSetting<bool>("InteractiveCamera.AutoMirror", SettingSync.LocalChange.UpdateSetting);
             //this._active.Value = true;
+        }
+        protected override void OnCommonUpdate()
+        {
+            base.OnCommonUpdate();
+
+            //Check control variables from panel UI
+            if (record_button_pressed.Target.Value)
+            {
+                record_button_pressed.Target.Value = false;
+                if (IsRecording)
+                {
+                    IsRecording = false;
+                    StopRecording?.Invoke();
+                } else
+                {
+                    IsRecording = true;
+                    StartRecording?.Invoke();
+                }
+            }
+            if (play_button_pressed.Target.Value)
+            {
+                play_button_pressed.Target.Value = false;
+                if (IsPlaying)
+                {
+                    IsPlaying = false;
+                    StopPlaying?.Invoke();
+                } else
+                {
+                    IsPlaying = true;
+                    StartPlaying?.Invoke();
+                }
+            }
         }
     }
 }

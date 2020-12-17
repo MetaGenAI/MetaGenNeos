@@ -182,6 +182,7 @@ namespace FrooxEngine.LogiX
                 //attach BotLogic
                 Slot botLogicSlot = world.LocalUser.Root.Slot.AddLocalSlot("botlogic local slot");
                 BotLogic logicComp = botLogicSlot.AttachComponent<BotLogic>();
+                logicComp.mg = current_metagen;
             });
         }
         private void RemoveWorld(World world)

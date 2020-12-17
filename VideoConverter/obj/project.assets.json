@@ -15,9 +15,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\code\\neos\\metagen\\VideoConverter\\VideoConverter.csproj",
-      "projectName": "VideoConverter",
-      "projectPath": "D:\\code\\neos\\metagen\\VideoConverter\\VideoConverter.csproj",
+      "projectUniqueName": "D:\\code\\neos\\metagen\\VideoConverter\\StandaloneVideoConverter.csproj",
+      "projectName": "StandaloneVideoConverter",
+      "projectPath": "D:\\code\\neos\\metagen\\VideoConverter\\StandaloneVideoConverter.csproj",
       "packagesPath": "C:\\Users\\Guillermo Valle\\.nuget\\packages\\",
       "outputPath": "D:\\code\\neos\\metagen\\VideoConverter\\obj\\",
       "projectStyle": "PackageReference",

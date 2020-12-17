@@ -23,7 +23,9 @@ namespace metagen
     public class MetaGen : FrooxEngine.Component
     {
         public bool playing = false;
+        public OutputState playing_state = OutputState.Stopped;
         public bool recording = false;
+        public OutputState recording_state = OutputState.Stopped;
         private DateTime utcNow;
         private DateTime recordingBeginTime;
         private DateTime playingBeginTime;
@@ -46,6 +48,7 @@ namespace metagen
         public UnityNeos.AudioRecorderNeos hearingRecorder;
         int frame_index = 0;
         float MAX_CHUNK_LEN_MIN = 0.3f;
+
         private float recording_time
         {
             get
@@ -169,6 +172,7 @@ namespace metagen
             if (!recording)
                 dataManager.StartSection();
             recording = true;
+            recording_state = OutputState.Started;
             frame_index = 0;
             //Set the recordings time to now
             utcNow = DateTime.UtcNow;
@@ -210,6 +214,7 @@ namespace metagen
         {
             UniLog.Log("Stop recording");
             recording = false;
+            recording_state = OutputState.Stopped;
 
             //STREAMS
             if (streamRecorder.isRecording)
@@ -240,6 +245,7 @@ namespace metagen
         {
             UniLog.Log("Start playing");
             playing = true;
+            playing_state = OutputState.Started;
             frame_index = 0;
             //Set the recordings time to now
             utcNow = DateTime.UtcNow;
@@ -251,6 +257,7 @@ namespace metagen
         {
             UniLog.Log("Stop playing");
             playing = false;
+            playing_state = OutputState.Stopped;
             if (streamPlayer.isPlaying)
                 streamPlayer.StopPlaying();
         }

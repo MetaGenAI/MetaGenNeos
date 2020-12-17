@@ -73,8 +73,8 @@ namespace metagen
         }
         public async Task<Slot> SpawnDefaultAvatar()
         {
-            //return await SpawnAvatar("neosdb:///3992605ec9c401672dd54ff388cce3bd6483313699e4e45642b3abe80941d98b.7zbson");
-            return await SpawnAvatar("neosdb:///f70e161112d7398522d32f043ef500b6d4340b9dd27c3d02824f4639c8da7386.7zbson");
+            return await SpawnAvatar("neosdb:///3992605ec9c401672dd54ff388cce3bd6483313699e4e45642b3abe80941d98b.7zbson");
+            //return await SpawnAvatar("neosdb:///f70e161112d7398522d32f043ef500b6d4340b9dd27c3d02824f4639c8da7386.7zbson");
         }
         public async Task<Slot> SpawnAvatar(String neosdb)
         {

@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "metagen", "metagen\metagen.csproj", "{E6F69C87-D5D1-4976-8B0C-9A39279B6B0D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoConverter", "VideoConverter\VideoConverter.csproj", "{E85D43B2-9CBD-4A84-AD9E-C034A281432A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StandaloneVideoConverter", "VideoConverter\StandaloneVideoConverter.csproj", "{E85D43B2-9CBD-4A84-AD9E-C034A281432A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
