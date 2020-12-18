@@ -125,35 +125,71 @@ namespace metagen
                 csv.WriteRecords(user_metadatas);
             }
         }
+        public List<string> CurrentWorldRecordings
+        {
+            get
+            {
+                World world = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
+                return GetRecordingsForWorld(world);
+            }
+        }
+        public string GetRecordingForCurrentWorld(int index)
+        {
+            World world = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
+            return GetRecordingForWorld(world, index);
+        }
+        public int NumberRecordingsForCurrentWorld()
+        {
+            World world = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
+            return NumberRecordingsForWorld(world);
+        }
+        public int NumberRecordingsForWorld(World world)
+        {
+            return GetRecordingsForWorld(world).Count;
+        }
+        public string GetRecordingForWorld(World world, int index)
+        {
+            //index starts from the last (0) to the first
+            List<string> recordings = GetRecordingsForWorld(world);
+            if (recordings.Count > 0)
+            {
+                return recordings[recordings.Count - index];
+            } else
+            {
+                return null;
+            }
+        }
         public string LastRecordingForWorld(World world)
+        {
+            List<string> recordings = GetRecordingsForWorld(world);
+            if (recordings.Count > 0)
+            {
+                return recordings[recordings.Count - 1];
+            } else
+            {
+                return null;
+            }
+        }
+        public List<string> GetRecordingsForWorld(World world)
         {
             string world_id = world.CorrespondingWorldId ?? "new_world";
             string path = root_saving_folder + "/" + scapeWorldID(world_id);
             if (!Directory.Exists(path)) return null;
             var di = new DirectoryInfo(path);
-            List<string> subfolders = di.EnumerateDirectories()
+            List<string> session_folders = di.EnumerateDirectories()
                               .OrderBy(d => d.CreationTime)
                               .Select(d=>d.FullName)
                               .ToList();
-            if (subfolders.Count > 0)
+            List<string> subfolders = new List<string>();
+            foreach(string subfolder in session_folders)
             {
-                di = new DirectoryInfo(subfolders[subfolders.Count - 1]);
-                subfolders = di.EnumerateDirectories()
+                di = new DirectoryInfo(subfolder);
+                subfolders.AddRange(di.EnumerateDirectories()
                                   .OrderBy(d => d.CreationTime)
-                                  .Select(d=>d.FullName)
-                                  .ToList();
-                if (subfolders.Count > 0)
-                {
-                    return subfolders[subfolders.Count - 1];
-                }
-                else
-                {
-                    return null;
-                }
-            } else
-            {
-                return null;
+                                  .Select(d => d.FullName)
+                                  .ToList());
             }
+            return subfolders;
         }
 
     }
