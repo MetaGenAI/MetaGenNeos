@@ -140,3 +140,10 @@ C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Libraries\net472\metagen.pd
 D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.csproj.CopyComplete
 D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.dll
 D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.pdb
+C:\Users\guill\Documents\code\MetaGenNeos\metagen\obj\Debug\net472\metagen.csprojAssemblyReference.cache
+C:\Users\guill\Documents\code\MetaGenNeos\metagen\obj\Debug\net472\metagen.csproj.CoreCompileInputs.cache
+C:\Users\guill\Documents\code\MetaGenNeos\metagen\obj\Debug\net472\metagen.AssemblyInfoInputs.cache
+C:\Users\guill\Documents\code\MetaGenNeos\metagen\obj\Debug\net472\metagen.AssemblyInfo.cs
+C:\Users\guill\Documents\code\MetaGenNeos\metagen\obj\Debug\net472\metagen.dll
+C:\Users\guill\Documents\code\MetaGenNeos\metagen\obj\Debug\net472\metagen.pdb
+C:\Users\guill\Documents\code\MetaGenNeos\metagen\obj\Debug\net472\metagen.csproj.CopyComplete

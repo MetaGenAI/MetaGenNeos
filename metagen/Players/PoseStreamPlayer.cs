@@ -28,6 +28,7 @@ namespace metagen
         public Dictionary<RefID, Dictionary<BodyNode, floatQ>> finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
         public Dictionary<RefID, Slot> avatars = new Dictionary<RefID, Slot>();
         public Dictionary<RefID, bool> hands_are_tracked = new Dictionary<RefID, bool>();
+        public int recording_index = 0;
         List<RefID> user_ids = new List<RefID>();
         metagen.AvatarManager avatarManager;
         Task avatar_loading_task;
@@ -166,9 +167,9 @@ namespace metagen
 
 
         }
-        public void StartPlaying()
+        public void StartPlaying(int recording_index = 0)
         {
-
+            this.recording_index = recording_index;
             avatar_loading_task = Task.Run(StartPlayingInternal);
         }
         private async void StartPlayingInternal()
@@ -177,7 +178,8 @@ namespace metagen
             {
                 //Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
                 avatarManager = new metagen.AvatarManager();
-                string reading_directory = dataManager.LastRecordingForWorld(metagen_comp.World);
+                //string reading_directory = dataManager.LastRecordingForWorld(metagen_comp.World);
+                string reading_directory = dataManager.GetRecordingForWorld(metagen_comp.World, this.recording_index);
                 if (reading_directory == null) return;
                 List<UserMetadata> userMetadatas;
                 using (var reader = new StreamReader(reading_directory + "/user_metadata.csv"))
@@ -273,6 +275,8 @@ namespace metagen
                             }
                         }
                     }
+                    //AUDIO PLAY
+                    //TODO: put this in separate class
                     UniLog.Log("got finger rotation vars");
                     UniLog.Log("Setting up audio!");
                     AudioOutput audio_output = avatar.GetComponentInChildren<AudioOutput>();
@@ -282,7 +286,8 @@ namespace metagen
                     //audio_outputs[user_id] = audio_output;
                     //AudioX audioData = new AudioX(reading_directory + "/" + user_id.ToString() + "_audio.wav");
                     //AssetRef<AudioClip> audioClip = new AssetRef<AudioClip>();
-                    Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(reading_directory + "/" + user_id.ToString() + "_audio.wav", LocalDB.ImportLocation.Original, (string)null);
+                    string audio_file = reading_directory + "/" + user_id.ToString() + "_audio.wav";
+                    Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(audio_file, LocalDB.ImportLocation.Original, (string)null);
                     //ToWorld thing = new ToWorld();
                     //var awaiter = thing.GetAwaiter();
                     //awaiter.GetResult();
