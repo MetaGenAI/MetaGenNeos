@@ -8,6 +8,7 @@ using FrooxEngine.CommonAvatar;
 using BaseX;
 using CodeX;
 using FrooxEngine.LogiX;
+using System.IO;
 
 namespace metagen
 {
@@ -15,6 +16,7 @@ namespace metagen
     {
         public Dictionary<RefID, AudioOutput> audio_outputs = new Dictionary<RefID, AudioOutput>();
         private Dictionary<RefID, AudioRecorder> audio_recorders = new Dictionary<RefID, AudioRecorder>();
+        private List<string> current_users_ids = new List<string>();
         public bool isRecording = false;
         public string saving_folder;
         private MetaGen metagen_comp;
@@ -58,6 +60,7 @@ namespace metagen
             foreach (User user in users)
             {
                 RefID user_id = user.ReferenceID;
+                current_users_ids.Add(user_id.ToString());
                 AvatarAudioOutputManager comp = user.Root.Slot.GetComponentInChildren<AvatarAudioOutputManager>();
                 AudioOutput audio_output = comp.AudioOutput.Target;
                 audio_outputs[user_id] = audio_output;
@@ -69,7 +72,7 @@ namespace metagen
                 {
                     UniLog.Log("Sample rate");
                     UniLog.Log(metagen_comp.Engine.AudioSystem.Connector.SampleRate.ToString());
-                    audio_recorders[user_id] = new AudioRecorder(saving_folder + "/" + user_id.ToString() + "_audio", metagen_comp.Engine.AudioSystem.BufferSize, 1, metagen_comp.Engine.AudioSystem.SampleRate, 1);
+                    audio_recorders[user_id] = new AudioRecorder(saving_folder + "/" + user_id.ToString() + "_voice_tmp", metagen_comp.Engine.AudioSystem.BufferSize, 1, metagen_comp.Engine.AudioSystem.SampleRate, 1);
                     audio_recorders[user_id].StartWriting();
                 }
             }
@@ -81,6 +84,16 @@ namespace metagen
             {
                 item.Value.WriteHeader();
             }
+            Task task = Task.Run(() =>
+            {
+                foreach (string user_id in current_users_ids)
+                {
+                    File.Move(saving_folder + "/" + user_id.ToString() + "_voice_tmp.wav", saving_folder + "/" + user_id.ToString() + "_voice.wav");
+                }
+                current_users_ids = new List<string>();
+            });
+            task.Wait();
+
             audio_outputs = new Dictionary<RefID, AudioOutput>();
             audio_recorders = new Dictionary<RefID, AudioRecorder>();
             isRecording = false;

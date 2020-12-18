@@ -282,13 +282,17 @@ namespace metagen
                     //audio_outputs[user_id] = audio_output;
                     //AudioX audioData = new AudioX(reading_directory + "/" + user_id.ToString() + "_audio.wav");
                     //AssetRef<AudioClip> audioClip = new AssetRef<AudioClip>();
-                    Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(reading_directory + "/" + user_id.ToString() + "_audio.wav", LocalDB.ImportLocation.Original, (string)null);
+                    //Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(reading_directory + "/" + user_id.ToString() + "_voice.mp3", LocalDB.ImportLocation.Original, (string)null);
+                    Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(reading_directory + "/" + user_id.ToString() + "_hearing.mp3", LocalDB.ImportLocation.Original, (string)null);
                     //ToWorld thing = new ToWorld();
                     //var awaiter = thing.GetAwaiter();
                     //awaiter.GetResult();
                     StaticAudioClip audioClip = audio_output.Slot.AttachAudioClip(uri);
                     AudioClipPlayer player = audio_output.Slot.AttachComponent<AudioClipPlayer>();
-                    visemeAnalyzer.Source.Target = player;
+                    if (visemeAnalyzer != null)
+                    {
+                        visemeAnalyzer.Source.Target = player;
+                    }
                     UniLog.Log("attaching clip to player");
                     player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
                     UniLog.Log("attaching player to audio output");

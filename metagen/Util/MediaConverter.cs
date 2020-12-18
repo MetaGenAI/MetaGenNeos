@@ -8,7 +8,7 @@ using BaseX;
 
 namespace metagen.Util
 {
-    class VideoConverter
+    class MediaConverter
     {
         static List<Task> ffmpegtasks = new List<Task>();
         static System.Collections.Specialized.StringCollection log = new System.Collections.Specialized.StringCollection();
@@ -19,9 +19,11 @@ namespace metagen.Util
             {
                 try
                 {
-                    UniLog.Log("hi");
-                    Task task = Task.Run(() => WalkDirectoryTree(new System.IO.DirectoryInfo("./data")));
-                    task.Wait();
+                    //UniLog.Log("hi");
+                    Task video_task = Task.Run(() => WalkDirectoryTree(new System.IO.DirectoryInfo("./data"), "video"));
+                    Task audio_task = Task.Run(() => WalkDirectoryTree(new System.IO.DirectoryInfo("./data"), "audio"));
+                    video_task.Wait();
+                    audio_task.Wait();
                 } catch (Exception e)
                 {
                     UniLog.Log("OwO: " + e.Message);
@@ -30,7 +32,7 @@ namespace metagen.Util
                 Thread.Sleep(1000);
             }
         }
-        static void WalkDirectoryTree(System.IO.DirectoryInfo root)
+        static void WalkDirectoryTree(System.IO.DirectoryInfo root, string media_type)
         {
             try
             {
@@ -41,7 +43,21 @@ namespace metagen.Util
                 try
                 {
                     //files = root.GetFiles("*_vision.avi");
-                    files = root.GetFiles("*_vision.avi");
+                    if (media_type == "video")
+                    {
+                        files = root.GetFiles("*_vision.avi");
+                    } else if (media_type == "audio")
+                    {
+                        
+                        FileInfo[] files_audio = root.GetFiles("*_voice.wav");
+                        FileInfo[] files_hearing =  root.GetFiles("*_hearing.wav");
+                        files = new FileInfo[files_audio.Length + files_hearing.Length];
+                        files_audio.CopyTo(files, 0);
+                        files_hearing.CopyTo(files, files_audio.Length);
+                    } else
+                    {
+                        UniLog.Log("OwO: Type of media conversion not supported in the Media Converter");
+                    }
                 }
                 // This is thrown if even one of the files requires permissions greater
                 // than the application provides.
@@ -62,14 +78,21 @@ namespace metagen.Util
                 {
                     foreach (System.IO.FileInfo fi in files)
                     {
-                        // In this example, we only access the existing FileInfo object. If we
-                        // want to open, delete or modify the file, then
-                        // a try-catch block is required here to handle the case
-                        // where the file has been deleted since the call to TraverseTree().
+                        string ffmpgCmdText = "";
                         UniLog.Log("converting " + fi.FullName);
-                        string new_name = fi.FullName.Substring(0, fi.FullName.Length - 10) + "vision.mp4";
-                        string ffmpgCmdText;
-                        ffmpgCmdText = "-hide_banner -loglevel warning -y -i \"" + fi.FullName + "\" \"" + new_name + "\"";
+                        if (media_type == "video")
+                        {
+                            string new_name = fi.FullName.Substring(0, fi.FullName.Length - 3) + "mp4";
+                            ffmpgCmdText = "-hide_banner -loglevel warning -y -i \"" + fi.FullName + "\" \"" + new_name + "\"";
+                        } else if (media_type == "audio")
+                        {
+                            string new_name = fi.FullName.Substring(0, fi.FullName.Length - 3) + "mp3";
+                            ffmpgCmdText = "-hide_banner -loglevel warning -y -i \"" + fi.FullName + "\" \"" + new_name + "\"";
+                        } else
+                        {
+                            UniLog.Log("OwO: Type of media conversion not supported in the Media Converter");
+                            break;
+                        }
                         Process ffmpegProcess = new System.Diagnostics.Process();
                         //processes.Add(ffmpegProcess);
                         ProcessStartInfo processInfo = new ProcessStartInfo();
@@ -90,7 +113,7 @@ namespace metagen.Util
                     foreach (System.IO.DirectoryInfo dirInfo in subDirs)
                     {
                         // Resursive call for each subdirectory.
-                        WalkDirectoryTree(dirInfo);
+                        WalkDirectoryTree(dirInfo, media_type);
                     }
                 }
             } catch (Exception e)

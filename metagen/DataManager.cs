@@ -67,6 +67,7 @@ namespace metagen
             section = 0;
             _saving_folder = root_saving_folder + "/" + session_saving_folder;
             Directory.CreateDirectory(saving_folder);
+            have_started_recording_session = true;
             have_users_changed = false;
         }
 

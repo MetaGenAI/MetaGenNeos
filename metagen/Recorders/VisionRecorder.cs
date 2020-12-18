@@ -67,7 +67,7 @@ namespace metagen
                     camera.NearClipping.Value = 0.15f;
                     cameras[user_id] = camera;
                     int fps = 30;
-                    visual_recorders[user_id] = new VideoRecorder(saving_folder + "/" + user_id.ToString() + "_video.avi", camera_resolution.x, camera_resolution.y, fps, metagen_comp);
+                    visual_recorders[user_id] = new VideoRecorder(saving_folder + "/" + user_id.ToString() + "_vision_tmp.avi", camera_resolution.x, camera_resolution.y, fps, metagen_comp);
                 }
                 UniLog.Log("Made visual recorder");
                 isRecording = true;
@@ -95,7 +95,7 @@ namespace metagen
             {
                 foreach (string user_id in current_users_ids)
                 {
-                    File.Move(saving_folder + "/" + user_id.ToString() + "_video.avi", saving_folder + "/" + user_id.ToString() + "_vision.avi");
+                    File.Move(saving_folder + "/" + user_id.ToString() + "_vision_tmp.avi", saving_folder + "/" + user_id.ToString() + "_vision.avi");
                 }
                 current_users_ids = new List<string>();
             });
