@@ -424,24 +424,27 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\guill\\.nuget\\packages\\": {},
+    "C:\\Users\\Guillermo Valle\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackagesFallback\\": {},
     "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\guill\\Documents\\code\\MetaGenNeos\\metagen\\metagen.csproj",
+      "projectUniqueName": "D:\\code\\neos\\metagen\\metagen\\metagen.csproj",
       "projectName": "metagen",
-      "projectPath": "C:\\Users\\guill\\Documents\\code\\MetaGenNeos\\metagen\\metagen.csproj",
-      "packagesPath": "C:\\Users\\guill\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\guill\\Documents\\code\\MetaGenNeos\\metagen\\obj\\",
+      "projectPath": "D:\\code\\neos\\metagen\\metagen\\metagen.csproj",
+      "packagesPath": "C:\\Users\\Guillermo Valle\\.nuget\\packages\\",
+      "outputPath": "D:\\code\\neos\\metagen\\metagen\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackagesFallback\\",
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
       ],
       "configFilePaths": [
-        "C:\\Users\\guill\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\Guillermo Valle\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.Fallback.config"
       ],
       "originalTargetFrameworks": [
         "net472"
@@ -452,6 +455,7 @@
       },
       "frameworks": {
         "net472": {
+          "targetAlias": "net472",
           "projectReferences": {}
         }
       },
@@ -463,6 +467,7 @@
     },
     "frameworks": {
       "net472": {
+        "targetAlias": "net472",
         "dependencies": {
           "CsvHelper": {
             "target": "Package",
@@ -480,7 +485,8 @@
             "target": "Package",
             "version": "[4.5.3, )"
           }
-        }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.100\\RuntimeIdentifierGraph.json"
       }
     }
   }

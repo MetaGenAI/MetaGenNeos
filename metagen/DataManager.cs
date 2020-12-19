@@ -153,7 +153,7 @@ namespace metagen
             List<string> recordings = GetRecordingsForWorld(world);
             if (recordings.Count > 0)
             {
-                return recordings[recordings.Count - index];
+                return recordings[recordings.Count - 1 - index];
             } else
             {
                 return null;

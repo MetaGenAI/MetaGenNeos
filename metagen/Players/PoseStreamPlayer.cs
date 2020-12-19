@@ -159,8 +159,8 @@ namespace metagen
                     }
                 } catch (Exception e)
                 {
-                UniLog.Log(e.Message);
-                    StopPlaying();
+                    UniLog.Log(e.Message);
+                    metagen_comp.StopPlaying();
                 }
             //});
 
@@ -181,6 +181,7 @@ namespace metagen
                 //string reading_directory = dataManager.LastRecordingForWorld(metagen_comp.World);
                 string reading_directory = dataManager.GetRecordingForWorld(metagen_comp.World, this.recording_index);
                 if (reading_directory == null) return;
+
                 List<UserMetadata> userMetadatas;
                 using (var reader = new StreamReader(reading_directory + "/user_metadata.csv"))
                 using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
@@ -279,31 +280,34 @@ namespace metagen
                     //TODO: put this in separate class
                     UniLog.Log("got finger rotation vars");
                     UniLog.Log("Setting up audio!");
-                    AudioOutput audio_output = avatar.GetComponentInChildren<AudioOutput>();
-                    VisemeAnalyzer visemeAnalyzer = avatar.GetComponentInChildren<VisemeAnalyzer>();
-                    audio_output.Volume.Value = 1f;
-                    audio_output.Enabled = true;
-                    //audio_outputs[user_id] = audio_output;
-                    //AudioX audioData = new AudioX(reading_directory + "/" + user_id.ToString() + "_audio.wav");
-                    //AssetRef<AudioClip> audioClip = new AssetRef<AudioClip>();
-                    string audio_file = reading_directory + "/" + user_id.ToString() + "_hearing.wav";
-                    Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(audio_file, LocalDB.ImportLocation.Original, (string)null);
-                    //ToWorld thing = new ToWorld();
-                    //var awaiter = thing.GetAwaiter();
-                    //awaiter.GetResult();
-                    StaticAudioClip audioClip = audio_output.Slot.AttachAudioClip(uri);
-                    AudioClipPlayer player = audio_output.Slot.AttachComponent<AudioClipPlayer>();
-                    if (visemeAnalyzer != null)
+                    string audio_file = reading_directory + "/" + user_id.ToString() + "_hearing.mp3";
+                    if (File.Exists(audio_file))
                     {
-                        visemeAnalyzer.Source.Target = player;
+                        AudioOutput audio_output = avatar.GetComponentInChildren<AudioOutput>();
+                        VisemeAnalyzer visemeAnalyzer = avatar.GetComponentInChildren<VisemeAnalyzer>();
+                        audio_output.Volume.Value = 1f;
+                        audio_output.Enabled = true;
+                        //audio_outputs[user_id] = audio_output;
+                        //AudioX audioData = new AudioX(reading_directory + "/" + user_id.ToString() + "_audio.wav");
+                        //AssetRef<AudioClip> audioClip = new AssetRef<AudioClip>();
+                        Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(audio_file, LocalDB.ImportLocation.Original, (string)null);
+                        //ToWorld thing = new ToWorld();
+                        //var awaiter = thing.GetAwaiter();
+                        //awaiter.GetResult();
+                        StaticAudioClip audioClip = audio_output.Slot.AttachAudioClip(uri);
+                        AudioClipPlayer player = audio_output.Slot.AttachComponent<AudioClipPlayer>();
+                        if (visemeAnalyzer != null)
+                        {
+                            visemeAnalyzer.Source.Target = player;
+                        }
+                        UniLog.Log("attaching clip to player");
+                        player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
+                        UniLog.Log("attaching player to audio output");
+                        audio_output.Source.Target = (IAudioSource) player;
+                        audio_output.Slot.AttachComponent<AudioMetadata>(true, (Action<AudioMetadata>)null).SetFromCurrentWorld();
+                        //TODO: refactor this stuff
+                        player.Play();
                     }
-                    UniLog.Log("attaching clip to player");
-                    player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
-                    UniLog.Log("attaching player to audio output");
-                    audio_output.Source.Target = (IAudioSource) player;
-                    audio_output.Slot.AttachComponent<AudioMetadata>(true, (Action<AudioMetadata>)null).SetFromCurrentWorld();
-                    //TODO: refactor this stuff
-                    player.Play();
                 }
                 avatars_finished_loading = true;
                 isPlaying = true;

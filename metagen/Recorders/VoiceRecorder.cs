@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using FrooxEngine;
 using FrooxEngine.CommonAvatar;
@@ -84,15 +85,28 @@ namespace metagen
             {
                 item.Value.WriteHeader();
             }
-            Task task = Task.Run(() =>
+            Task task1 = Task.Run(() =>
             {
                 foreach (string user_id in current_users_ids)
                 {
-                    File.Move(saving_folder + "/" + user_id.ToString() + "_voice_tmp.wav", saving_folder + "/" + user_id.ToString() + "_voice.wav");
+                    File.Move(saving_folder + "/" + user_id + "_voice_tmp.wav", saving_folder + "/" + user_id + "_voice.wav");
                 }
                 current_users_ids = new List<string>();
             });
-            task.Wait();
+            Task[] tasks = new Task[current_users_ids.Count];
+            int MAX_WAIT_ITERS = 10000;
+            for (int i = 0; i < current_users_ids.Count; i++)
+            {
+                string user_id = current_users_ids[i];
+                Task task2 = Task.Run(() =>
+                {
+                    int iter = 0;
+                    while (!File.Exists(saving_folder + "/" + user_id + "_voice.mp3") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
+                });
+                tasks[i] = task2;
+            }
+            task1.Wait();
+            Task.WaitAll(tasks);
 
             audio_outputs = new Dictionary<RefID, AudioOutput>();
             audio_recorders = new Dictionary<RefID, AudioRecorder>();

@@ -1,4 +1,0 @@
-D:\code\neos\metagen\metagen\obj\Debug\net462\metagen.csprojAssemblyReference.cache
-D:\code\neos\metagen\metagen\obj\Debug\net462\metagen.AssemblyInfoInputs.cache
-D:\code\neos\metagen\metagen\obj\Debug\net462\metagen.AssemblyInfo.cs
-D:\code\neos\metagen\metagen\obj\Debug\net462\metagen.csproj.CoreCompileInputs.cache

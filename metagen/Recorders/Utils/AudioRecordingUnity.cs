@@ -84,7 +84,7 @@ namespace UnityNeos
         void OnAudioFilterRead(float[] data, int channels)
         {
             //UniLog.Log("KEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEK");
-            if (isRecording && videoStartedRecording)
+            if (isRecording) //&& videoStartedRecording)
             {
                 recorder.ConvertAndWrite(data); //audio data is interlaced
             }

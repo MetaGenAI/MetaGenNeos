@@ -146,15 +146,15 @@ namespace FrooxEngine.LogiX
             world.RunSynchronously(() =>
             {
                 Dictionary<RefID, User>.ValueCollection users = world.AllUsers;
-                User recording_hearing_user = null;
-                foreach (User user in users)
-                {
-                    if (user.IsHost)
-                    {
-                        recording_hearing_user = user;
-                        break;
-                    }
-                }
+                User recording_hearing_user = world.LocalUser;
+                //foreach (User user in users)
+                //{
+                //    if (user.IsHost)
+                //    {
+                //        recording_hearing_user = user;
+                //        break;
+                //    }
+                //}
                 SetHearingUser(recording_hearing_user.ReferenceID.ToString());
                 Slot metagen_slot = world.RootSlot.Find("5013598197metagen local slot");
                 if (metagen_slot == null)

@@ -47,7 +47,7 @@ namespace metagen
         private metagen.AvatarManager avatarManager;
         public UnityNeos.AudioRecorderNeos hearingRecorder;
         int frame_index = 0;
-        float MAX_CHUNK_LEN_MIN = 0.3f;
+        float MAX_CHUNK_LEN_MIN = 7f;
 
         private float recording_time
         {
@@ -123,8 +123,8 @@ namespace metagen
                 bool vision_ok = (visionRecorder == null ? false : visionRecorder.isRecording) || !recording_vision;
                 bool hearing_ok = (hearingRecorder == null ? false : hearingRecorder.isRecording) || !recording_hearing;
                 bool voice_ok = (voiceRecorder == null ? false : (voiceRecorder.isRecording && voiceRecorder.audio_sources_ready)) || !recording_voice;
-                //bool all_ready = voice_ok && streams_ok && vision_ok && hearing_ok;
-                bool all_ready = hearing_ok;
+                bool all_ready = voice_ok && streams_ok && vision_ok && hearing_ok;
+                //bool all_ready = hearing_ok;
                 if (recording && all_ready && streamRecorder==null? false : streamRecorder.isRecording)
                 {
                     //UniLog.Log("recording streams");
@@ -134,8 +134,8 @@ namespace metagen
                 if (recording && all_ready && visionRecorder==null? false : visionRecorder.isRecording)
                 {
                     //UniLog.Log("recording vision");
-                    if (frame_index == 30)
-                        hearingRecorder.videoStartedRecording = true;
+                    //if (frame_index == 30)
+                    //    hearingRecorder.videoStartedRecording = true;
                     visionRecorder.RecordVision();
                 }
 
@@ -172,7 +172,7 @@ namespace metagen
             if (!recording)
                 dataManager.StartSection();
             recording = true;
-            recording_state = OutputState.Started;
+            recording_state = OutputState.Starting;
             frame_index = 0;
             //Set the recordings time to now
             utcNow = DateTime.UtcNow;
@@ -209,12 +209,13 @@ namespace metagen
                 //Record the first frame
                 visionRecorder.RecordVision();
             }
+            recording_state = OutputState.Started;
         }
         public void StopRecording()
         {
             UniLog.Log("Stop recording");
             recording = false;
-            recording_state = OutputState.Stopped;
+            recording_state = OutputState.Starting;
 
             //STREAMS
             if (streamRecorder.isRecording)
@@ -233,6 +234,7 @@ namespace metagen
                 visionRecorder.StopRecording();
 
             dataManager.StopSection();
+            recording_state = OutputState.Stopped;
         }
 
         public void ToggleRecording()

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using FrooxEngine;
 using BaseX;
@@ -35,11 +36,18 @@ namespace metagen
                 VideoRecorder videoRecorder = item.Value;
                 if (videoRecorder != null && cameras[user_id] != null)
                 {
-                    metagen_comp.StartTask((Func<Task>)(async () =>
+                    Task task = metagen_comp.StartTask((Func<Task>)(async () =>
                     {
                         Bitmap2D bmp = await cameras[user_id].RenderToBitmap(camera_resolution);
                         visual_recorders[user_id].WriteFrame(bmp.ConvertTo(CodeX.TextureFormat.BGRA32).RawData);
                     }));
+                    //TODO: sync video
+                    //task.Wait();
+                    //World currentWorld = metagen_comp.World;
+                    //FrooxEngine.RenderSettings renderSettings = cameras[user_id].GetRenderSettings(camera_resolution);
+                    //byte[] data = currentWorld.Render.Connector.Render(renderSettings).Result;
+                    //Bitmap2D bmp = new Bitmap2D(data, renderSettings.size.x, renderSettings.size.y, renderSettings.textureFormat, false, true, (string)null);
+                    //visual_recorders[user_id].WriteFrame(bmp.ConvertTo(CodeX.TextureFormat.BGRA32).RawData);
                 }
                 else
                 { //something was null:P
@@ -91,15 +99,28 @@ namespace metagen
             cameras = new Dictionary<RefID, FrooxEngine.Camera>();
             visual_recorders = new Dictionary<RefID, VideoRecorder>();
             isRecording = false;
-            Task task = Task.Run(() =>
+            Task task1 = Task.Run(() =>
             {
                 foreach (string user_id in current_users_ids)
                 {
-                    File.Move(saving_folder + "/" + user_id.ToString() + "_vision_tmp.avi", saving_folder + "/" + user_id.ToString() + "_vision.avi");
+                    File.Move(saving_folder + "/" + user_id + "_vision_tmp.avi", saving_folder + "/" + user_id + "_vision.avi");
                 }
                 current_users_ids = new List<string>();
             });
-            task.Wait();
+            Task[] tasks = new Task[current_users_ids.Count];
+            int MAX_WAIT_ITERS = 10000;
+            for (int i = 0; i < current_users_ids.Count; i++)
+            {
+                string user_id = current_users_ids[i];
+                Task task2 = Task.Run(() =>
+                {
+                    int iter = 0;
+                    while (!File.Exists(saving_folder + "/" + user_id + "_vision.mp4") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
+                });
+                tasks[i] = task2;
+            }
+            task1.Wait();
+            Task.WaitAll(tasks);
             //});
         }
     }

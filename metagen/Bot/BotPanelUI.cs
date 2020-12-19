@@ -16,6 +16,7 @@ namespace FrooxEngine
         public readonly Sync<bool> _active;
         public readonly SyncRef<Button> _playButton;
         public readonly SyncRef<Button> _recordButton;
+        public readonly SyncRef<TextField> _recordIndexField;
         public readonly SyncTime _recordingStarted;
         public readonly SyncRef<Sync<bool>> record_button_pressed;
         public readonly SyncRef<Sync<bool>> play_button_pressed;
@@ -104,6 +105,10 @@ namespace FrooxEngine
             ButtonValueSet<bool> comp1 = button1.Slot.AttachComponent<ButtonValueSet<bool>>();
             comp1.SetValue.Value = true;
             comp1.TargetValue.Target = record_button_pressed.Target;
+
+            //Recording index
+            TextField field1 = uiBuilder1.TextField("0");
+            this._recordIndexField.Target = field1;
 
             //play button
             SyncRef<Button> streamButton = this._playButton;

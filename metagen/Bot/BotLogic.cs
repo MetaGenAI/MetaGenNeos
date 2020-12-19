@@ -50,7 +50,8 @@ namespace metagen
             };
             panelUI.StartPlaying += () =>
             {
-                mg.StartPlaying();
+                int recording_index = Int32.Parse(panelUI._recordIndexField.Target.Text.Content.Value);
+                mg.StartPlaying(recording_index);
             };
             panelUI.StopPlaying += () =>
             {
