@@ -215,7 +215,7 @@ namespace metagen
         {
             UniLog.Log("Stop recording");
             recording = false;
-            recording_state = OutputState.Starting;
+            recording_state = OutputState.Stopping;
 
             //STREAMS
             if (streamRecorder.isRecording)
@@ -259,9 +259,9 @@ namespace metagen
         {
             UniLog.Log("Stop playing");
             playing = false;
-            playing_state = OutputState.Stopped;
             if (streamPlayer.isPlaying)
                 streamPlayer.StopPlaying();
+            playing_state = OutputState.Stopped;
         }
         public void TogglePlaying()
         {

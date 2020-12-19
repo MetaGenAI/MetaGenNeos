@@ -160,6 +160,7 @@ namespace metagen
                 } catch (Exception e)
                 {
                     UniLog.Log(e.Message);
+                    this.StopPlaying();
                     metagen_comp.StopPlaying();
                 }
             //});
