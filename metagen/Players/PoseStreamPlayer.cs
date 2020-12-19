@@ -50,7 +50,6 @@ namespace metagen
             World currentWorld = metagen_comp.World;
             //currentWorld.RunSynchronously(() =>
             //{
-                //TODO: Need this function to not depend on users being present! Just gave the info from the recorded data!!
                 try
                 {
                     foreach (RefID user_id in user_ids)
@@ -160,7 +159,7 @@ namespace metagen
                 } catch (Exception e)
                 {
                     UniLog.Log(e.Message);
-                    this.StopPlaying();
+                    //this.StopPlaying();
                     metagen_comp.StopPlaying();
                 }
             //});
@@ -281,7 +280,7 @@ namespace metagen
                     //TODO: put this in separate class
                     UniLog.Log("got finger rotation vars");
                     UniLog.Log("Setting up audio!");
-                    string audio_file = reading_directory + "/" + user_id.ToString() + "_hearing.mp3";
+                    string audio_file = reading_directory + "/" + user_id.ToString() + "_hearing.ogg";
                     if (File.Exists(audio_file))
                     {
                         AudioOutput audio_output = avatar.GetComponentInChildren<AudioOutput>();

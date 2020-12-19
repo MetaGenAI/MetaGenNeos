@@ -49,7 +49,7 @@ namespace metagen
         int frame_index = 0;
         float MAX_CHUNK_LEN_MIN = 7f;
 
-        private float recording_time
+        public float recording_time
         {
             get
             {
@@ -217,24 +217,31 @@ namespace metagen
             recording = false;
             recording_state = OutputState.Stopping;
 
-            //STREAMS
-            if (streamRecorder.isRecording)
-                streamRecorder.StopRecording();
+            Task task = Task.Run(() =>
+            {
+                //STREAMS
+                if (streamRecorder.isRecording)
+                    streamRecorder.StopRecording();
 
-            //AUDIO
-            if (voiceRecorder.isRecording)
-                voiceRecorder.StopRecording();
+                //AUDIO
+                if (voiceRecorder.isRecording)
+                    voiceRecorder.StopRecording();
 
-            //HEARING
-            if (hearingRecorder.isRecording)
-                hearingRecorder.StopRecording();
+                //HEARING
+                if (hearingRecorder.isRecording)
+                    hearingRecorder.StopRecording();
 
-            //VIDEO
-            if (visionRecorder.isRecording)
-                visionRecorder.StopRecording();
+                //VIDEO
+                if (visionRecorder.isRecording)
+                    visionRecorder.StopRecording();
 
-            dataManager.StopSection();
-            recording_state = OutputState.Stopped;
+            });
+            task.ContinueWith((Task t) =>
+            {
+                UniLog.Log("FINISHED STOPPING RECORDING");
+                this.recording_state = OutputState.Stopped;
+                dataManager.StopSection();
+            });
         }
 
         public void ToggleRecording()

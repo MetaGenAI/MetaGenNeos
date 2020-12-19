@@ -81,6 +81,7 @@ namespace metagen
         }
         public void StopRecording()
         {
+            isRecording = false;
             foreach (var item in audio_recorders)
             {
                 item.Value.WriteHeader();
@@ -94,14 +95,14 @@ namespace metagen
                 current_users_ids = new List<string>();
             });
             Task[] tasks = new Task[current_users_ids.Count];
-            int MAX_WAIT_ITERS = 10000;
+            int MAX_WAIT_ITERS = 100000;
             for (int i = 0; i < current_users_ids.Count; i++)
             {
                 string user_id = current_users_ids[i];
                 Task task2 = Task.Run(() =>
                 {
                     int iter = 0;
-                    while (!File.Exists(saving_folder + "/" + user_id + "_voice.mp3") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
+                    while (!File.Exists(saving_folder + "/" + user_id + "_voice.ogg") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
                 });
                 tasks[i] = task2;
             }
@@ -110,7 +111,6 @@ namespace metagen
 
             audio_outputs = new Dictionary<RefID, AudioOutput>();
             audio_recorders = new Dictionary<RefID, AudioRecorder>();
-            isRecording = false;
         }
     }
 }

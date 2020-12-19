@@ -40,22 +40,26 @@ namespace metagen
             panelUI = this.Slot.AttachComponent<MetaGenBotPanelUI>();
 
             //UI Control Logic (the events from the UI control the MetaGen functionality which implements the recording/playback logic
-            panelUI.StartRecording += () =>
+            panelUI.ToggleRecording += () =>
             {
-                mg.StartRecording();
+                if (mg.recording)
+                {
+                    mg.StopRecording();
+                } else
+                {
+                    mg.StartRecording();
+                }
             };
-            panelUI.StopRecording += () =>
+            panelUI.TogglePlaying += () =>
             {
-                mg.StopRecording();
-            };
-            panelUI.StartPlaying += () =>
-            {
-                int recording_index = Int32.Parse(panelUI._recordIndexField.Target.Text.Content.Value);
-                mg.StartPlaying(recording_index);
-            };
-            panelUI.StopPlaying += () =>
-            {
-                mg.StopPlaying();
+                if (mg.playing)
+                {
+                    mg.StopPlaying();
+                } else
+                {
+                    int recording_index = Int32.Parse(panelUI._recordIndexField.Target.Text.Content.Value);
+                    mg.StartPlaying(recording_index);
+                }
             };
         }
         protected override void OnCommonUpdate()
@@ -63,15 +67,16 @@ namespace metagen
             base.OnCommonUpdate();
 
             //Update panel UI
-            StreamStatus obsStatus1 = this._obsStatus;
-            int num1 = obsStatus1 != null ? obsStatus1.TotalStreamTime : 0;
             //string localized1 = this.GetLocalized("CameraCOntrol.OBS.Live", (string)null, (Dictionary<string, object>)null);
             string localized1 = "idle";
             if (mg.recording_state == OutputState.Started)
             {
-                num1 = (int)this._recordingStarted.CurrentTime;
                 localized1 = this.GetLocalized("CameraCOntrol.OBS.Recording", (string)null, (Dictionary<string, object>)null);
+            } else if (mg.playing_state == OutputState.Started)
+            {
+                localized1 = "PLAY";
             }
+            int num1 = (mg.recording || mg.playing) ? (int)mg.recording_time / 1000 : 0;
             int num2 = num1 / 3600;
             int num3 = num1 / 60 % 60;
             int num4 = num1 % 60;

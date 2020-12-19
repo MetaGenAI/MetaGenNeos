@@ -24,10 +24,8 @@ namespace FrooxEngine
         public bool IsRecording = false;
         public bool IsPlaying = false;
         private NeosSwapCanvasPanel panel;
-        public event Action StartRecording;
-        public event Action StopRecording;
-        public event Action StartPlaying;
-        public event Action StopPlaying;
+        public event Action ToggleRecording;
+        public event Action TogglePlaying;
 
         protected override void OnAttach()
         {
@@ -133,28 +131,12 @@ namespace FrooxEngine
             if (record_button_pressed.Target.Value)
             {
                 record_button_pressed.Target.Value = false;
-                if (IsRecording)
-                {
-                    IsRecording = false;
-                    StopRecording?.Invoke();
-                } else
-                {
-                    IsRecording = true;
-                    StartRecording?.Invoke();
-                }
+                ToggleRecording?.Invoke();
             }
             if (play_button_pressed.Target.Value)
             {
                 play_button_pressed.Target.Value = false;
-                if (IsPlaying)
-                {
-                    IsPlaying = false;
-                    StopPlaying?.Invoke();
-                } else
-                {
-                    IsPlaying = true;
-                    StartPlaying?.Invoke();
-                }
+                TogglePlaying?.Invoke();
             }
         }
     }

@@ -86,7 +86,7 @@ namespace metagen.Util
                             ffmpgCmdText = "-hide_banner -loglevel warning -y -i \"" + fi.FullName + "\" \"" + new_name + "\"";
                         } else if (media_type == "audio")
                         {
-                            string new_name = fi.FullName.Substring(0, fi.FullName.Length - 3) + "mp3";
+                            string new_name = fi.FullName.Substring(0, fi.FullName.Length - 3) + "ogg";
                             ffmpgCmdText = "-hide_banner -loglevel warning -y -i \"" + fi.FullName + "\" \"" + new_name + "\"";
                         } else
                         {
