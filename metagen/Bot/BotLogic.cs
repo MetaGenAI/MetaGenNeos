@@ -13,7 +13,6 @@ namespace metagen
 {
     class BotLogic : Component
     {
-        private StreamStatus _obsStatus;
         protected readonly SyncTime _recordingStarted;
         private MetaGenBotPanelUI panelUI;
         public metagen.MetaGen mg;
@@ -21,7 +20,6 @@ namespace metagen
         {
             get
             {
-                //return panelUI.IsPlaying;
                 return mg.playing_state != OutputState.Stopped;
             }
         }
@@ -30,7 +28,6 @@ namespace metagen
         {
             get
             {
-                //return panelUI.IsRecording;
                 return mg.recording_state != OutputState.Stopped;
             }
         }
@@ -58,7 +55,10 @@ namespace metagen
                 } else
                 {
                     int recording_index = Int32.Parse(panelUI._recordIndexField.Target.Text.Content.Value);
-                    mg.StartPlaying(recording_index);
+                    bool play_hearing = panelUI._hearingCheckbox.Target.State.Value;
+                    bool play_voices = panelUI._voicesCheckbox.Target.State.Value;
+                    Slot avatar = panelUI._avatarRefField.Target.Reference.Target;
+                    mg.StartPlaying(recording_index,play_voices,play_hearing,avatar);
                 }
             };
         }
@@ -83,7 +83,6 @@ namespace metagen
             this.panelUI._recordingTime.Target.Content.Value = string.Format("{0}: {1:00}:{2:00}:{3:00}", (object)localized1, (object)num2, (object)num3, (object)num4);
             this.UpdateButton((Button)this.panelUI._playButton, mg.playing_state, "Playing");
             this.UpdateButton((Button)this.panelUI._recordButton, mg.recording_state, "Recording");
-
         }
 
         private void UpdateButton(Button button, OutputState state, string label)

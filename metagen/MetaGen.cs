@@ -250,7 +250,7 @@ namespace metagen
             if (recording) StopRecording();
             else StartRecording();
         }
-        public void StartPlaying(int recording_index = 0)
+        public void StartPlaying(int recording_index = 0, bool play_voices = false, bool play_hearing = true, Slot avatar_template = null)
         {
             UniLog.Log("Start playing");
             playing = true;
@@ -260,7 +260,7 @@ namespace metagen
             utcNow = DateTime.UtcNow;
             recordingBeginTime = DateTime.UtcNow;
             if (!streamPlayer.isPlaying)
-                streamPlayer.StartPlaying(recording_index);
+                streamPlayer.StartPlaying(recording_index,play_voices,play_hearing, avatar_template);
         }
         public void StopPlaying()
         {

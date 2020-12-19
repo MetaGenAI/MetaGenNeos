@@ -17,6 +17,9 @@ namespace FrooxEngine
         public readonly SyncRef<Button> _playButton;
         public readonly SyncRef<Button> _recordButton;
         public readonly SyncRef<TextField> _recordIndexField;
+        public readonly SyncRef<Checkbox> _voicesCheckbox;
+        public readonly SyncRef<Checkbox> _hearingCheckbox;
+        public readonly SyncRef<ReferenceField<Slot>> _avatarRefField;
         public readonly SyncTime _recordingStarted;
         public readonly SyncRef<Sync<bool>> record_button_pressed;
         public readonly SyncRef<Sync<bool>> play_button_pressed;
@@ -30,7 +33,7 @@ namespace FrooxEngine
         protected override void OnAttach()
         {
             base.OnAttach();
-            float2 float2 = new float2(800f, 1080f);
+            float2 float2 = new float2(800f, 1200f);
             this.CanvasSize = float2 * 0.4f;
             this.PhysicalHeight = this.Slot.Parent.LocalScaleToGlobal(0.3f);
             this.Panel.ShowHeader.Value = false;
@@ -107,6 +110,21 @@ namespace FrooxEngine
             //Recording index
             TextField field1 = uiBuilder1.TextField("0");
             this._recordIndexField.Target = field1;
+
+            //Voices checkpoint
+            Checkbox checkbox1 = uiBuilder1.Checkbox("Voices",false);
+            this._voicesCheckbox.Target = checkbox1;
+
+            //Hearing checkpoint
+            Checkbox checkbox2 = uiBuilder1.Checkbox("Hearing", true);
+            this._hearingCheckbox.Target = checkbox2;
+
+            //Avatar ref
+            uiBuilder1.Next("Root");
+            ReferenceField<Slot> refField = uiBuilder1.Current.AttachComponent<ReferenceField<Slot>>();
+            _avatarRefField.Target = refField;
+            RefEditor avatarRefEditor = uiBuilder1.Current.AttachComponent<RefEditor>();
+            avatarRefEditor.Setup(refField.Reference);
 
             //play button
             SyncRef<Button> streamButton = this._playButton;

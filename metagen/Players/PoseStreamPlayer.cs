@@ -29,6 +29,9 @@ namespace metagen
         public Dictionary<RefID, Slot> avatars = new Dictionary<RefID, Slot>();
         public Dictionary<RefID, bool> hands_are_tracked = new Dictionary<RefID, bool>();
         public int recording_index = 0;
+        public bool play_voices = false;
+        public bool play_hearing = true;
+        public Slot avatar_template = null;
         List<RefID> user_ids = new List<RefID>();
         metagen.AvatarManager avatarManager;
         Task avatar_loading_task;
@@ -158,7 +161,7 @@ namespace metagen
                     }
                 } catch (Exception e)
                 {
-                    UniLog.Log(e.Message);
+                    UniLog.Log("OwO: "+e.Message);
                     //this.StopPlaying();
                     metagen_comp.StopPlaying();
                 }
@@ -167,10 +170,13 @@ namespace metagen
 
 
         }
-        public void StartPlaying(int recording_index = 0)
+        public void StartPlaying(int recording_index = 0, bool play_voices = false, bool play_hearing = true, Slot avatar_template = null)
         {
             this.recording_index = recording_index;
             avatar_loading_task = Task.Run(StartPlayingInternal);
+            this.play_voices = play_voices;
+            this.play_hearing = play_hearing;
+            this.avatar_template = avatar_template;
         }
         private async void StartPlayingInternal()
         {
@@ -198,6 +204,13 @@ namespace metagen
                     output_readers[user_id] = new BitBinaryReaderX(bitstream);
                     fake_proxies[user_id] = new List<Tuple<BodyNode, AvatarObjectSlot>>();
                     avatar_stream_channels[user_id] = new Dictionary<BodyNode, Tuple<bool, bool, bool>>();
+                    if (avatarManager.avatar_template == null && avatar_template != null)
+                    {
+                        //metagen_comp.World.RunSynchronously(() =>
+                        //{
+                        avatarManager.avatar_template = avatar_template;
+                        //});
+                    }
                     Slot avatar = await avatarManager.GetAvatar();
                     UniLog.Log("AVATAR");
                     UniLog.Log(avatar.ToString());
@@ -280,33 +293,47 @@ namespace metagen
                     //TODO: put this in separate class
                     UniLog.Log("got finger rotation vars");
                     UniLog.Log("Setting up audio!");
-                    string audio_file = reading_directory + "/" + user_id.ToString() + "_hearing.ogg";
-                    if (File.Exists(audio_file))
+                    avatar.GetComponentInChildren<AudioOutput>().Source.Target = null;
+                    for (int i = 0; i < 2; i++)
                     {
-                        AudioOutput audio_output = avatar.GetComponentInChildren<AudioOutput>();
-                        VisemeAnalyzer visemeAnalyzer = avatar.GetComponentInChildren<VisemeAnalyzer>();
-                        audio_output.Volume.Value = 1f;
-                        audio_output.Enabled = true;
-                        //audio_outputs[user_id] = audio_output;
-                        //AudioX audioData = new AudioX(reading_directory + "/" + user_id.ToString() + "_audio.wav");
-                        //AssetRef<AudioClip> audioClip = new AssetRef<AudioClip>();
-                        Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(audio_file, LocalDB.ImportLocation.Original, (string)null);
-                        //ToWorld thing = new ToWorld();
-                        //var awaiter = thing.GetAwaiter();
-                        //awaiter.GetResult();
-                        StaticAudioClip audioClip = audio_output.Slot.AttachAudioClip(uri);
-                        AudioClipPlayer player = audio_output.Slot.AttachComponent<AudioClipPlayer>();
-                        if (visemeAnalyzer != null)
+                        string audio_file;
+                        if (i==0)
                         {
-                            visemeAnalyzer.Source.Target = player;
+                            if (!play_hearing) continue;
+                            audio_file = reading_directory + "/" + user_id.ToString() + "_hearing.ogg";
+                        } else
+                        {
+                            if (!play_voices) continue;
+                            audio_file = reading_directory + "/" + user_id.ToString() + "_voice.ogg";
                         }
-                        UniLog.Log("attaching clip to player");
-                        player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
-                        UniLog.Log("attaching player to audio output");
-                        audio_output.Source.Target = (IAudioSource) player;
-                        audio_output.Slot.AttachComponent<AudioMetadata>(true, (Action<AudioMetadata>)null).SetFromCurrentWorld();
-                        //TODO: refactor this stuff
-                        player.Play();
+                        if (File.Exists(audio_file))
+                        {
+                            AudioOutput audio_output = avatar.GetComponentInChildren<AudioOutput>();
+                            if (audio_output.Source.Target != null) audio_output = audio_output.Slot.AttachComponent<AudioOutput>();
+                            VisemeAnalyzer visemeAnalyzer = avatar.GetComponentInChildren<VisemeAnalyzer>();
+                            audio_output.Volume.Value = 1f;
+                            audio_output.Enabled = true;
+                            //audio_outputs[user_id] = audio_output;
+                            //AudioX audioData = new AudioX(reading_directory + "/" + user_id.ToString() + "_audio.wav");
+                            //AssetRef<AudioClip> audioClip = new AssetRef<AudioClip>();
+                            Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(audio_file, LocalDB.ImportLocation.Original, (string)null);
+                            //ToWorld thing = new ToWorld();
+                            //var awaiter = thing.GetAwaiter();
+                            //awaiter.GetResult();
+                            StaticAudioClip audioClip = audio_output.Slot.AttachAudioClip(uri);
+                            AudioClipPlayer player = audio_output.Slot.AttachComponent<AudioClipPlayer>();
+                            if (visemeAnalyzer != null)
+                            {
+                                visemeAnalyzer.Source.Target = player;
+                            }
+                            UniLog.Log("attaching clip to player");
+                            player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
+                            UniLog.Log("attaching player to audio output");
+                            audio_output.Source.Target = (IAudioSource) player;
+                            audio_output.Slot.AttachComponent<AudioMetadata>(true, (Action<AudioMetadata>)null).SetFromCurrentWorld();
+                            //TODO: refactor this stuff
+                            player.Play();
+                        }
                     }
                 }
                 avatars_finished_loading = true;
@@ -329,6 +356,7 @@ namespace metagen
             hands_are_tracked = new Dictionary<RefID, bool>();
             user_ids = new List<RefID>();
             avatarManager.avatar_template = null;
+            avatarManager.has_prepared_avatar = false;
             foreach (var item in avatars)
             {
                 Slot slot = item.Value;
