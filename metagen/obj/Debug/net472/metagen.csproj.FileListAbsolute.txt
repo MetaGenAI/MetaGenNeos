@@ -1,9 +1,0 @@
-C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Libraries\net472\metagen.dll
-C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Libraries\net472\metagen.pdb
-D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.csprojAssemblyReference.cache
-D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.AssemblyInfoInputs.cache
-D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.AssemblyInfo.cs
-D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.csproj.CoreCompileInputs.cache
-D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.csproj.CopyComplete
-D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.dll
-D:\code\neos\metagen\metagen\obj\Debug\net472\metagen.pdb

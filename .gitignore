@@ -1,2 +1,4 @@
 VersionBypasser.cs
 .vs/*
+metagen/obj/*
+VideoConverter/obj/*
