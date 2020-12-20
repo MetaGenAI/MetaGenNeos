@@ -103,9 +103,9 @@ namespace metagen
             {
                 foreach (string user_id in current_users_ids)
                 {
+                    UniLog.Log("Moving " + Path.Combine(saving_folder, user_id + "_vision_tmp.avi"));
                     File.Move(Path.Combine(saving_folder,user_id + "_vision_tmp.avi"), Path.Combine(saving_folder,user_id + "_vision.avi"));
                 }
-                current_users_ids = new List<string>();
             });
             Task[] tasks = new Task[current_users_ids.Count];
             int MAX_WAIT_ITERS = 100000;
@@ -121,6 +121,7 @@ namespace metagen
             }
             task1.Wait();
             Task.WaitAll(tasks);
+            current_users_ids = new List<string>();
             //});
         }
     }
