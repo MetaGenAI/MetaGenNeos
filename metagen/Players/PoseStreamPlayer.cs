@@ -87,8 +87,8 @@ namespace metagen
                                 y = reader.ReadSingle();
                                 z = reader.ReadSingle();
                                 slot.LocalPosition = new float3(x, y, z);
-                                //UniLog.Log(slot.LocalPosition.ToString());
-                            }
+                            //UniLog.Log(slot.LocalPosition.ToString());
+                        }
                             //Rotation stream
                             if (available_streams.Item3)
                             {
