@@ -179,5 +179,9 @@ namespace metagen
             current_users = new List<RefID>();
             isRecording = false;
         }
+        public void WaitForFinish()
+        {
+
+        }
     }
 }

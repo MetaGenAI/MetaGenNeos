@@ -216,25 +216,68 @@ namespace metagen
             UniLog.Log("Stop recording");
             recording = false;
             recording_state = OutputState.Stopping;
+            bool wait_streams = false;
+            bool wait_voices = false;
+            bool wait_hearing = false;
+            bool wait_vision = false;
+
+            //STREAMS
+            if (streamRecorder.isRecording)
+            {
+                streamRecorder.StopRecording();
+                wait_streams = true;
+            }
+
+            //VOICES
+            if (voiceRecorder.isRecording)
+            {
+                voiceRecorder.StopRecording();
+                wait_voices = true;
+            }
+
+            //HEARING
+            if (hearingRecorder.isRecording)
+            {
+                hearingRecorder.StopRecording();
+                wait_hearing = true;
+            }
+
+            //VISION
+            if (visionRecorder.isRecording)
+            {
+                visionRecorder.StopRecording();
+                wait_vision = true;
+            }
 
             Task task = Task.Run(() =>
             {
                 //STREAMS
-                if (streamRecorder.isRecording)
-                    streamRecorder.StopRecording();
+                if (wait_streams)
+                {
+                    streamRecorder.WaitForFinish();
+                    wait_streams = false;
+                }
 
-                //AUDIO
-                if (voiceRecorder.isRecording)
-                    voiceRecorder.StopRecording();
+                //VOICES
+                if (wait_voices)
+                {
+                    voiceRecorder.WaitForFinish();
+                    wait_voices = false;
+                }
 
                 //HEARING
-                if (hearingRecorder.isRecording)
-                    hearingRecorder.StopRecording();
+                if (wait_hearing)
+                {
+                    hearingRecorder.WaitForFinish();
+                    wait_hearing = false;
+                }
 
-                //VIDEO
-                if (visionRecorder.isRecording)
-                    visionRecorder.StopRecording();
-
+                //VISION
+                if (wait_vision)
+                {
+                    visionRecorder.WaitForFinish();
+                    wait_vision = false;
+                }
             });
             task.ContinueWith((Task t) =>
             {

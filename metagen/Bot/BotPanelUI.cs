@@ -33,7 +33,7 @@ namespace FrooxEngine
         protected override void OnAttach()
         {
             base.OnAttach();
-            float2 float2 = new float2(800f, 1200f);
+            float2 float2 = new float2(800f, 2000f);
             this.CanvasSize = float2 * 0.4f;
             this.PhysicalHeight = this.Slot.Parent.LocalScaleToGlobal(0.3f);
             this.Panel.ShowHeader.Value = false;
@@ -42,6 +42,10 @@ namespace FrooxEngine
             holder.LocalPosition = new float3(0f, 1.5f, 1f);
             this.Slot.DestroyChildren();
             panel = holder.AttachComponent<NeosSwapCanvasPanel>();
+            panel.CanvasSize = float2 * 0.4f;
+            panel.PhysicalHeight = panel.Slot.Parent.LocalScaleToGlobal(0.3f);
+            panel.Panel.ShowHeader.Value = false;
+            panel.Panel.ShowHandle.Value = false;
             record_button_pressed.Target = holder.AttachComponent<ValueField<bool>>().Value;
             play_button_pressed.Target = holder.AttachComponent<ValueField<bool>>().Value;
             this.OpenConnectedPanel();

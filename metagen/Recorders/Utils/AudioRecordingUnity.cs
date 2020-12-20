@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO; // for FileStream
 using System; // for BitConverter and Byte Type
+using System.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
 using metagen;
 using BaseX;
@@ -79,6 +81,23 @@ namespace UnityNeos
             //task.Wait();
 
             print("hearing rec stop");
+        }
+        public void WaitForFinish()
+        {
+            List<string> current_users_ids = new List<string> { userID };
+            Task[] tasks = new Task[current_users_ids.Count];
+            int MAX_WAIT_ITERS = 100000;
+            for (int i = 0; i < current_users_ids.Count; i++)
+            {
+                string user_id = current_users_ids[i];
+                Task task2 = Task.Run(() =>
+                {
+                    int iter = 0;
+                    while (!File.Exists(saving_folder + "/" + user_id + "_hearing.ogg") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
+                });
+                tasks[i] = task2;
+            }
+            Task.WaitAll(tasks);
         }
 
         void OnAudioFilterRead(float[] data, int channels)

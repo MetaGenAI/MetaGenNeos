@@ -94,6 +94,13 @@ namespace metagen
                 }
                 current_users_ids = new List<string>();
             });
+            task1.Wait();
+
+            audio_outputs = new Dictionary<RefID, AudioOutput>();
+            audio_recorders = new Dictionary<RefID, AudioRecorder>();
+        }
+        public void WaitForFinish()
+        {
             Task[] tasks = new Task[current_users_ids.Count];
             int MAX_WAIT_ITERS = 100000;
             for (int i = 0; i < current_users_ids.Count; i++)
@@ -106,11 +113,8 @@ namespace metagen
                 });
                 tasks[i] = task2;
             }
-            task1.Wait();
             Task.WaitAll(tasks);
-
-            audio_outputs = new Dictionary<RefID, AudioOutput>();
-            audio_recorders = new Dictionary<RefID, AudioRecorder>();
+            current_users_ids = new List<string>();
         }
     }
 }
