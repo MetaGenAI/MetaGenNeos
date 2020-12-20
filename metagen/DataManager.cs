@@ -59,13 +59,13 @@ namespace metagen
             UniLog.Log(currentWorld.SessionId);
             string world_id = currentWorld.CorrespondingWorldId ?? "new_world";
             string escaped_world_id = scapeWorldID(world_id);
-            if (!Directory.Exists(root_saving_folder+"/"+escaped_world_id))
+            if (!Directory.Exists(Path.Combine(root_saving_folder,escaped_world_id)))
             {
-                Directory.CreateDirectory(root_saving_folder + "/" + escaped_world_id);
+                Directory.CreateDirectory(Path.Combine(root_saving_folder,escaped_world_id));
             }
-            session_saving_folder = escaped_world_id+"/"+currentWorld.SessionId+"_"+g.ToString();
+            session_saving_folder = Path.Combine(escaped_world_id,currentWorld.SessionId+"_"+g.ToString());
             section = 0;
-            _saving_folder = root_saving_folder + "/" + session_saving_folder;
+            _saving_folder = Path.Combine(root_saving_folder,session_saving_folder);
             Directory.CreateDirectory(saving_folder);
             have_started_recording_session = true;
             have_users_changed = false;
@@ -74,7 +74,7 @@ namespace metagen
         public void StartSection()
         {
             section += 1;
-            _saving_folder = root_saving_folder + "/" + session_saving_folder + "/" + section.ToString();
+            _saving_folder = Path.Combine(root_saving_folder,session_saving_folder,section.ToString());
             Directory.CreateDirectory(saving_folder);
             have_users_changed = false;
             WriteUserMetadata();
@@ -119,7 +119,7 @@ namespace metagen
                     devices = String.Join(",", user.Devices.Where<SyncVar>((Func<SyncVar, bool>)(i => i.IsDictionary)).Select(d => d["Type"].GetValue<string>(true))),
                 });
             }
-            using (var writer = new StreamWriter(saving_folder+"/user_metadata.csv"))
+            using (var writer = new StreamWriter(Path.Combine(saving_folder,"user_metadata.csv")))
             using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
             {
                 csv.WriteRecords(user_metadatas);
@@ -173,7 +173,7 @@ namespace metagen
         public List<string> GetRecordingsForWorld(World world)
         {
             string world_id = world.CorrespondingWorldId ?? "new_world";
-            string path = root_saving_folder + "/" + scapeWorldID(world_id);
+            string path = Path.Combine(root_saving_folder,scapeWorldID(world_id));
             if (!Directory.Exists(path)) return null;
             var di = new DirectoryInfo(path);
             List<string> session_folders = di.EnumerateDirectories()

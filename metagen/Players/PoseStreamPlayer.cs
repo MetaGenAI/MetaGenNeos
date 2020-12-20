@@ -189,7 +189,7 @@ namespace metagen
                 if (reading_directory == null) return;
 
                 List<UserMetadata> userMetadatas;
-                using (var reader = new StreamReader(reading_directory + "/user_metadata.csv"))
+                using (var reader = new StreamReader(Path.Combine(reading_directory,"user_metadata.csv")))
                 using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
                     userMetadatas = csv.GetRecords<UserMetadata>().ToList();
@@ -199,7 +199,7 @@ namespace metagen
                     RefID user_id = RefID.Parse(user.userRefId);
                     UniLog.Log(user_id.ToString());
                     user_ids.Add(user_id);
-                    output_fss[user_id] = new FileStream(reading_directory + "/" + user_id.ToString() + "_streams.dat", FileMode.Open, FileAccess.Read);
+                    output_fss[user_id] = new FileStream(Path.Combine(reading_directory,user_id.ToString() + "_streams.dat"), FileMode.Open, FileAccess.Read);
                     BitReaderStream bitstream = new BitReaderStream(output_fss[user_id]);
                     output_readers[user_id] = new BitBinaryReaderX(bitstream);
                     fake_proxies[user_id] = new List<Tuple<BodyNode, AvatarObjectSlot>>();
@@ -300,11 +300,11 @@ namespace metagen
                         if (i==0)
                         {
                             if (!play_hearing) continue;
-                            audio_file = reading_directory + "/" + user_id.ToString() + "_hearing.ogg";
+                            audio_file = Path.Combine(reading_directory, user_id.ToString() + "_hearing.ogg");
                         } else
                         {
                             if (!play_voices) continue;
-                            audio_file = reading_directory + "/" + user_id.ToString() + "_voice.ogg";
+                            audio_file = Path.Combine(reading_directory,user_id.ToString() + "_voice.ogg");
                         }
                         if (File.Exists(audio_file))
                         {

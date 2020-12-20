@@ -62,7 +62,7 @@ namespace UnityNeos
         public void StartRecording()
         {
             //Guid g = Guid.NewGuid();
-            recorder = new AudioRecorder(saving_folder+"/"+userID+"_hearing_tmp", bufferSize, numBuffers, outputRate);
+            recorder = new AudioRecorder(Path.Combine(saving_folder,userID+"_hearing_tmp"), bufferSize, numBuffers, outputRate);
             recorder.StartWriting();
             isRecording = true;
             print("hearing rec start");
@@ -74,7 +74,7 @@ namespace UnityNeos
             recorder.WriteHeader();
             //Task task = Task.Run(() =>
             //{
-            File.Move(saving_folder + "/" + userID + "_hearing_tmp.wav", saving_folder + "/" + userID + "_hearing.wav");
+            File.Move(Path.Combine(saving_folder,userID + "_hearing_tmp.wav"), Path.Combine(saving_folder,userID + "_hearing.wav"));
             //});
             //task.Wait();
 
