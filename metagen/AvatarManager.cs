@@ -185,7 +185,7 @@ namespace metagen
             //    handPoser.Slot.RemoveComponent(handPoser);
             //}
             slot.SetParent(fake_root);
-            slot.LocalScale = originalScale;
+            slot.LocalScale = avatarScale;
                 return fake_root;
             //    task.SetResult(fake_root);
             //});
