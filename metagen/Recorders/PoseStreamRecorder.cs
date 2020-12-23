@@ -108,6 +108,7 @@ namespace metagen
             Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
             foreach (User user in users)
             {
+                if (user == metagen_comp.World.LocalUser) continue;
                 RefID user_id = user.ReferenceID;
                 output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_streams.dat", FileMode.Create, FileAccess.ReadWrite);
 

@@ -63,7 +63,7 @@ namespace metagen
             recording_streams = true;
             recording_voice = true;
             recording_hearing = true;
-            recording_vision = true;
+            recording_vision = false;
             utcNow = DateTime.UtcNow;
             recordingBeginTime = DateTime.UtcNow;
             dataManager = this.Slot.AttachComponent<DataManager>();

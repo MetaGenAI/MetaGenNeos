@@ -94,7 +94,14 @@ namespace metagen
             }
             foreach (var item in cameras)
             {
-                item.Value.Slot.RemoveComponent(item.Value);
+                try
+                {
+                    item.Value.Slot.RemoveComponent(item.Value);
+                } catch (Exception e)
+                {
+                    UniLog.Log("OwO: " + e.Message);
+                    UniLog.Log(e.StackTrace);
+                }
             }
             cameras = new Dictionary<RefID, FrooxEngine.Camera>();
             visual_recorders = new Dictionary<RefID, VideoRecorder>();

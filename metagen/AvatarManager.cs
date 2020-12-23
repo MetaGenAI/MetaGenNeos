@@ -124,11 +124,13 @@ namespace metagen
             FingerPlayerSource player_source = hidden_slot.AttachComponent<FingerPlayerSource>();
             //FingerPlayerSource player_source = fake_root.AttachComponent<FingerPlayerSource>();
             List<HandPoser> handPosers = slot.GetComponentsInChildren<HandPoser>();
+            float3 avatarScale = originalScale;
             foreach (IAvatarObject comp in components)
             {
                 AvatarObjectSlot comp2;
                 if (comp.Node == BodyNode.Root)
                 {
+                    avatarScale = ((AvatarRoot)comp).Scale;
                     comp2 = fake_root.AttachComponent<AvatarObjectSlot>();
                     comp2.Node.Value = comp.Node;
                     comp2.Equipped.Target = comp;
