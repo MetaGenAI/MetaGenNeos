@@ -10,6 +10,7 @@ using System.IO;
 using FrooxEngine.CommonAvatar;
 using CsvHelper;
 using System.Globalization;
+using System.Reflection;
 
 namespace metagen
 {
@@ -241,11 +242,15 @@ namespace metagen
                             {
                                 AvatarObjectSlot connected_comp = comp.EquippingSlot;
                                 fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, connected_comp));
+                                MethodInfo dynMethod = connected_comp.Slot.GetType().GetMethod("RegisterUserRoot",
+                                    BindingFlags.NonPublic | BindingFlags.Instance);
+                                dynMethod.Invoke(this, new object[] { metagen_comp.World.LocalUser.LocalUserRoot });
+                                connected_comp.IsTracking.Value = true;
                                 //avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
-                                if (comp.Node != BodyNode.Root)
-                                {
-                                    ((AvatarPoseNode)comp).IsTracking.Value = true;
-                                }
+                                //if (comp.Node != BodyNode.Root)
+                                //{
+                                //    ((AvatarPoseNode)comp).IsTracking.Value = true;
+                                //}
                                 node_found = true;
                                 break;
                             }
