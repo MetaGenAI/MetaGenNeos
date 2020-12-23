@@ -242,6 +242,10 @@ namespace metagen
                                 AvatarObjectSlot connected_comp = comp.EquippingSlot;
                                 fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, connected_comp));
                                 //avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
+                                if (comp.Node != BodyNode.Root)
+                                {
+                                    ((AvatarPoseNode)comp).IsTracking.Value = true;
+                                }
                                 node_found = true;
                                 break;
                             }
