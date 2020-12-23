@@ -143,6 +143,7 @@ namespace metagen
                     comp2.Node.Value = comp.Node;
                     comp2.Equipped.Target = comp;
                     comp.Equip(comp2);
+                    ((AvatarPoseNode)comp).IsTracking.Value = true;
                 }
             }
             //foreach(HandPoser handPoser in handPosers)
