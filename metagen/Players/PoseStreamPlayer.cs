@@ -121,10 +121,10 @@ namespace metagen
                                 z = reader.ReadSingle();
                                 w = reader.ReadSingle();
                                 //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
-                                UniLog.Log(x);
-                                UniLog.Log(y);
-                                UniLog.Log(z);
-                                UniLog.Log(w);
+                                //UniLog.Log(x);
+                                //UniLog.Log(y);
+                                //UniLog.Log(z);
+                                //UniLog.Log(w);
                                 if (finger_slot.ContainsKey(node))
                                 {
                                     floatQ rot = new floatQ(x, y, z, w);
@@ -242,9 +242,9 @@ namespace metagen
                             {
                                 AvatarObjectSlot connected_comp = comp.EquippingSlot;
                                 fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, connected_comp));
-                                MethodInfo dynMethod = connected_comp.Slot.GetType().GetMethod("RegisterUserRoot",
-                                    BindingFlags.NonPublic | BindingFlags.Instance);
-                                dynMethod.Invoke(connected_comp.Slot, new object[] { metagen_comp.World.LocalUser.LocalUserRoot });
+                                //MethodInfo dynMethod = connected_comp.Slot.GetType().GetMethod("RegisterUserRoot",
+                                //    BindingFlags.NonPublic | BindingFlags.Instance);
+                                //dynMethod.Invoke(connected_comp.Slot, new object[] { metagen_comp.World.LocalUser.LocalUserRoot });
                                 connected_comp.IsTracking.Value = true;
                                 //avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
                                 //if (comp.Node != BodyNode.Root)
