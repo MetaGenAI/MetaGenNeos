@@ -67,6 +67,7 @@ namespace metagen
             {
                 foreach (User user in users)
                 {
+                    if (user == metagen_comp.World.LocalUser) continue;
                     RefID user_id = user.ReferenceID;
                     current_users_ids.Add(user_id.ToString());
                     Slot localSlot = user.Root.HeadSlot.AddLocalSlot("vision recorder camera");

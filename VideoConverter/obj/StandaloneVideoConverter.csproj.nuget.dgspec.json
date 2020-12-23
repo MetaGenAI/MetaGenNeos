@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\code\\neos\\metagen\\VideoConverter\\StandaloneVideoConverter.csproj": {}
+    "D:\\code\\neos\\metagen\\metagenneos\\VideoConverter\\StandaloneVideoConverter.csproj": {}
   },
   "projects": {
-    "D:\\code\\neos\\metagen\\VideoConverter\\StandaloneVideoConverter.csproj": {
+    "D:\\code\\neos\\metagen\\metagenneos\\VideoConverter\\StandaloneVideoConverter.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\code\\neos\\metagen\\VideoConverter\\StandaloneVideoConverter.csproj",
+        "projectUniqueName": "D:\\code\\neos\\metagen\\metagenneos\\VideoConverter\\StandaloneVideoConverter.csproj",
         "projectName": "StandaloneVideoConverter",
-        "projectPath": "D:\\code\\neos\\metagen\\VideoConverter\\StandaloneVideoConverter.csproj",
+        "projectPath": "D:\\code\\neos\\metagen\\metagenneos\\VideoConverter\\StandaloneVideoConverter.csproj",
         "packagesPath": "C:\\Users\\Guillermo Valle\\.nuget\\packages\\",
-        "outputPath": "D:\\code\\neos\\metagen\\VideoConverter\\obj\\",
+        "outputPath": "D:\\code\\neos\\metagen\\metagenneos\\VideoConverter\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackagesFallback\\",
