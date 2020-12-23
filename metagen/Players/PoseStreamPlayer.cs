@@ -244,7 +244,7 @@ namespace metagen
                                 fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, connected_comp));
                                 MethodInfo dynMethod = connected_comp.Slot.GetType().GetMethod("RegisterUserRoot",
                                     BindingFlags.NonPublic | BindingFlags.Instance);
-                                dynMethod.Invoke(this, new object[] { metagen_comp.World.LocalUser.LocalUserRoot });
+                                dynMethod.Invoke(connected_comp.Slot, new object[] { metagen_comp.World.LocalUser.LocalUserRoot });
                                 connected_comp.IsTracking.Value = true;
                                 //avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
                                 //if (comp.Node != BodyNode.Root)
