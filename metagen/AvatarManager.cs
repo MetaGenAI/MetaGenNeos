@@ -135,7 +135,8 @@ namespace metagen
                     comp2 = fake_root.AttachComponent<AvatarObjectSlot>();
                     comp2.Node.Value = comp.Node;
                     comp2.Equipped.Target = comp;
-                    comp.Equip(comp2);
+                    comp2.IsTracking.Value = false;
+                    //comp.Equip(comp2);
                 }
                 else
                 {
@@ -143,7 +144,8 @@ namespace metagen
                     comp2 = new_proxy.AttachComponent<AvatarObjectSlot>();
                     comp2.Node.Value = comp.Node;
                     comp2.Equipped.Target = comp;
-                    comp.Equip(comp2);
+                    comp2.IsTracking.Value = false;
+                    //comp.Equip(comp2);
                     //((AvatarPoseNode)comp).IsTracking.Value = true;
                 }
             }

@@ -217,6 +217,7 @@ namespace metagen
                     UniLog.Log(avatar.ToString());
                     avatars[user_id] = avatar;
                     List<IAvatarObject> components = avatar.GetComponentsInChildren<IAvatarObject>();
+                    List<AvatarObjectSlot> root_comps = avatar.GetComponentsInChildren<AvatarObjectSlot>();
 
                     //READ absolute time
                     output_readers[user_id].ReadSingle();
@@ -237,22 +238,27 @@ namespace metagen
                         bool node_found = false;
                         foreach (IAvatarObject comp in components)
                         {
-                            UniLog.Log(comp.Name);
-                            if (comp.Node == bodyNodeType)
+                            foreach (AvatarObjectSlot comp2 in root_comps)
                             {
-                                AvatarObjectSlot connected_comp = comp.EquippingSlot;
-                                fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, connected_comp));
-                                //MethodInfo dynMethod = connected_comp.Slot.GetType().GetMethod("RegisterUserRoot",
-                                //    BindingFlags.NonPublic | BindingFlags.Instance);
-                                //dynMethod.Invoke(connected_comp.Slot, new object[] { metagen_comp.World.LocalUser.LocalUserRoot });
-                                connected_comp.IsTracking.Value = true;
-                                //avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
-                                //if (comp.Node != BodyNode.Root)
-                                //{
-                                //    ((AvatarPoseNode)comp).IsTracking.Value = true;
-                                //}
-                                node_found = true;
-                                break;
+                                UniLog.Log(comp.Name);
+                                if (comp.Node == bodyNodeType && comp2.Node == bodyNodeType)
+                                {
+                                    //AvatarObjectSlot connected_comp = comp.EquippingSlot;
+                                    comp.Equip(comp2);
+                                    fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, comp2));
+                                    //MethodInfo dynMethod = connected_comp.Slot.GetType().GetMethod("RegisterUserRoot",
+                                    //    BindingFlags.NonPublic | BindingFlags.Instance);
+                                    //dynMethod.Invoke(connected_comp.Slot, new object[] { metagen_comp.World.LocalUser.LocalUserRoot });
+                                    comp2.IsTracking.Value = true;
+                                    //avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
+                                    //if (comp.Node != BodyNode.Root)
+                                    //{
+                                    //    ((AvatarPoseNode)comp).IsTracking.Value = true;
+                                    //}
+                                    node_found = true;
+                                    break;
+                                }
+                                if (node_found) break;
                             }
                         }
                         if (!node_found) throw new Exception("Node " + bodyNodeType.ToString() + " not found in avatar!");
