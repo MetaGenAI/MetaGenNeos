@@ -16,6 +16,7 @@ namespace metagen
         public Dictionary<RefID, BitBinaryWriterX> output_writers = new Dictionary<RefID, BitBinaryWriterX>();
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
         public Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>> avatar_stream_drivers = new Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>>();
+        public Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>>();
         public Dictionary<RefID, FingerPoseStreamManager> finger_stream_drivers = new Dictionary<RefID, FingerPoseStreamManager>();
         public List<RefID> current_users = new List<RefID>();
         public bool isRecording = false;
@@ -34,38 +35,43 @@ namespace metagen
 
                 //WRITE deltaT
                 writer.Write(deltaT); //float
-                foreach (var item in avatar_stream_drivers[user_id])
+                //foreach (var item in avatar_stream_drivers[user_id])
+                foreach (var item in avatar_pose_nodes[user_id])
                 {
                     BodyNode node = item.Item1;
-                    TransformStreamDriver driver = item.Item2;
+                    //TransformStreamDriver driver = item.Item2;
+                    IAvatarObject avatarObject = item.Item2;
 
                     //WRITE the transform
 
                     //scale stream;
-                    if (driver.ScaleStream.Target != null)
-                    {
-                        float3 scale = driver.TargetScale;
+                    //if (driver.ScaleStream.Target != null)
+                    //{
+                        //float3 scale = driver.TargetScale;
+                        float3 scale = avatarObject.Slot.LocalScale;
                         writer.Write((float)(scale.x));
                         writer.Write((float)(scale.y));
                         writer.Write((float)(scale.z));
-                    }
+                    //}
                     //position stream;
-                    if (driver.PositionStream.Target != null)
-                    {
-                        float3 position = driver.TargetPosition;
+                    //if (driver.PositionStream.Target != null)
+                    //{
+                        //float3 position = driver.TargetPosition;
+                        float3 position = avatarObject.Slot.LocalPosition;
                         writer.Write(position.x);
                         writer.Write(position.y);
                         writer.Write(position.z);
-                    }
+                    //}
                     //rotation stream;
-                    if (driver.RotationStream.Target != null)
-                    {
-                        floatQ rotation = driver.TargetRotation;
+                    //if (driver.RotationStream.Target != null)
+                    //{
+                        //floatQ rotation = driver.TargetRotation;
+                        floatQ rotation = avatarObject.Slot.LocalRotation;
                         writer.Write(rotation.x);
                         writer.Write(rotation.y);
                         writer.Write(rotation.z);
                         writer.Write(rotation.w);
-                    }
+                    //}
                 }
                 //WRITE finger pose
                 if (finger_stream_drivers[user_id] != null)
@@ -117,23 +123,28 @@ namespace metagen
                 avatar_stream_drivers[user_id] = new List<Tuple<BodyNode, TransformStreamDriver>>();
                 List<AvatarObjectSlot> components = user.Root.Slot.GetComponentsInChildren<AvatarObjectSlot>();
                 finger_stream_drivers[user_id] = user.Root.Slot.GetComponent<FingerPoseStreamManager>();
+                avatar_pose_nodes[user_id] = new List<Tuple<BodyNode, IAvatarObject>>();
                 //WRITE the absolute time
                 output_writers[user_id].Write((float)DateTimeOffset.Now.ToUnixTimeMilliseconds()); //absolute time
                 int numValidNodes = 0;
                 foreach (AvatarObjectSlot comp in components)
                 {
-                    if (comp.Node.Value == BodyNode.LeftController || comp.Node.Value == BodyNode.RightController || comp.Node.Value == BodyNode.NONE) continue;
-                    TransformStreamDriver driver = comp.Slot.Parent.GetComponent<TransformStreamDriver>();
-                    if (driver != null)
+                    if (comp.IsTracking.Value)
                     {
-                        avatar_stream_drivers[user_id].Add(new Tuple<BodyNode, TransformStreamDriver>(comp.Node.Value, driver));
+                        avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(comp.Node, comp.Equipped.Target));
+                        if (comp.Node.Value == BodyNode.LeftController || comp.Node.Value == BodyNode.RightController || comp.Node.Value == BodyNode.NONE) continue;
+                        TransformStreamDriver driver = comp.Slot.Parent.GetComponent<TransformStreamDriver>();
+                        if (driver != null)
+                        {
+                            avatar_stream_drivers[user_id].Add(new Tuple<BodyNode, TransformStreamDriver>(comp.Node.Value, driver));
+                        }
+                        else //if the driver is not in the parent, then it is in the slot (which is what happens for the root)
+                        {
+                            driver = comp.Slot.GetComponent<TransformStreamDriver>();
+                            avatar_stream_drivers[user_id].Add(new Tuple<BodyNode, TransformStreamDriver>(comp.Node.Value, driver));
+                        }
+                        numValidNodes += 1;
                     }
-                    else //if the driver is not in the parent, then it is in the slot (which is what happens for the root)
-                    {
-                        driver = comp.Slot.GetComponent<TransformStreamDriver>();
-                        avatar_stream_drivers[user_id].Add(new Tuple<BodyNode, TransformStreamDriver>(comp.Node.Value, driver));
-                    }
-                    numValidNodes += 1;
                 }
                 //WRITE the number of body nodes
                 output_writers[user_id].Write(numValidNodes); //int
@@ -177,6 +188,7 @@ namespace metagen
             output_writers = new Dictionary<RefID, BitBinaryWriterX>();
             output_fss = new Dictionary<RefID, FileStream>();
             avatar_stream_drivers = new Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>>();
+            avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>>();
             current_users = new List<RefID>();
             isRecording = false;
         }

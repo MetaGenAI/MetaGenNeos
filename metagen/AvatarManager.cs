@@ -126,27 +126,30 @@ namespace metagen
             //FingerPlayerSource player_source = fake_root.AttachComponent<FingerPlayerSource>();
             List<HandPoser> handPosers = slot.GetComponentsInChildren<HandPoser>();
             float3 avatarScale = originalScale;
-            foreach (IAvatarObject comp in components)
-            {
-                AvatarObjectSlot comp2;
-                if (comp.Node == BodyNode.Root)
-                {
-                    avatarScale = ((AvatarRoot)comp).Scale;
-                    comp2 = fake_root.AttachComponent<AvatarObjectSlot>();
-                    comp2.Node.Value = comp.Node;
-                    comp2.Equipped.Target = comp;
-                    comp.Equip(comp2);
-                }
-                else
-                {
-                    Slot new_proxy = fake_root.AddSlot(comp.Name);
-                    comp2 = new_proxy.AttachComponent<AvatarObjectSlot>();
-                    comp2.Node.Value = comp.Node;
-                    comp2.Equipped.Target = comp;
-                    comp.Equip(comp2);
-                    //((AvatarPoseNode)comp).IsTracking.Value = true;
-                }
-            }
+
+            //FAKE AVATAROBJECTSLOTS
+            //foreach (IAvatarObject comp in components)
+            //{
+            //    AvatarObjectSlot comp2;
+            //    if (comp.Node == BodyNode.Root)
+            //    {
+            //        avatarScale = ((AvatarRoot)comp).Scale;
+            //        comp2 = fake_root.AttachComponent<AvatarObjectSlot>();
+            //        comp2.Node.Value = comp.Node;
+            //        comp2.Equipped.Target = comp;
+            //        comp.Equip(comp2);
+            //    }
+            //    else
+            //    {
+            //        Slot new_proxy = fake_root.AddSlot(comp.Name);
+            //        comp2 = new_proxy.AttachComponent<AvatarObjectSlot>();
+            //        comp2.Node.Value = comp.Node;
+            //        comp2.Equipped.Target = comp;
+            //        comp.Equip(comp2);
+            //        //((AvatarPoseNode)comp).IsTracking.Value = true;
+            //    }
+            //}
+
             //foreach(HandPoser handPoser in handPosers)
             //{
             //handPoser.PoseSource.Target = player_source;
