@@ -118,14 +118,15 @@ namespace metagen
             slot.SetParent(currentWorld.LocalUser.Root.Slot.Parent);
             List<IAvatarObject> components = slot.GetComponentsInChildren<IAvatarObject>();
             //AvatarRoot root = slot.GetComponentInChildren<AvatarRoot>();
-            //Slot fake_root = currentWorld.AddSlot("Fake Root");
-            Slot fake_root = currentWorld.LocalUser.Root.Slot.AddSlot("Fake Root");
+            //Slot fake_root = currentWorld.RootSlot.AddSlot("Fake Root");
+            Slot fake_root = currentWorld.LocalUser.Root.Slot.Parent.AddSlot("Fake Root");
             Slot hidden_slot = fake_root.AddLocalSlot("hand poser local slot");
             //TODO: find a way to do this without a custom component, because this won't work in normal sessions as it is!
             FingerPlayerSource player_source = hidden_slot.AttachComponent<FingerPlayerSource>();
             //FingerPlayerSource player_source = fake_root.AttachComponent<FingerPlayerSource>();
             List<HandPoser> handPosers = slot.GetComponentsInChildren<HandPoser>();
             float3 avatarScale = originalScale;
+
             foreach (IAvatarObject comp in components)
             {
                 AvatarObjectSlot comp2;

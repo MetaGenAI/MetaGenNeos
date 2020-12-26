@@ -24,3 +24,16 @@ D:\code\neos\metagen\metagenneos\VideoConverter\obj\Debug\netcoreapp3.1\Standalo
 D:\code\neos\metagen\metagenneos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.dll
 D:\code\neos\metagen\metagenneos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.pdb
 D:\code\neos\metagen\metagenneos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.genruntimeconfig.cache
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.exe
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.deps.json
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.runtimeconfig.json
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.runtimeconfig.dev.json
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.dll
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.pdb
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.csprojAssemblyReference.cache
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.AssemblyInfoInputs.cache
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.AssemblyInfo.cs
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.csproj.CoreCompileInputs.cache
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.dll
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.pdb
+C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.genruntimeconfig.cache

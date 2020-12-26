@@ -64,12 +64,20 @@ namespace metagen
 
                         //READ deltaT
                         float deltaT = reader.ReadSingle();
-                        foreach (var item in fake_proxies[user_id])
+                        int node_index = 0;
+                        //foreach (var item in fake_proxies[user_id])
+                        foreach (var item in avatar_pose_nodes[user_id])
                         {
                             BodyNode node = item.Item1;
                             var available_streams = avatar_stream_channels[user_id][node];
-                            AvatarObjectSlot comp = item.Item2;
+                            //AvatarObjectSlot comp = item.Item2;
+                            AvatarObjectSlot avatarObject = fake_proxies[user_id][node_index].Item2;
+                            IAvatarObject comp = item.Item2;
                             Slot slot = comp.Slot;
+                            if (node == BodyNode.Root)
+                            {
+                                slot = avatarObject.Slot;
+                            }
 
                             //READ transform
                             float x, y, z, w;
@@ -79,7 +87,9 @@ namespace metagen
                                 x = reader.ReadSingle();
                                 y = reader.ReadSingle();
                                 z = reader.ReadSingle();
-                                slot.LocalScale = new float3(x, y, z);
+                                float3 scale = new float3(x, y, z);
+                                scale = avatarObject.Slot.Parent.LocalScaleToSpace(scale, slot.Parent);
+                                slot.LocalScale = scale;
                                 //UniLog.Log(slot.LocalScale.ToString());
                             }
                             //Position stream
@@ -88,9 +98,11 @@ namespace metagen
                                 x = reader.ReadSingle();
                                 y = reader.ReadSingle();
                                 z = reader.ReadSingle();
-                                slot.LocalPosition = new float3(x, y, z);
+                                float3 position = new float3(x, y, z);
+                                position = avatarObject.Slot.Parent.LocalPointToSpace(position, slot.Parent);
+                                slot.LocalPosition = position;
                             //UniLog.Log(slot.LocalPosition.ToString());
-                        }
+                            }
                             //Rotation stream
                             if (available_streams.Item3)
                             {
@@ -98,10 +110,14 @@ namespace metagen
                                 y = reader.ReadSingle();
                                 z = reader.ReadSingle();
                                 w = reader.ReadSingle();
-                                slot.LocalRotation = new floatQ(x, y, z, w);
+                                floatQ rotation = new floatQ(x, y, z, w);
+                                rotation = avatarObject.Slot.Parent.LocalRotationToSpace(rotation, slot.Parent);
+                                slot.LocalRotation = rotation;
                                 //UniLog.Log(slot.LocalRotation.ToString());
                             }
+                        node_index++;
                         }
+
                         //READ finger pose
                         var finger_slot = finger_slots[user_id];
                         if (hands_are_tracked[user_id])
@@ -240,14 +256,24 @@ namespace metagen
                         bool node_found = false;
                         foreach (IAvatarObject comp in components)
                         {
+                            UniLog.Log(comp.Node);
                             foreach (AvatarObjectSlot comp2 in root_comps)
                             {
-                                UniLog.Log(comp.Name);
                                 if (comp.Node == bodyNodeType && comp2.Node == bodyNodeType)
                                 {
                                     //AvatarObjectSlot connected_comp = comp.EquippingSlot;
                                     comp.Equip(comp2);
+                                    if (bodyNodeType != BodyNode.Root)
+                                    {
+                                        SyncRef<Slot> sourceField = (SyncRef<Slot>) comp.GetType().GetField("_source", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(comp);
+                                        sourceField.Target = null;
+                                        FieldDrive<float3> posField = (FieldDrive<float3>) comp.GetType().GetField("_position", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(comp);
+                                        posField.Target = null;
+                                        FieldDrive<floatQ> rotField = (FieldDrive<floatQ>) comp.GetType().GetField("_rotation", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(comp);
+                                        rotField.Target = null;
+                                    }
                                     fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, comp2));
+                                    avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(comp.Node, comp));
                                     //MethodInfo dynMethod = connected_comp.Slot.GetType().GetMethod("RegisterUserRoot",
                                     //    BindingFlags.NonPublic | BindingFlags.Instance);
                                     //dynMethod.Invoke(connected_comp.Slot, new object[] { metagen_comp.World.LocalUser.LocalUserRoot });

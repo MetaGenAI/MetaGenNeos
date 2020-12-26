@@ -35,43 +35,58 @@ namespace metagen
 
                 //WRITE deltaT
                 writer.Write(deltaT); //float
+                int node_index = 0;
                 //foreach (var item in avatar_stream_drivers[user_id])
                 foreach (var item in avatar_pose_nodes[user_id])
                 {
                     BodyNode node = item.Item1;
                     //TransformStreamDriver driver = item.Item2;
+                    TransformStreamDriver driver = avatar_stream_drivers[user_id][node_index].Item2;
                     IAvatarObject avatarObject = item.Item2;
+                    Slot slot = avatarObject.Slot;
+                    //if (node == BodyNode.Root)
+                    //{
+                    //    slot = driver.Slot;
+                    //}
 
                     //WRITE the transform
 
                     //scale stream;
-                    //if (driver.ScaleStream.Target != null)
-                    //{
-                        //float3 scale = driver.TargetScale;
-                        float3 scale = avatarObject.Slot.LocalScale;
+                    if (driver.ScaleStream.Target != null)
+                    {
+                        float3 scale = slot.LocalScale;
+                        scale = slot.Parent.LocalScaleToSpace(scale,driver.Slot.Parent);
+                        if (node == BodyNode.Root)
+                            scale = driver.TargetScale;
                         writer.Write((float)(scale.x));
                         writer.Write((float)(scale.y));
                         writer.Write((float)(scale.z));
-                    //}
+                    }
                     //position stream;
-                    //if (driver.PositionStream.Target != null)
-                    //{
-                        //float3 position = driver.TargetPosition;
-                        float3 position = avatarObject.Slot.LocalPosition;
+                    if (driver.PositionStream.Target != null)
+                    {
+                        float3 position = slot.LocalPosition;
+                        position = slot.Parent.LocalPointToSpace(position,driver.Slot.Parent);
+                        if (node == BodyNode.Root)
+                        if (node == BodyNode.Root)
+                            position = driver.TargetPosition;
                         writer.Write(position.x);
                         writer.Write(position.y);
                         writer.Write(position.z);
-                    //}
+                    }
                     //rotation stream;
-                    //if (driver.RotationStream.Target != null)
-                    //{
-                        //floatQ rotation = driver.TargetRotation;
-                        floatQ rotation = avatarObject.Slot.LocalRotation;
+                    if (driver.RotationStream.Target != null)
+                    {
+                        floatQ rotation = slot.LocalRotation;
+                        rotation = slot.Parent.LocalRotationToSpace(rotation,driver.Slot.Parent);
+                        if (node == BodyNode.Root)
+                            rotation = driver.TargetRotation;
                         writer.Write(rotation.x);
                         writer.Write(rotation.y);
                         writer.Write(rotation.z);
                         writer.Write(rotation.w);
-                    //}
+                    }
+                    node_index++;
                 }
                 //WRITE finger pose
                 if (finger_stream_drivers[user_id] != null)
