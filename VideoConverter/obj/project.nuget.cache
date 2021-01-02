@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "QHK5tfEV6iYFNi9yq0wCtr6T+EnGuq3gn0UiGlDg5cV/875FYnRZ6zVJk9hYlwAjG66MXCAAz5j3Fju/xC5Kiw==",
+  "dgSpecHash": "7r2fbyAm7UZpO7cN3HoFjprNOclstk39cjb6KSok0WBmPdlr4/vC6kyFXsa0BnN6aRpl/NHiUOppUwCAmfLxRw==",
   "success": true,
-  "projectFilePath": "C:\\Users\\guill\\Documents\\code\\metagen\\MetaGenNeos\\VideoConverter\\StandaloneVideoConverter.csproj",
+  "projectFilePath": "D:\\code\\neos\\metagen\\metagenneos\\VideoConverter\\StandaloneVideoConverter.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }
