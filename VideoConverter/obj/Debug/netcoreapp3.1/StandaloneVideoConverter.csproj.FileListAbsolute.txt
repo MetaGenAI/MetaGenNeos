@@ -37,3 +37,16 @@ C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\obj\Debug\netco
 C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.dll
 C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.pdb
 C:\Users\guill\Documents\code\metagen\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.genruntimeconfig.cache
+C:\Users\Administrator\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.exe
+C:\Users\Administrator\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.deps.json
+C:\Users\Administrator\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.runtimeconfig.json
+C:\Users\Administrator\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.runtimeconfig.dev.json
+C:\Users\Administrator\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.dll
+C:\Users\Administrator\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.pdb
+C:\Users\Administrator\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.csprojAssemblyReference.cache
+C:\Users\Administrator\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.AssemblyInfoInputs.cache
+C:\Users\Administrator\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.AssemblyInfo.cs
+C:\Users\Administrator\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.csproj.CoreCompileInputs.cache
+C:\Users\Administrator\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.dll
+C:\Users\Administrator\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.pdb
+C:\Users\Administrator\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.genruntimeconfig.cache

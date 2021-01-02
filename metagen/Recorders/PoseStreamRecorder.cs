@@ -40,14 +40,18 @@ namespace metagen
                 foreach (var item in avatar_pose_nodes[user_id])
                 {
                     BodyNode node = item.Item1;
+                    //UniLog.Log(node);
                     //TransformStreamDriver driver = item.Item2;
                     TransformStreamDriver driver = avatar_stream_drivers[user_id][node_index].Item2;
                     IAvatarObject avatarObject = item.Item2;
-                    Slot slot = avatarObject.Slot;
-                    //if (node == BodyNode.Root)
-                    //{
-                    //    slot = driver.Slot;
-                    //}
+                    Slot slot = null;
+                    if (node == BodyNode.Root)
+                    {
+                        slot = driver.Slot;
+                    } else
+                    {
+                        slot = avatarObject.Slot;
+                    }
 
                     //WRITE the transform
 
@@ -146,8 +150,8 @@ namespace metagen
                 {
                     if (comp.IsTracking.Value)
                     {
-                        avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(comp.Node, comp.Equipped.Target));
                         if (comp.Node.Value == BodyNode.LeftController || comp.Node.Value == BodyNode.RightController || comp.Node.Value == BodyNode.NONE) continue;
+                        avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(comp.Node, comp.Equipped?.Target));
                         TransformStreamDriver driver = comp.Slot.Parent.GetComponent<TransformStreamDriver>();
                         if (driver != null)
                         {

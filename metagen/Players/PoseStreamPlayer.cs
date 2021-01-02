@@ -11,6 +11,7 @@ using FrooxEngine.CommonAvatar;
 using CsvHelper;
 using System.Globalization;
 using System.Reflection;
+using FrooxEngine.FinalIK;
 
 namespace metagen
 {
@@ -252,15 +253,16 @@ namespace metagen
                         //READ if rotation stream exists
                         bool rot_exists = output_readers[user_id].ReadBoolean();
                         BodyNode bodyNodeType = (BodyNode)nodeInt;
+                        VRIKAvatar avatarIK = avatar.GetComponentInChildren<VRIKAvatar>();
 
                         bool node_found = false;
                         foreach (IAvatarObject comp in components)
                         {
-                            UniLog.Log(comp.Node);
                             foreach (AvatarObjectSlot comp2 in root_comps)
                             {
                                 if (comp.Node == bodyNodeType && comp2.Node == bodyNodeType)
                                 {
+                                    UniLog.Log((comp.Node, scale_exists, pos_exists, rot_exists));
                                     //AvatarObjectSlot connected_comp = comp.EquippingSlot;
                                     comp.Equip(comp2);
                                     if (bodyNodeType != BodyNode.Root)
@@ -278,6 +280,26 @@ namespace metagen
                                     //    BindingFlags.NonPublic | BindingFlags.Instance);
                                     //dynMethod.Invoke(connected_comp.Slot, new object[] { metagen_comp.World.LocalUser.LocalUserRoot });
                                     comp2.IsTracking.Value = true;
+                                    if (bodyNodeType == BodyNode.LeftFoot || bodyNodeType == BodyNode.RightFoot)
+                                    {
+                                        avatarIK.ForceUseFeetProxies.Value = true;
+                                    }
+                                    if (bodyNodeType == BodyNode.LeftLowerLeg || bodyNodeType == BodyNode.RightLowerLeg)
+                                    {
+                                        avatarIK.ForceUseKneeProxies.Value = true;
+                                    }
+                                    if (bodyNodeType == BodyNode.LeftLowerArm || bodyNodeType == BodyNode.RightLowerArm)
+                                    {
+                                        avatarIK.ForceUseElbowProxies.Value = true;
+                                    }
+                                    if (bodyNodeType == BodyNode.Chest)
+                                    {
+                                        avatarIK.ForceUseChestProxy.Value = true;
+                                    }
+                                    if (bodyNodeType == BodyNode.Hips)
+                                    {
+                                        avatarIK.ForceUsePelvisProxy.Value = true;
+                                    }
                                     //avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(bodyNodeType, comp));
                                     //if (comp.Node != BodyNode.Root)
                                     //{
