@@ -44,6 +44,8 @@ namespace metagen
         public bool recording_streams = false;
         private PoseStreamRecorder streamRecorder;
         private PoseStreamPlayer streamPlayer;
+        private AnimationRecorder animationRecorder;
+        public bool recording_animation = false;
         private metagen.AvatarManager avatarManager;
         public UnityNeos.AudioRecorderNeos hearingRecorder;
         int frame_index = 0;
@@ -61,6 +63,7 @@ namespace metagen
         {
             base.OnAttach();
             recording_streams = true;
+            recording_animation = true;
             recording_voice = true;
             recording_hearing = true;
             recording_vision = false;
@@ -71,6 +74,9 @@ namespace metagen
             voiceRecorder = new VoiceRecorder(this);
             visionRecorder = new VisionRecorder(camera_resolution, this);
             streamPlayer = new PoseStreamPlayer(dataManager, this);
+            Slot holder = World.RootSlot.AddSlot("holder");
+            animationRecorder = Slot.AttachComponent<AnimationRecorder>();
+            animationRecorder.rootSlot.Target = holder;
             //StartRecording();
         }
         protected override void OnDispose()
@@ -139,6 +145,11 @@ namespace metagen
                     visionRecorder.RecordVision();
                 }
 
+                if (recording && all_ready && animationRecorder==null? false : animationRecorder.isRecording)
+                {
+                    animationRecorder.RecordFrame();
+                }
+
                 if (recording && all_ready && recording_hearing_user != null && hearingRecorder==null? false : hearingRecorder.isRecording)
                 {
                     hearingRecorder.UpdatePosition(recording_hearing_user.Root.Slot.GlobalPosition);
@@ -177,14 +188,24 @@ namespace metagen
             //Set the recordings time to now
             utcNow = DateTime.UtcNow;
             recordingBeginTime = DateTime.UtcNow;
-            UniLog.Log(streamRecorder.isRecording.ToString());
-            UniLog.Log(recording_streams.ToString());
+            //UniLog.Log(streamRecorder.isRecording.ToString());
+            //UniLog.Log(recording_streams.ToString());
+            
+            //STREAMS
             if (recording_streams && !streamRecorder.isRecording)
             {
                 streamRecorder.saving_folder = dataManager.saving_folder;
                 streamRecorder.StartRecording();
                 //Record the first frame
                 streamRecorder.RecordStreams(0f);
+            }
+
+            //ANIMATION
+            if (recording_animation && !animationRecorder.isRecording)
+            {
+                animationRecorder.StartRecording();
+                //Record the first frame
+                animationRecorder.RecordFrame();
             }
 
             //AUDIO
@@ -220,12 +241,20 @@ namespace metagen
             bool wait_voices = false;
             bool wait_hearing = false;
             bool wait_vision = false;
+            bool wait_anim = false;
 
             //STREAMS
             if (streamRecorder.isRecording)
             {
                 streamRecorder.StopRecording();
                 wait_streams = true;
+            }
+
+            //ANIMATION
+            if (animationRecorder.isRecording)
+            {
+                animationRecorder.StopRecording();
+                wait_anim = true;
             }
 
             //VOICES
@@ -256,6 +285,13 @@ namespace metagen
                 {
                     streamRecorder.WaitForFinish();
                     wait_streams = false;
+                }
+
+                //ANIMATION
+                if (wait_anim)
+                {
+                    animationRecorder.WaitForFinish();
+                    wait_anim = false;
                 }
 
                 //VOICES

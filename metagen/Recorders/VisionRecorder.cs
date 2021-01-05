@@ -12,7 +12,7 @@ using System.IO;
 
 namespace metagen
 {
-    class VisionRecorder
+    class VisionRecorder : IRecorder
     {
         private Dictionary<RefID, FrooxEngine.Camera> cameras = new Dictionary<RefID, FrooxEngine.Camera>();
         private Dictionary<RefID, VideoRecorder> visual_recorders = new Dictionary<RefID, VideoRecorder>();

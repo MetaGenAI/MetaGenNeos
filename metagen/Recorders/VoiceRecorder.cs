@@ -13,7 +13,7 @@ using System.IO;
 
 namespace metagen
 {
-    class VoiceRecorder
+    class VoiceRecorder : IRecorder
     {
         public Dictionary<RefID, AudioOutput> audio_outputs = new Dictionary<RefID, AudioOutput>();
         private Dictionary<RefID, AudioRecorder> audio_recorders = new Dictionary<RefID, AudioRecorder>();
