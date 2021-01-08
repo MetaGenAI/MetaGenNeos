@@ -44,7 +44,7 @@ namespace metagen
         public bool recording_streams = false;
         private PoseStreamRecorder streamRecorder;
         private PoseStreamPlayer streamPlayer;
-        private AnimationRecorder animationRecorder;
+        public AnimationRecorder animationRecorder;
         public bool recording_animation = false;
         private metagen.AvatarManager avatarManager;
         public UnityNeos.AudioRecorderNeos hearingRecorder;
@@ -76,7 +76,8 @@ namespace metagen
             streamPlayer = new PoseStreamPlayer(dataManager, this);
             Slot holder = World.RootSlot.AddSlot("holder");
             animationRecorder = Slot.AttachComponent<AnimationRecorder>();
-            animationRecorder.rootSlot.Target = holder;
+            animationRecorder.metagen_comp = this;
+            animationRecorder.componentHoldingSlot.Target = holder;
             //StartRecording();
         }
         protected override void OnDispose()

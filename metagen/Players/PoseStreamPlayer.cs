@@ -31,6 +31,8 @@ namespace metagen
         public Dictionary<RefID, Dictionary<BodyNode, floatQ>> finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
         public Dictionary<RefID, Slot> avatars = new Dictionary<RefID, Slot>();
         public Dictionary<RefID, bool> hands_are_tracked = new Dictionary<RefID, bool>();
+        public Dictionary<RefID, Dictionary<BodyNode, Slot>> proxy_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
+        public Dictionary<RefID, List<Slot>> boness = new Dictionary<RefID, List<Slot>>();
         public int recording_index = 0;
         public bool play_voices = false;
         public bool play_hearing = true;
@@ -224,6 +226,7 @@ namespace metagen
                     fake_proxies[user_id] = new List<Tuple<BodyNode, AvatarObjectSlot>>();
                     avatar_pose_nodes[user_id] = new List<Tuple<BodyNode, IAvatarObject>>();
                     avatar_stream_channels[user_id] = new Dictionary<BodyNode, Tuple<bool, bool, bool>>();
+                    proxy_slots[user_id] = new Dictionary<BodyNode, Slot>();
                     if (avatarManager.avatar_template == null && avatar_template != null)
                     {
                         //metagen_comp.World.RunSynchronously(() =>
@@ -237,6 +240,7 @@ namespace metagen
                     avatars[user_id] = avatar;
                     List<IAvatarObject> components = avatar.GetComponentsInChildren<IAvatarObject>();
                     List<AvatarObjectSlot> root_comps = avatar.GetComponentsInChildren<AvatarObjectSlot>();
+                    boness[user_id] = avatar.GetComponentInChildren<Rig>()?.Bones.ToList();
 
                     //READ absolute time
                     output_readers[user_id].ReadSingle();
@@ -263,6 +267,13 @@ namespace metagen
                                 if (comp.Node == bodyNodeType && comp2.Node == bodyNodeType)
                                 {
                                     UniLog.Log((comp.Node, scale_exists, pos_exists, rot_exists));
+                                    if (bodyNodeType == BodyNode.Root)
+                                    {
+                                        proxy_slots[user_id][bodyNodeType] = avatar;
+                                    } else
+                                    {
+                                        proxy_slots[user_id][bodyNodeType] = comp.Slot;
+                                    }
                                     //AvatarObjectSlot connected_comp = comp.EquippingSlot;
                                     comp.Equip(comp2);
                                     if (bodyNodeType != BodyNode.Root)
@@ -343,6 +354,7 @@ namespace metagen
                                 UniLog.Log(nodee.ToString());
                                 //fingerSegment.RotationDrive.Target.ReleaseLink(fingerSegment.RotationDrive.Target.DirectLink);
                                 finger_slots[user_id][nodee] = fingerSegment.Root.Target;
+                                proxy_slots[user_id][nodee] = fingerSegment.Root.Target;
                                 finger_compensations[user_id][nodee] = fingerSegment.CoordinateCompensation.Value;
                                 //finger_rotations[user_id][nodee] = new RelayRef<IValue<floatQ>>();
                                 //finger_rotations[user_id][nodee].TrySet(fingerSegment.Root.Target);
@@ -414,19 +426,39 @@ namespace metagen
             {
                 item.Value.Close();
             }
+            metagen_comp.animationRecorder.AttachToObjects(proxy_slots, boness);
+            //foreach(var item in fake_proxies)
+            //{
+            //    RefID user_id = item.Key;
+            //    int i = 0;
+            //    foreach(var item2 in item.Value)
+            //    {
+            //        AvatarObjectSlot proxy_comp = item2.Item2;
+            //        BodyNode nodeType = item2.Item1;
+            //        IAvatarObject node_comp = avatar_pose_nodes[user_id][i].Item2;
+            //        CopyGlobalTransform comp = node_comp.Slot.AttachComponent<CopyGlobalTransform>();
+            //        comp.Source.Target = proxy_comp.Slot;
+            //        i += 1;
+            //    }
+            //}
+
             output_fss = new Dictionary<RefID, FileStream>();
             output_readers = new Dictionary<RefID, BitBinaryReaderX>();
             fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>>();
             avatar_stream_channels = new Dictionary<RefID, Dictionary<BodyNode, Tuple<bool, bool, bool>>>();
             hands_are_tracked = new Dictionary<RefID, bool>();
+            proxy_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
             user_ids = new List<RefID>();
             avatarManager.avatar_template = null;
             avatarManager.has_prepared_avatar = false;
-            foreach (var item in avatars)
+            if (false)
             {
-                Slot slot = item.Value;
-                slot.Destroy();
+                foreach (var item in avatars)
+                {
+                    Slot slot = item.Value;
+                    slot.Destroy();
 
+                }
             }
             avatars = new Dictionary<RefID, Slot>();
             finger_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();

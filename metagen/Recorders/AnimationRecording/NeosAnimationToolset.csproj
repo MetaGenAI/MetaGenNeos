@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net462</TargetFramework>
+    <OutputPath>$(NeosExternalLibDir)</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="BaseX" HintPath="$(NeosLibDir)\BaseX.dll" Private="false" />
+    <Reference Include="CodeX" HintPath="$(NeosLibDir)\CodeX.dll" Private="false" />
+    <Reference Include="FrooxEngine" HintPath="$(NeosLibDir)\FrooxEngine.dll" Private="false" />
+  </ItemGroup>
+</Project>
