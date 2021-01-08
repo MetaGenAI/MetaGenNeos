@@ -16,6 +16,7 @@ using CodeX;
 using metagen;
 using System.Runtime.InteropServices;
 using FrooxEngine.CommonAvatar;
+using NeosAnimationToolset;
 
 
 namespace metagen
@@ -44,7 +45,7 @@ namespace metagen
         public bool recording_streams = false;
         private PoseStreamRecorder streamRecorder;
         private PoseStreamPlayer streamPlayer;
-        public AnimationRecorder animationRecorder;
+        public RecordingTool animationRecorder;
         public bool recording_animation = false;
         private metagen.AvatarManager avatarManager;
         public UnityNeos.AudioRecorderNeos hearingRecorder;
@@ -75,7 +76,8 @@ namespace metagen
             visionRecorder = new VisionRecorder(camera_resolution, this);
             streamPlayer = new PoseStreamPlayer(dataManager, this);
             Slot holder = World.RootSlot.AddSlot("holder");
-            animationRecorder = Slot.AttachComponent<AnimationRecorder>();
+            animationRecorder = Slot.AttachComponent<RecordingTool>();
+            animationRecorder.rootSlot.Target = holder;
             animationRecorder.metagen_comp = this;
             animationRecorder.componentHoldingSlot.Target = holder;
             //StartRecording();
