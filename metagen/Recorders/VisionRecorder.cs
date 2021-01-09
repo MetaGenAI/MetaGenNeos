@@ -21,6 +21,7 @@ namespace metagen
         public bool isRecording = false;
         public string saving_folder;
         private MetaGen metagen_comp;
+        private string license;
         public VisionRecorder(int2 resolution, MetaGen component)
         {
             camera_resolution = resolution;
@@ -76,7 +77,8 @@ namespace metagen
                     camera.NearClipping.Value = 0.15f;
                     cameras[user_id] = camera;
                     int fps = 30;
-                    visual_recorders[user_id] = new VideoRecorder(Path.Combine(saving_folder,user_id.ToString() + "_vision_tmp.avi"), camera_resolution.x, camera_resolution.y, fps, metagen_comp);
+                    license = metagen_comp.isRecordingPublicDomain ? "CC0" : "NA";
+                    visual_recorders[user_id] = new VideoRecorder(Path.Combine(saving_folder,user_id.ToString() + "_"+license+"_vision_tmp.avi"), camera_resolution.x, camera_resolution.y, fps, metagen_comp);
                 }
                 UniLog.Log("Made visual recorder");
                 isRecording = true;
@@ -111,8 +113,8 @@ namespace metagen
             {
                 foreach (string user_id in current_users_ids)
                 {
-                    UniLog.Log("Moving " + Path.Combine(saving_folder, user_id + "_vision_tmp.avi"));
-                    File.Move(Path.Combine(saving_folder,user_id + "_vision_tmp.avi"), Path.Combine(saving_folder,user_id + "_vision.avi"));
+                    UniLog.Log("Moving " + Path.Combine(saving_folder, user_id + "_"+license+"_vision_tmp.avi"));
+                    File.Move(Path.Combine(saving_folder,user_id + "_"+license+"_vision_tmp.avi"), Path.Combine(saving_folder,user_id + "_"+license+"_vision.avi"));
                 }
             });
             task1.Wait();
@@ -128,7 +130,7 @@ namespace metagen
                 Task task2 = Task.Run(() =>
                 {
                     int iter = 0;
-                    while (!File.Exists(Path.Combine(saving_folder,user_id + "_vision.mp4")) && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
+                    while (!File.Exists(Path.Combine(saving_folder,user_id + "_"+license+"_vision.mp4")) && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
                 });
                 tasks[i] = task2;
             }

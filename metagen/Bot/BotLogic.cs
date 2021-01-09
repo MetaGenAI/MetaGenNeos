@@ -41,6 +41,8 @@ namespace metagen
             {
                 if (mg.recording)
                 {
+                    mg.recording_animation = panelUI._animationsCheckbox.Target.State.Value;
+                    mg.recording_vision = panelUI._videoCheckbox.Target.State.Value;
                     mg.StopRecording();
                 } else
                 {
@@ -55,10 +57,11 @@ namespace metagen
                 } else
                 {
                     int recording_index = Int32.Parse(panelUI._recordIndexField.Target.Text.Content.Value);
-                    bool play_hearing = panelUI._hearingCheckbox.Target.State.Value;
-                    bool play_voices = panelUI._voicesCheckbox.Target.State.Value;
+                    mg.play_hearing = panelUI._hearingCheckbox.Target.State.Value;
+                    mg.play_voice = panelUI._voicesCheckbox.Target.State.Value;
+                    mg.isRecordingPublicDomain = panelUI._publicDomainCheckbox.Target.State.Value;
                     Slot avatar = panelUI._avatarRefField.Target.Reference.Target;
-                    mg.StartPlaying(recording_index,play_voices,play_hearing,avatar);
+                    mg.StartPlaying(recording_index,avatar);
                 }
             };
         }

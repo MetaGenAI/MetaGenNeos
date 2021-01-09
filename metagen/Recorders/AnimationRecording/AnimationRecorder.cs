@@ -13,12 +13,13 @@ using FrooxEngine.CommonAvatar;
 using System.Threading;
 using NeosAnimationToolset;
 using metagen;
+using System.IO;
 
 namespace NeosAnimationToolset
 {
     public enum ResultTypeEnum
     {
-        REPLACE_REFERENCES, CREATE_VISUAL, CREATE_NON_PERSISTENT_VISUAL, CREATE_EMPTY_SLOT, CREATE_PARENT_SLOTS, DO_NOTHING
+        REPLACE_REFERENCES, CREATE_VISUAL, CREATE_NON_PERSISTENT_VISUAL, CREATE_EMPTY_SLOT, CREATE_PARENT_SLOTS, DO_NOTHING, COPY_COMPONENTS
     }
     public partial class RecordingTool : Component, IRecorder
     {
@@ -31,7 +32,6 @@ namespace NeosAnimationToolset
         public AnimX animation;
 
         public readonly SyncRef<Slot> rootSlot;
-        public readonly SyncRef<Slot> componentHoldingSlot;
         public readonly Sync<bool> replaceRefs;
 
         //public readonly SyncList<TrackedRig> recordedRigs;
@@ -44,7 +44,9 @@ namespace NeosAnimationToolset
 
         public string saving_folder;
         public MetaGen metagen_comp;
+        public DataManager dataManager;
         public Dictionary<RefID, List<Tuple<BodyNode, TrackedSlot>>> trackedSlots = new Dictionary<RefID, List<Tuple<BodyNode, TrackedSlot>>>();
+        public Dictionary<RefID, TrackedSlot> audioSources = new Dictionary<RefID, TrackedSlot>();
         //public Dictionary<RefID, TrackedRig> trackedRigs = new Dictionary<RefID, TrackedRig>();
 
         //public int animationTrackIndex = 0;
@@ -86,8 +88,11 @@ namespace NeosAnimationToolset
 
         public void StartRecording()
         {
+            Slot holder = World.RootSlot.AddSlot("holder");
+            rootSlot.Target = holder;
             bool record_proxies = false;
             bool record_rigs = false;
+            bool record_audio_sources = true;
             bool record_smr = true;
             trackedSlots = new Dictionary<RefID, List<Tuple<BodyNode, TrackedSlot>>>();
             recordedSlots?.Clear();
@@ -99,6 +104,17 @@ namespace NeosAnimationToolset
                 RefID user_id = user.ReferenceID;
                 trackedSlots[user_id] = new List<Tuple<BodyNode, TrackedSlot>>();
                 Slot rootSlot = user.Root?.Slot;
+
+                if (record_audio_sources)
+                {
+                    AvatarAudioOutputManager comp = user.Root.Slot.GetComponentInChildren<AvatarAudioOutputManager>();
+                    AudioOutput audio_output = comp.AudioOutput.Target;
+                    Slot containingSlot = audio_output.Slot;
+                    TrackedSlot trackedSlot = recordedSlots.Add();
+                    trackedSlot.slot.Target = containingSlot;
+                    trackedSlot.ResultType.Value = ResultTypeEnum.COPY_COMPONENTS;
+                    audioSources[user_id] = trackedSlot;
+                }
 
                 if (record_proxies)
                 {
@@ -174,7 +190,7 @@ namespace NeosAnimationToolset
                 }
                 if (record_smr)
                 {
-                    foreach(SkinnedMeshRenderer meshRenderer in rootSlot.GetComponentsInChildren<SkinnedMeshRenderer>())
+                    foreach(SkinnedMeshRenderer meshRenderer in rootSlot?.GetComponentsInChildren<SkinnedMeshRenderer>())
                     {
                         TrackedSkinnedMeshRenderer trackedRenderer = recordedSMR.Add();
                         trackedRenderer.renderer.Target = meshRenderer;
@@ -260,13 +276,41 @@ namespace NeosAnimationToolset
             //foreach (ACMngr field in trackedFields) { field.OnStop(); }
             Animator animator = rootSlot.Target.AttachComponent<Animator>();
             animator.Clip.Target = _result.Target;
-            foreach (ITrackable it in recordedSMR) { it.OnReplace(animator); it.Clean(); }
-            foreach (ITrackable it in recordedMR) { it.OnReplace(animator); it.Clean(); }
-            foreach (ITrackable it in recordedSlots) { it.OnReplace(animator); it.Clean(); }
-            foreach (ITrackable it in recordedFields) { it.OnReplace(animator); it.Clean(); }
+            foreach (ITrackable it in recordedSMR) { it.OnReplace(animator); }
+            foreach (ITrackable it in recordedMR) { it.OnReplace(animator); }
+            foreach (ITrackable it in recordedSlots) { it.OnReplace(animator); }
+            foreach (ITrackable it in recordedFields) { it.OnReplace(animator); }
+            //AUDIO PLAY
+            UniLog.Log("Attaching audio to exported!");
+            string reading_directory = dataManager.GetRecordingForWorld(metagen_comp.World, 0);
+            foreach(var item in audioSources)
+            {
+                RefID user_id = item.Key;
+                TrackedSlot trackedSlot = item.Value;
+                AudioOutput audio_output = trackedSlot.newSlot.Target.GetComponent<AudioOutput>();
+                string[] files = Directory.GetFiles(reading_directory, user_id.ToString() + "*_voice.ogg");
+                String audio_file = files.Length > 0 ? files[0] : null;
+                if (File.Exists(audio_file))
+                {
+                    if (audio_output == null) audio_output = trackedSlot.newSlot.Target.AttachComponent<AudioOutput>();
+                    audio_output.Volume.Value = 1f;
+                    audio_output.Enabled = true;
+                    Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(audio_file, LocalDB.ImportLocation.Original, (string)null);
+                    StaticAudioClip audioClip = audio_output.Slot.AttachAudioClip(uri);
+                    AudioClipPlayer player = audio_output.Slot.AttachComponent<AudioClipPlayer>();
+                    player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
+                    audio_output.Source.Target = (IAudioSource) player;
+                    audio_output.Slot.AttachComponent<AudioMetadata>(true, (Action<AudioMetadata>)null).SetFromCurrentWorld();
+                }
+            }
+            foreach (ITrackable it in recordedSMR) { it.Clean(); }
+            foreach (ITrackable it in recordedMR) { it.Clean(); }
+            foreach (ITrackable it in recordedSlots) { it.Clean(); }
+            foreach (ITrackable it in recordedFields) { it.Clean(); }
 
             trackedSlots = new Dictionary<RefID, List<Tuple<BodyNode, TrackedSlot>>>();
-            recordedSlots?.Clear();
+            audioSources = new Dictionary<RefID, TrackedSlot>();
+            //recordedSlots?.Clear();
             //recordedRigs?.Clear();
             state.Value = 0;
         }

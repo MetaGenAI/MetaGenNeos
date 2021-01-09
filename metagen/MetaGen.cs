@@ -31,18 +31,23 @@ namespace metagen
         private DateTime recordingBeginTime;
         private DateTime playingBeginTime;
         private DataManager dataManager;
+        public bool isRecordingPublicDomain = false;
 
         public bool recording_hearing = false;
+        public bool play_hearing = false;
         public User recording_hearing_user;
 
         public bool recording_voice = false;
+        public bool play_voice = true;
         private VoiceRecorder voiceRecorder;
 
         public bool recording_vision = false;
+        public bool play_vision = false;
         public int2 camera_resolution = new int2(256, 256);
         private VisionRecorder visionRecorder;
 
         public bool recording_streams = false;
+        public bool play_streams = true;
         private PoseStreamRecorder streamRecorder;
         private PoseStreamPlayer streamPlayer;
         public RecordingTool animationRecorder;
@@ -75,11 +80,9 @@ namespace metagen
             voiceRecorder = new VoiceRecorder(this);
             visionRecorder = new VisionRecorder(camera_resolution, this);
             streamPlayer = new PoseStreamPlayer(dataManager, this);
-            Slot holder = World.RootSlot.AddSlot("holder");
             animationRecorder = Slot.AttachComponent<RecordingTool>();
-            animationRecorder.rootSlot.Target = holder;
             animationRecorder.metagen_comp = this;
-            animationRecorder.componentHoldingSlot.Target = holder;
+            animationRecorder.dataManager = dataManager;
             //StartRecording();
         }
         protected override void OnDispose()
@@ -332,7 +335,7 @@ namespace metagen
             if (recording) StopRecording();
             else StartRecording();
         }
-        public void StartPlaying(int recording_index = 0, bool play_voices = false, bool play_hearing = true, Slot avatar_template = null)
+        public void StartPlaying(int recording_index = 0, Slot avatar_template = null)
         {
             UniLog.Log("Start playing");
             playing = true;
@@ -342,7 +345,7 @@ namespace metagen
             utcNow = DateTime.UtcNow;
             recordingBeginTime = DateTime.UtcNow;
             if (!streamPlayer.isPlaying)
-                streamPlayer.StartPlaying(recording_index,play_voices,play_hearing, avatar_template);
+                streamPlayer.StartPlaying(recording_index, avatar_template);
         }
         public void StopPlaying()
         {

@@ -22,6 +22,7 @@ namespace metagen
         public string saving_folder;
         private MetaGen metagen_comp;
         public bool audio_sources_ready = false;
+        private string license;
 
         public VoiceRecorder(MetaGen component)
         {
@@ -74,7 +75,8 @@ namespace metagen
                 {
                     UniLog.Log("Sample rate");
                     UniLog.Log(metagen_comp.Engine.AudioSystem.Connector.SampleRate.ToString());
-                    audio_recorders[user_id] = new AudioRecorder(saving_folder + "/" + user_id.ToString() + "_voice_tmp", metagen_comp.Engine.AudioSystem.BufferSize, 1, metagen_comp.Engine.AudioSystem.SampleRate, 1);
+                    license = metagen_comp.isRecordingPublicDomain ? "CC0" : "NA";
+                    audio_recorders[user_id] = new AudioRecorder(saving_folder + "/" + user_id.ToString() + "_"+license+"_voice_tmp", metagen_comp.Engine.AudioSystem.BufferSize, 1, metagen_comp.Engine.AudioSystem.SampleRate, 1);
                     audio_recorders[user_id].StartWriting();
                 }
             }
@@ -91,7 +93,7 @@ namespace metagen
             {
                 foreach (string user_id in current_users_ids)
                 {
-                    File.Move(saving_folder + "/" + user_id + "_voice_tmp.wav", saving_folder + "/" + user_id + "_voice.wav");
+                    File.Move(saving_folder + "/" + user_id + "_"+license+"_voice_tmp.wav", saving_folder + "/" + user_id + "_"+license+"_voice.wav");
                 }
                 current_users_ids = new List<string>();
             });
@@ -110,7 +112,7 @@ namespace metagen
                 Task task2 = Task.Run(() =>
                 {
                     int iter = 0;
-                    while (!File.Exists(saving_folder + "/" + user_id + "_voice.ogg") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
+                    while (!File.Exists(saving_folder + "/" + user_id + "_"+license+"_voice.ogg") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
                 });
                 tasks[i] = task2;
             }

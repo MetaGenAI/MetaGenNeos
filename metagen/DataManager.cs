@@ -11,7 +11,7 @@ using BaseX;
 
 namespace metagen
 {
-    class DataManager : Component
+    public class DataManager : Component
     {
         private bool have_users_changed = false;
         private string _saving_folder = @"./data";

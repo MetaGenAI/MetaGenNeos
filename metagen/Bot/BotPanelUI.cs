@@ -17,7 +17,10 @@ namespace FrooxEngine
         public readonly SyncRef<Button> _playButton;
         public readonly SyncRef<Button> _recordButton;
         public readonly SyncRef<TextField> _recordIndexField;
+        public readonly SyncRef<Checkbox> _animationsCheckbox;
+        public readonly SyncRef<Checkbox> _videoCheckbox;
         public readonly SyncRef<Checkbox> _voicesCheckbox;
+        public readonly SyncRef<Checkbox> _publicDomainCheckbox;
         public readonly SyncRef<Checkbox> _hearingCheckbox;
         public readonly SyncRef<ReferenceField<Slot>> _avatarRefField;
         public readonly SyncTime _recordingStarted;
@@ -33,8 +36,8 @@ namespace FrooxEngine
         protected override void OnAttach()
         {
             base.OnAttach();
-            float2 float2 = new float2(800f, 2000f);
-            this.CanvasSize = float2 * 0.4f;
+            float2 float2 = new float2(3000f, 6000f);
+            this.CanvasSize = float2 * 1.0f;
             this.PhysicalHeight = this.Slot.Parent.LocalScaleToGlobal(0.3f);
             this.Panel.ShowHeader.Value = false;
             this.Panel.ShowHandle.Value = false;
@@ -77,8 +80,10 @@ namespace FrooxEngine
             UIBuilder uiBuilder1 = panel.SwapPanel(NeosSwapCanvasPanel.Slide.None, 0.5f);
             uiBuilder1.VerticalLayout(4f, 0.0f, new Alignment?());
             uiBuilder1.FitContent(SizeFit.Disabled, SizeFit.PreferredSize);
-            uiBuilder1.Style.PreferredHeight = 32f;
+            uiBuilder1.Style.PreferredHeight = 65f;
             uiBuilder1.Style.MinHeight = 32f;
+            uiBuilder1.Style.TextAutoSizeMin = 45f;
+            uiBuilder1.Style.TextAutoSizeMax = 65f;
 
             //status text
             //SyncRef<Text> status = this._status;
@@ -89,19 +94,35 @@ namespace FrooxEngine
             //status.Target = text1;
 
             //Description
-            uiBuilder1.Style.MinHeight = 200f;
-            Text text1 = uiBuilder1.Text("MetaGen is a project to generate a public dataset of VR experiences, for use in scientific research, and development of AI technologies");
-            text1.AutoSizeMin.Value = 24f;
+            uiBuilder1.Style.MinHeight = 350f;
+            Text text1 = uiBuilder1.Text("<b>This recording system is currenlty in Beta. Expect bugs</b>. MetaGen is a project to generate a public dataset of VR experiences, for use in scientific research, and development of AI technologies.");
             uiBuilder1.Style.MinHeight = 32f;
+
+            //Data submission checkbox
+            uiBuilder1.Style.MinHeight = 350f;
+            Text text2 = uiBuilder1.Text("<b>By checking this box you agree to license the recorded data as CC0 (Public domain), as part of the MetaGen Public Dataset (intended for research in AI and other sciences). By GDPR you can also request for your data to be deleted at any point, even if you checked the box.</b>");
+            uiBuilder1.Style.MinHeight = 32f;
+            text2.HorizontalAlign.Value = CodeX.TextHorizontalAlignment.Left;
+            Checkbox checkbox0 = uiBuilder1.Checkbox("Public domain",false);
+            this._publicDomainCheckbox.Target = checkbox0;
+
 
             //recording time
             SyncRef<Text> recording_time = this._recordingTime;
             LocaleString localeString2 = (LocaleString)"";
-            Text text2 = uiBuilder1.Text(localeString2);
-            recording_time.Target = text2;
+            Text text3 = uiBuilder1.Text(localeString2);
+            recording_time.Target = text3;
 
             uiBuilder1.Style.PreferredHeight *= 2f;
             uiBuilder1.Style.MinHeight *= 2f;
+
+            //animation checkpoint
+            Checkbox animCheckbox = uiBuilder1.Checkbox("Record animation",true);
+            this._animationsCheckbox.Target = animCheckbox;
+
+            //video checkpoint
+            Checkbox videoCheckbox = uiBuilder1.Checkbox("Record vision",true);
+            this._videoCheckbox.Target = videoCheckbox;
 
             //record button
             SyncRef<Button> recordButton = this._recordButton;

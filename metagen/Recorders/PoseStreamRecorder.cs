@@ -135,7 +135,8 @@ namespace metagen
             {
                 //if (user == metagen_comp.World.LocalUser) continue;
                 RefID user_id = user.ReferenceID;
-                output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_streams.dat", FileMode.Create, FileAccess.ReadWrite);
+                String license = metagen_comp.isRecordingPublicDomain ? "CC0" : "NA";
+                output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_"+license+"_streams.dat", FileMode.Create, FileAccess.ReadWrite);
 
                 BitWriterStream bitstream = new BitWriterStream(output_fss[user_id]);
                 output_writers[user_id] = new BitBinaryWriterX(bitstream);

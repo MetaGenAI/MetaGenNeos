@@ -34,7 +34,7 @@ namespace metagen
         public Dictionary<RefID, Dictionary<BodyNode, Slot>> proxy_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
         public Dictionary<RefID, List<Slot>> boness = new Dictionary<RefID, List<Slot>>();
         public int recording_index = 0;
-        public bool play_voices = false;
+        public bool play_voice = false;
         public bool play_hearing = true;
         public Slot avatar_template = null;
         List<RefID> user_ids = new List<RefID>();
@@ -191,12 +191,12 @@ namespace metagen
 
 
         }
-        public void StartPlaying(int recording_index = 0, bool play_voices = false, bool play_hearing = true, Slot avatar_template = null)
+        public void StartPlaying(int recording_index = 0, Slot avatar_template = null)
         {
             this.recording_index = recording_index;
             avatar_loading_task = Task.Run(StartPlayingInternal);
-            this.play_voices = play_voices;
-            this.play_hearing = play_hearing;
+            this.play_voice = metagen_comp.play_voice;
+            this.play_hearing = metagen_comp.play_hearing;
             this.avatar_template = avatar_template;
         }
         private async void StartPlayingInternal()
@@ -220,7 +220,7 @@ namespace metagen
                     RefID user_id = RefID.Parse(user.userRefId);
                     UniLog.Log(user_id.ToString());
                     user_ids.Add(user_id);
-                    output_fss[user_id] = new FileStream(Path.Combine(reading_directory,user_id.ToString() + "_streams.dat"), FileMode.Open, FileAccess.Read);
+                    output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory,user_id.ToString() + "*_streams.dat")[0], FileMode.Open, FileAccess.Read);
                     BitReaderStream bitstream = new BitReaderStream(output_fss[user_id]);
                     output_readers[user_id] = new BitBinaryReaderX(bitstream);
                     fake_proxies[user_id] = new List<Tuple<BodyNode, AvatarObjectSlot>>();
@@ -366,9 +366,8 @@ namespace metagen
                             }
                         }
                     }
-                    //AUDIO PLAY
-                    //TODO: put this in separate class
                     UniLog.Log("got finger rotation vars");
+                    //AUDIO PLAY
                     UniLog.Log("Setting up audio!");
                     avatar.GetComponentInChildren<AudioOutput>().Source.Target = null;
                     for (int i = 0; i < 2; i++)
@@ -377,11 +376,13 @@ namespace metagen
                         if (i==0)
                         {
                             if (!play_hearing) continue;
-                            audio_file = Path.Combine(reading_directory, user_id.ToString() + "_hearing.ogg");
+                            string[] files = Directory.GetFiles(reading_directory, user_id.ToString() + "*_hearing.ogg");
+                            audio_file = files.Length > 0 ? files[0] : null;
                         } else
                         {
-                            if (!play_voices) continue;
-                            audio_file = Path.Combine(reading_directory,user_id.ToString() + "_voice.ogg");
+                            if (!play_voice) continue;
+                            string[] files = Directory.GetFiles(reading_directory, user_id.ToString() + "*_voice.ogg");
+                            audio_file = files.Length > 0 ? files[0] : null;
                         }
                         if (File.Exists(audio_file))
                         {
@@ -408,7 +409,6 @@ namespace metagen
                             UniLog.Log("attaching player to audio output");
                             audio_output.Source.Target = (IAudioSource) player;
                             audio_output.Slot.AttachComponent<AudioMetadata>(true, (Action<AudioMetadata>)null).SetFromCurrentWorld();
-                            //TODO: refactor this stuff
                             player.Play();
                         }
                     }
@@ -451,14 +451,11 @@ namespace metagen
             user_ids = new List<RefID>();
             avatarManager.avatar_template = null;
             avatarManager.has_prepared_avatar = false;
-            if (false)
+            foreach (var item in avatars)
             {
-                foreach (var item in avatars)
-                {
-                    Slot slot = item.Value;
-                    slot.Destroy();
+                Slot slot = item.Value;
+                slot.Destroy();
 
-                }
             }
             avatars = new Dictionary<RefID, Slot>();
             finger_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();

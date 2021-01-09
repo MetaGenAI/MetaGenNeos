@@ -9,6 +9,7 @@ using System.Threading;
 using BaseX;
 using UnityEngine;
 using CloudX;
+using CloudX.Shared;
 
 namespace FrooxEngine.LogiX
 {
@@ -20,7 +21,7 @@ namespace FrooxEngine.LogiX
     {
         private string current_session_id;
         private Dictionary<string, MetaGen> metagens = new Dictionary<string, MetaGen>();
-        MetaGen current_metagen;
+        MetaGen current_metagen = null;
         UnityNeos.AudioRecorderNeos hearingRecorder;
         protected override void OnAttach()
         {
@@ -54,7 +55,15 @@ namespace FrooxEngine.LogiX
             //FrooxEngine.Engine.Current.WorldManager.WorldAdded += AddWorld;
             FrooxEngine.Engine.Current.WorldManager.WorldFocused += FocusedWorld;
             FrooxEngine.Engine.Current.Cloud.Messages.OnMessageReceived += ProcessMessage;
+            FrooxEngine.Engine.Current.Cloud.Friends.FriendRequestCountChanged += ProcessFriendRequest;
         }
+        
+        private void ProcessFriendRequest(int count)
+        {
+            Friend friend = FrooxEngine.Engine.Current.Cloud.Friends.FindFriend(f => f.FriendStatus == FriendStatus.Requested);
+            Engine.Cloud.Friends.AddFriend(friend);
+        }
+
         private void ProcessMessage(CloudX.Shared.Message msg)
         {
             this.RunSynchronously(() =>
@@ -66,11 +75,25 @@ namespace FrooxEngine.LogiX
                     case CloudX.Shared.MessageType.Text:
                         processCommand(content);
                         break;
+                    case CloudX.Shared.MessageType.SessionInvite:
+                        processInvite(msg);
+                        break;
                     default:
                         break;
                 }
 
             });
+        }
+        private void processInvite(Message msg)
+        {
+            SessionInfo sessionInfo = msg.ExtractContent<SessionInfo>();
+            WorldManager worldManager = FrooxEngine.Engine.Current.WorldManager;
+            List<Uri> sessions = sessionInfo.GetSessionURLs();
+            if (current_metagen == null ? true : !current_metagen.recording)
+            {
+                World world = worldManager.JoinSession(sessions);
+                StartTask(async () => await Userspace.FocusWhenReady(world));
+            }
         }
         private void processCommand(string msg)
         {
@@ -114,6 +137,14 @@ namespace FrooxEngine.LogiX
 
             });
 
+        }
+
+        protected override void OnCommonUpdate()
+        {
+            if (current_metagen == null ? false : current_metagen.recording)
+                FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Busy;
+            else
+                FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Online;
         }
         private void FocusedWorld(World world)
         {
@@ -178,6 +209,7 @@ namespace FrooxEngine.LogiX
                 }
                 metagens[current_session_id] = metagen;
                 current_metagen = metagen;
+                hearingRecorder.metagen_comp = metagen;
 
                 //attach BotLogic
                 Slot botLogicSlot = world.LocalUser.Root.Slot.AddLocalSlot("botlogic local slot");

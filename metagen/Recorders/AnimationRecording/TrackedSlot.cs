@@ -11,6 +11,7 @@ namespace NeosAnimationToolset
             public readonly Sync<int> index;
         }
         public readonly SyncRef<Slot> slot;
+        public readonly SyncRef<Slot> newSlot;
         public readonly Sync<bool> position;
         public readonly Sync<bool> rotation;
         public readonly Sync<bool> scale;
@@ -52,9 +53,15 @@ namespace NeosAnimationToolset
             }
 
             Slot s = root.AddSlot((rte == ResultTypeEnum.CREATE_VISUAL || rte == ResultTypeEnum.CREATE_NON_PERSISTENT_VISUAL) ? "Visual" : "Empty Object", rte != ResultTypeEnum.CREATE_NON_PERSISTENT_VISUAL);
+            newSlot.Target = s;
             if (positionTrack != null) { anim.Fields.Add().Target = s.Position_Field; }
             if (rotationTrack != null) { anim.Fields.Add().Target = s.Rotation_Field; }
             if (scaleTrack != null) { anim.Fields.Add().Target = s.Scale_Field; }
+            if (rte == ResultTypeEnum.COPY_COMPONENTS)
+            {
+                Slot old = slot.Target;
+                old.CopyComponents(s);
+            }
             if (rte == ResultTypeEnum.CREATE_VISUAL || rte == ResultTypeEnum.CREATE_NON_PERSISTENT_VISUAL)
             {
                 CrossMesh mesh = root.GetComponentOrAttach<CrossMesh>();
