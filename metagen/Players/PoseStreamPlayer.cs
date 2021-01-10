@@ -426,7 +426,6 @@ namespace metagen
             {
                 item.Value.Close();
             }
-            metagen_comp.animationRecorder.AttachToObjects(proxy_slots, boness);
             //foreach(var item in fake_proxies)
             //{
             //    RefID user_id = item.Key;

@@ -133,7 +133,7 @@ namespace metagen
             Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
             foreach (User user in users)
             {
-                //if (user == metagen_comp.World.LocalUser) continue;
+                if (user == metagen_comp.World.LocalUser) continue;
                 RefID user_id = user.ReferenceID;
                 String license = metagen_comp.isRecordingPublicDomain ? "CC0" : "NA";
                 output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_"+license+"_streams.dat", FileMode.Create, FileAccess.ReadWrite);

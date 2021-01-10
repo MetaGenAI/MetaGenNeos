@@ -26,10 +26,10 @@ namespace metagen
         public bool playing = false;
         public OutputState playing_state = OutputState.Stopped;
         public bool recording = false;
+        public bool record_local_user = false;
         public OutputState recording_state = OutputState.Stopped;
         private DateTime utcNow;
         private DateTime recordingBeginTime;
-        private DateTime playingBeginTime;
         private DataManager dataManager;
         public bool isRecordingPublicDomain = false;
 
@@ -55,7 +55,7 @@ namespace metagen
         private metagen.AvatarManager avatarManager;
         public UnityNeos.AudioRecorderNeos hearingRecorder;
         int frame_index = 0;
-        float MAX_CHUNK_LEN_MIN = 7f;
+        float MAX_CHUNK_LEN_MIN = 10f;
 
         public float recording_time
         {
@@ -209,6 +209,9 @@ namespace metagen
             //ANIMATION
             if (recording_animation && !animationRecorder.isRecording)
             {
+                animationRecorder = Slot.AttachComponent<RecordingTool>();
+                animationRecorder.metagen_comp = this;
+                animationRecorder.dataManager = dataManager;
                 animationRecorder.StartRecording();
                 //Record the first frame
                 animationRecorder.RecordFrame();

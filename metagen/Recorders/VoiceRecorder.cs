@@ -61,7 +61,7 @@ namespace metagen
             Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
             foreach (User user in users)
             {
-                if (user == metagen_comp.World.LocalUser) continue;
+                if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
                 RefID user_id = user.ReferenceID;
                 current_users_ids.Add(user_id.ToString());
                 AvatarAudioOutputManager comp = user.Root.Slot.GetComponentInChildren<AvatarAudioOutputManager>();
