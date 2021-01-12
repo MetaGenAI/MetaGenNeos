@@ -94,7 +94,7 @@ namespace metagen
         public override void OnUserJoined(User user)
         {
             base.OnUserJoined(user);
-            have_users_changed = true;
+            //have_users_changed = true;
         }
 
         public bool ShouldStartNewSection()
@@ -102,6 +102,7 @@ namespace metagen
             //we should restart recording if users have left or joined
             bool result = have_users_changed;
             //we reset the indicator of whether a user has left or joined
+            have_users_changed = false;
             return result;
         }
         private void WriteUserMetadata()

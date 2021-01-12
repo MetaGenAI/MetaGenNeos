@@ -255,16 +255,18 @@ namespace NeosAnimationToolset
                 {
                     UniLog.Log("OwO error in AttachToObject: " + e.Message);
                     UniLog.Log(e.StackTrace);
+                    state.Value = 4; //error
                 }
             });
         }
         
         public void WaitForFinish()
         {
+            int MAX_ITERS = 100000;
             Task task = Task.Run(() =>
                 {
                     int iter = 0;
-                    while (state.Value != 0) { Thread.Sleep(10); iter += 1; }
+                    while (state.Value != 0 && state.Value != 4 && iter < MAX_ITERS) { Thread.Sleep(10); iter += 1; }
                 });
             task.Wait();
         }
@@ -572,17 +574,24 @@ namespace NeosAnimationToolset
         public void RecordFrame()
         {
             //base.OnCommonUpdate();
-            if (state.Value != 1) return;
-            User usr = recordingUser.Target;
-            if (usr == LocalUser)
+            try
             {
-                float t = (float)(base.Time.WorldTime - _startTime);
-                if (t < 0) return;
-                foreach (ITrackable it in recordedSMR) { it.OnUpdate(t); }
-                foreach (ITrackable it in recordedMR) { it.OnUpdate(t); }
-                foreach (ITrackable it in recordedSlots) { it.OnUpdate(t); }
-                foreach (ITrackable it in recordedFields) { it.OnUpdate(t); }
+                if (state.Value != 1) return;
+                User usr = recordingUser.Target;
+                if (usr == LocalUser)
+                {
+                    float t = (float)(base.Time.WorldTime - _startTime);
+                    if (t < 0) return;
+                    foreach (ITrackable it in recordedSMR) { it.OnUpdate(t); }
+                    foreach (ITrackable it in recordedMR) { it.OnUpdate(t); }
+                    foreach (ITrackable it in recordedSlots) { it.OnUpdate(t); }
+                    foreach (ITrackable it in recordedFields) { it.OnUpdate(t); }
+                }
+            } catch (Exception e)
+            {
+                UniLog.Log("OwO error in RecordFrame of AnimationRecorder: " + e.Message);
             }
+
         }
 
         protected async Task bakeAsync()

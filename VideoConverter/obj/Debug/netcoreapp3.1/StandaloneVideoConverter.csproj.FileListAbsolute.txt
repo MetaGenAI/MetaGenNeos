@@ -50,3 +50,16 @@ C:\Users\Administrator\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\Standa
 C:\Users\Administrator\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.dll
 C:\Users\Administrator\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.pdb
 C:\Users\Administrator\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.genruntimeconfig.cache
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.exe
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.deps.json
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.runtimeconfig.json
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.runtimeconfig.dev.json
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.dll
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\bin\Debug\netcoreapp3.1\StandaloneVideoConverter.pdb
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.csprojAssemblyReference.cache
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.AssemblyInfoInputs.cache
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.AssemblyInfo.cs
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.csproj.CoreCompileInputs.cache
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.dll
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.pdb
+C:\Users\Paperspace\MetaGenNeos\VideoConverter\obj\Debug\netcoreapp3.1\StandaloneVideoConverter.genruntimeconfig.cache

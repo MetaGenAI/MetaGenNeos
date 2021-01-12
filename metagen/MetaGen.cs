@@ -105,7 +105,7 @@ namespace metagen
             }
 
             //Start a new chunk, if we have been recording for 30 minutes, or start a new section, if a new user has left or joined
-            if (recording && (recording_time > MAX_CHUNK_LEN_MIN * 60 * 1000 || dataManager.ShouldStartNewSection()))
+            if (recording && ((recording_time > MAX_CHUNK_LEN_MIN * 60 * 1000) || dataManager.ShouldStartNewSection()))
             {
                 StopRecording();
                 StartRecording();
@@ -282,10 +282,16 @@ namespace metagen
                 wait_vision = true;
             }
 
-            if (animationRecorder.isRecording)
+            try
             {
-                animationRecorder.PreStopRecording();
-                wait_anim = true;
+                if (animationRecorder.isRecording)
+                {
+                    animationRecorder.PreStopRecording();
+                    wait_anim = true;
+                }
+            } catch (Exception e)
+            {
+                UniLog.Log(">w< animation stopping failed");
             }
 
             Task task = Task.Run(() =>
@@ -330,20 +336,26 @@ namespace metagen
                             animationRecorder.StopRecording();
                         });
                         animationRecorder.WaitForFinish();
+                        Slot.RemoveComponent(animationRecorder);
                         wait_anim = false;
                     }
                 } catch (Exception e)
                 {
                     UniLog.Log("OwO error in waiting task when stopped recording: " + e.Message);
                     UniLog.Log(e.StackTrace);
+                } finally
+                {
+                    UniLog.Log("FINISHED STOPPING RECORDING");
+                    this.recording_state = OutputState.Stopped;
+                    dataManager.StopSection();
                 }
             });
-            task.ContinueWith((Task t) =>
-            {
-                UniLog.Log("FINISHED STOPPING RECORDING");
-                this.recording_state = OutputState.Stopped;
-                dataManager.StopSection();
-            });
+            //task.ContinueWith((Task t) =>
+            //{
+            //    UniLog.Log("FINISHED STOPPING RECORDING");
+            //    this.recording_state = OutputState.Stopped;
+            //    dataManager.StopSection();
+            //});
         }
 
         public void ToggleRecording()
