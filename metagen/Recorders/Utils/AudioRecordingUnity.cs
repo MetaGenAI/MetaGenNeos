@@ -89,7 +89,7 @@ namespace UnityNeos
         {
             List<string> current_users_ids = new List<string> { userID };
             Task[] tasks = new Task[current_users_ids.Count];
-            int MAX_WAIT_ITERS = 100000;
+            int MAX_WAIT_ITERS = 1000000;
             for (int i = 0; i < current_users_ids.Count; i++)
             {
                 string user_id = current_users_ids[i];

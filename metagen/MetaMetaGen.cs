@@ -81,7 +81,6 @@ namespace FrooxEngine.LogiX
                     default:
                         break;
                 }
-
             });
         }
         private void processInvite(Message msg)
@@ -133,6 +132,9 @@ namespace FrooxEngine.LogiX
                     case "stop": //stop playing
                         current_metagen.StopPlaying();
                         break;
+                    case "reset": //reset current metagen (e.g. if it crashed)
+                        ResetCurrentMetaGen();
+                        break;
                 }
 
             });
@@ -154,6 +156,13 @@ namespace FrooxEngine.LogiX
                 metagen.StopRecording();
                 metagen.StopPlaying();
             }
+            current_session_id = world.SessionId;
+            AddWorld(world);
+        }
+        private void ResetCurrentMetaGen()
+        {
+            World world = current_metagen.World;
+            current_metagen.Destroy();
             current_session_id = world.SessionId;
             AddWorld(world);
         }
@@ -205,7 +214,7 @@ namespace FrooxEngine.LogiX
                 {
                     metagen.hearingRecorder = hearingRecorder;
                     metagen.recording_hearing_user = recording_hearing_user;
-                    metagen.StartRecording();
+                    //metagen.StartRecording();
                 }
                 metagens[current_session_id] = metagen;
                 current_metagen = metagen;
@@ -215,12 +224,14 @@ namespace FrooxEngine.LogiX
                 Slot botLogicSlot = world.LocalUser.Root.Slot.AddLocalSlot("botlogic local slot");
                 BotLogic logicComp = botLogicSlot.AttachComponent<BotLogic>();
                 logicComp.mg = current_metagen;
+                current_metagen.botComponent = logicComp;
             });
         }
         private void RemoveWorld(World world)
         {
             //current_session_id = FrooxEngine.Engine.Current.WorldManager.FocusedWorld.SessionId;
-            metagens.Remove(world.SessionId);
+            if (metagens.ContainsKey(world.SessionId))
+                metagens.Remove(world.SessionId);
         }
     }
 }

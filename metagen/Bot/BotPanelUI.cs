@@ -36,7 +36,7 @@ namespace FrooxEngine
         protected override void OnAttach()
         {
             base.OnAttach();
-            float2 float2 = new float2(3000f, 6000f);
+            float2 float2 = new float2(2300f, 5700f);
             this.CanvasSize = float2 * 1.0f;
             this.PhysicalHeight = this.Slot.Parent.LocalScaleToGlobal(0.3f);
             this.Panel.ShowHeader.Value = false;
@@ -46,6 +46,7 @@ namespace FrooxEngine
             this.Slot.DestroyChildren();
             panel = holder.AttachComponent<NeosSwapCanvasPanel>();
             panel.CanvasSize = float2 * 0.4f;
+            panel.Slot.LocalScale = new float3(2.5f, 2.5f, 2.5f);
             panel.PhysicalHeight = panel.Slot.Parent.LocalScaleToGlobal(0.3f);
             panel.Panel.ShowHeader.Value = false;
             panel.Panel.ShowHandle.Value = false;
@@ -93,6 +94,12 @@ namespace FrooxEngine
             //Text text1 = uiBuilder1.Text(in local1, true, alignment1, true, (string)null);
             //status.Target = text1;
 
+            //Title
+            uiBuilder1.Style.PreferredHeight = 200f;
+            Text text4 = uiBuilder1.Text("MetaGen Bot");
+            text4.AutoSizeMax.Value = 150f;
+            text4.Size.Value = 150f;
+
             //Description
             uiBuilder1.Style.MinHeight = 350f;
             Text text1 = uiBuilder1.Text("<b>This recording system is currenlty in Beta. Expect bugs</b>. MetaGen is a project to generate a public dataset of VR experiences, for use in scientific research, and development of AI technologies.");
@@ -101,20 +108,23 @@ namespace FrooxEngine
             //Data submission checkbox
             uiBuilder1.Style.MinHeight = 350f;
             Text text2 = uiBuilder1.Text("<b>By checking this box you agree to license the recorded data as CC0 (Public domain), as part of the MetaGen Public Dataset (intended for research in AI and other sciences). By GDPR you can also request for your data to be deleted at any point, even if you checked the box.</b>");
-            uiBuilder1.Style.MinHeight = 32f;
             text2.HorizontalAlign.Value = CodeX.TextHorizontalAlignment.Left;
+            uiBuilder1.Style.PreferredHeight = 100f;
+            uiBuilder1.Style.MinHeight = 100f;
             Checkbox checkbox0 = uiBuilder1.Checkbox("Public domain",false);
             this._publicDomainCheckbox.Target = checkbox0;
 
 
             //recording time
+            uiBuilder1.Style.PreferredHeight = 75f;
+            uiBuilder1.Style.MinHeight = 75f;
             SyncRef<Text> recording_time = this._recordingTime;
             LocaleString localeString2 = (LocaleString)"";
             Text text3 = uiBuilder1.Text(localeString2);
             recording_time.Target = text3;
 
-            uiBuilder1.Style.PreferredHeight *= 2f;
-            uiBuilder1.Style.MinHeight *= 2f;
+            uiBuilder1.Style.PreferredHeight = 100f;
+            uiBuilder1.Style.MinHeight = 100f;
 
             //animation checkpoint
             Checkbox animCheckbox = uiBuilder1.Checkbox("Record animation",true);
@@ -125,6 +135,8 @@ namespace FrooxEngine
             this._videoCheckbox.Target = videoCheckbox;
 
             //record button
+            uiBuilder1.Style.PreferredHeight = 120f;
+            uiBuilder1.Style.MinHeight = 120f;
             SyncRef<Button> recordButton = this._recordButton;
             Button button1 = uiBuilder1.Button("");
             recordButton.Target = button1;
@@ -132,24 +144,45 @@ namespace FrooxEngine
             comp1.SetValue.Value = true;
             comp1.TargetValue.Target = record_button_pressed.Target;
 
+            //Text for debug play section
+            uiBuilder1.Style.PreferredHeight = 200f;
+            uiBuilder1.Style.MinHeight = 100f;
+            Text text5 = uiBuilder1.Text("Debug play");
+            text4.AutoSizeMax.Value = 130f;
+            text4.Size.Value = 130f;
+            uiBuilder1.Style.MinHeight = 100f;
+            uiBuilder1.Style.PreferredHeight = 100f;
+
             //Recording index
+            uiBuilder1.Style.PreferredHeight = 75f;
+            uiBuilder1.Style.MinHeight = 75f;
+            Text text6 = uiBuilder1.Text("Recording index:");
             TextField field1 = uiBuilder1.TextField("0");
             this._recordIndexField.Target = field1;
 
+            uiBuilder1.Style.MinHeight = 100f;
+            uiBuilder1.Style.PreferredHeight = 100f;
+
             //Voices checkpoint
-            Checkbox checkbox1 = uiBuilder1.Checkbox("Voices",false);
+            Checkbox checkbox1 = uiBuilder1.Checkbox("Voices",true);
             this._voicesCheckbox.Target = checkbox1;
 
             //Hearing checkpoint
-            Checkbox checkbox2 = uiBuilder1.Checkbox("Hearing", true);
+            Checkbox checkbox2 = uiBuilder1.Checkbox("Hearing", false);
             this._hearingCheckbox.Target = checkbox2;
 
             //Avatar ref
+            uiBuilder1.Style.PreferredHeight = 75f;
+            uiBuilder1.Style.MinHeight = 75f;
+            Text text7 = uiBuilder1.Text("Avatar slot:");
             uiBuilder1.Next("Root");
             ReferenceField<Slot> refField = uiBuilder1.Current.AttachComponent<ReferenceField<Slot>>();
             _avatarRefField.Target = refField;
             RefEditor avatarRefEditor = uiBuilder1.Current.AttachComponent<RefEditor>();
             avatarRefEditor.Setup(refField.Reference);
+
+            uiBuilder1.Style.MinHeight = 100f;
+            uiBuilder1.Style.PreferredHeight = 100f;
 
             //play button
             SyncRef<Button> streamButton = this._playButton;
@@ -165,6 +198,7 @@ namespace FrooxEngine
             //autoMirror.Target = checkbox;
             //this._autoMirror.Target.State.SyncWithSetting<bool>("InteractiveCamera.AutoMirror", SettingSync.LocalChange.UpdateSetting);
             //this._active.Value = true;
+
         }
         protected override void OnCommonUpdate()
         {

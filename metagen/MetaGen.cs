@@ -50,10 +50,11 @@ namespace metagen
         public bool play_streams = true;
         private PoseStreamRecorder streamRecorder;
         private PoseStreamPlayer streamPlayer;
+
         public RecordingTool animationRecorder;
         public bool recording_animation = false;
-        private metagen.AvatarManager avatarManager;
         public UnityNeos.AudioRecorderNeos hearingRecorder;
+        public BotLogic botComponent;
         int frame_index = 0;
         float MAX_CHUNK_LEN_MIN = 10f;
 
@@ -76,6 +77,7 @@ namespace metagen
             utcNow = DateTime.UtcNow;
             recordingBeginTime = DateTime.UtcNow;
             dataManager = this.Slot.AttachComponent<DataManager>();
+            dataManager.metagen_comp = this;
             streamRecorder = new PoseStreamRecorder(this);
             voiceRecorder = new VoiceRecorder(this);
             visionRecorder = new VisionRecorder(camera_resolution, this);
@@ -259,13 +261,6 @@ namespace metagen
                 wait_streams = true;
             }
 
-            //ANIMATION
-            if (animationRecorder.isRecording)
-            {
-                animationRecorder.StopRecording();
-                wait_anim = true;
-            }
-
             //VOICES
             if (voiceRecorder.isRecording)
             {
@@ -287,41 +282,60 @@ namespace metagen
                 wait_vision = true;
             }
 
+            if (animationRecorder.isRecording)
+            {
+                animationRecorder.PreStopRecording();
+                wait_anim = true;
+            }
+
             Task task = Task.Run(() =>
             {
-                //STREAMS
-                if (wait_streams)
+                try
                 {
-                    streamRecorder.WaitForFinish();
-                    wait_streams = false;
-                }
+                    //STREAMS
+                    if (wait_streams)
+                    {
+                        streamRecorder.WaitForFinish();
+                        wait_streams = false;
+                    }
 
-                //ANIMATION
-                if (wait_anim)
-                {
-                    animationRecorder.WaitForFinish();
-                    wait_anim = false;
-                }
+                    //VOICES
+                    if (wait_voices)
+                    {
+                        voiceRecorder.WaitForFinish();
+                        wait_voices = false;
+                    }
 
-                //VOICES
-                if (wait_voices)
-                {
-                    voiceRecorder.WaitForFinish();
-                    wait_voices = false;
-                }
+                    //HEARING
+                    if (wait_hearing)
+                    {
+                        hearingRecorder.WaitForFinish();
+                        wait_hearing = false;
+                    }
 
-                //HEARING
-                if (wait_hearing)
-                {
-                    hearingRecorder.WaitForFinish();
-                    wait_hearing = false;
-                }
+                    //VISION
+                    if (wait_vision)
+                    {
+                        visionRecorder.WaitForFinish();
+                        wait_vision = false;
+                    }
 
-                //VISION
-                if (wait_vision)
+                    metagen.Util.MediaConverter.WaitForFinish();
+
+                    //ANIMATION
+                    if (wait_anim)
+                    {
+                        World.RunSynchronously(() =>
+                        {
+                            animationRecorder.StopRecording();
+                        });
+                        animationRecorder.WaitForFinish();
+                        wait_anim = false;
+                    }
+                } catch (Exception e)
                 {
-                    visionRecorder.WaitForFinish();
-                    wait_vision = false;
+                    UniLog.Log("OwO error in waiting task when stopped recording: " + e.Message);
+                    UniLog.Log(e.StackTrace);
                 }
             });
             task.ContinueWith((Task t) =>
@@ -370,6 +384,11 @@ namespace metagen
 
         }
 
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            botComponent.Destroy();
+        }
 
     }
 }

@@ -20,6 +20,7 @@ namespace metagen
         private string session_saving_folder = "";
         private int section = 0;
         public bool have_started_recording_session = false;
+        public MetaGen metagen_comp;
         public string saving_folder
         {
             get
@@ -109,6 +110,7 @@ namespace metagen
             List<UserMetadata> user_metadatas = new List<UserMetadata>();
             foreach(User user in users)
             {
+                if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
                 user_metadatas.Add(new UserMetadata
                 {
                     userRefId = user.ReferenceID.ToString(),

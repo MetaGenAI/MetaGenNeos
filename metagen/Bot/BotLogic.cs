@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 
 namespace metagen
 {
-    class BotLogic : Component
+    public class BotLogic : Component
     {
         protected readonly SyncTime _recordingStarted;
         private MetaGenBotPanelUI panelUI;
@@ -121,9 +121,14 @@ namespace metagen
             button1.SetColors(in local3);
             button.LabelText = this.GetLocalized(key, (string)null, (Dictionary<string, object>)null);
         }
-
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            panelUI.Destroy();
         }
+
     }
+}
     public enum OutputState
     {
         Starting,
@@ -179,4 +184,4 @@ namespace metagen
         {
             JsonConvert.PopulateObject(data.ToString(), (object)this);
         }
-}
+    }

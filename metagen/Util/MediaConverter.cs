@@ -12,6 +12,7 @@ namespace metagen.Util
     {
         static List<Task> ffmpegtasks = new List<Task>();
         static System.Collections.Specialized.StringCollection log = new System.Collections.Specialized.StringCollection();
+        public static bool busy = false;
         public static void Run()
         {
             //Console.WriteLine("Hello World!");
@@ -22,8 +23,10 @@ namespace metagen.Util
                     //UniLog.Log("hi");
                     Task video_task = Task.Run(() => WalkDirectoryTree(new System.IO.DirectoryInfo("./data"), "video"));
                     Task audio_task = Task.Run(() => WalkDirectoryTree(new System.IO.DirectoryInfo("./data"), "audio"));
+                    busy = true;
                     video_task.Wait();
                     audio_task.Wait();
+                    busy = false;
                 } catch (Exception e)
                 {
                     UniLog.Log("OwO: " + e.Message);
@@ -134,5 +137,16 @@ namespace metagen.Util
                 Console.WriteLine(e.StackTrace);
             }
         }
+        static public void WaitForFinish()
+        {
+            //TODO: add max iters
+            Task task = Task.Run(() =>
+            {
+                int iter = 0;
+                while (busy) { Thread.Sleep(10); iter += 1; }
+            });
+            task.Wait();
+        }
+
     }
 }

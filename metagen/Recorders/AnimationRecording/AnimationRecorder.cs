@@ -50,6 +50,9 @@ namespace NeosAnimationToolset
         public Dictionary<RefID, TrackedSlot> audioSources = new Dictionary<RefID, TrackedSlot>();
         //public Dictionary<RefID, TrackedRig> trackedRigs = new Dictionary<RefID, TrackedRig>();
 
+        private Slot hearing_slot;
+        private Task bakeAsyncTask;
+
         //public int animationTrackIndex = 0;
 
         //public readonly SyncList<ACMngr> trackedFields;
@@ -101,7 +104,7 @@ namespace NeosAnimationToolset
             Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
             foreach (User user in users)
             {
-                //if (user == metagen_comp.World.LocalUser) continue;
+                if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
                 RefID user_id = user.ReferenceID;
                 trackedSlots[user_id] = new List<Tuple<BodyNode, TrackedSlot>>();
                 Slot rootSlot = user.Root?.Slot;
@@ -194,10 +197,25 @@ namespace NeosAnimationToolset
                 {
                     foreach(SkinnedMeshRenderer meshRenderer in rootSlot?.GetComponentsInChildren<SkinnedMeshRenderer>())
                     {
-                        TrackedSkinnedMeshRenderer trackedRenderer = recordedSMR.Add();
-                        trackedRenderer.renderer.Target = meshRenderer;
-                        trackedRenderer.recordBlendshapes.Value = true;
-                        trackedRenderer.recordScales.Value = true;
+                        if (meshRenderer.Enabled && meshRenderer.Slot.IsActive)
+                        {
+                            TrackedSkinnedMeshRenderer trackedRenderer = recordedSMR.Add();
+                            trackedRenderer.renderer.Target = meshRenderer;
+                            trackedRenderer.recordBlendshapes.Value = true;
+                            trackedRenderer.recordScales.Value = true;
+                        }
+                    }
+
+                    foreach(MeshRenderer meshRenderer in rootSlot?.GetComponentInChildren<AvatarRoot>().Slot.GetComponentsInChildren<MeshRenderer>())
+                    {
+                        if (meshRenderer.Enabled && meshRenderer.Slot.IsActive && !(meshRenderer is SkinnedMeshRenderer))
+                        {
+                            if (meshRenderer.Slot.GetComponent<InteractionLaser>() != null) continue;
+                            if (meshRenderer.Slot.GetComponentInParents<InteractionLaser>() != null) continue;
+                            TrackedMeshRenderer trackedRenderer = recordedMR.Add();
+                            trackedRenderer.renderer.Target = meshRenderer;
+                            trackedRenderer.recordScales.Value = true;
+                        }
                     }
 
                 }
@@ -205,18 +223,18 @@ namespace NeosAnimationToolset
 
             animation = new AnimX(1f);
             recordingUser.Target = LocalUser;
-            state.Value = 1;
             _startTime.Value = base.Time.WorldTime;
+            state.Value = 1;
             foreach (ITrackable it in recordedSMR) { it.OnStart(this); it.OnUpdate(0); }
             foreach (ITrackable it in recordedMR) { it.OnStart(this); it.OnUpdate(0); }
             foreach (ITrackable it in recordedSlots) { it.OnStart(this); it.OnUpdate(0); }
             foreach (ITrackable it in recordedFields) { it.OnStart(this); it.OnUpdate(0); }
             //foreach (ACMngr field in trackedFields) { field.OnStart(this); }
         }
-        public void StopRecording()
+        public void PreStopRecording()
         {
             state.Value = 2;
-            Task task = StartTask(async () => { 
+            bakeAsyncTask = StartTask(async () => { 
                 try
                 {
                     await this.bakeAsync();
@@ -226,10 +244,13 @@ namespace NeosAnimationToolset
                     UniLog.Log(e.StackTrace);
                 }
             });
+        }
+        public void StopRecording()
+        {
             StartTask(async () => { 
                 try
                 {
-                    await this.AttachToObject(task);
+                    await this.AttachToObject(bakeAsyncTask);
                 } catch (Exception e)
                 {
                     UniLog.Log("OwO error in AttachToObject: " + e.Message);
@@ -243,7 +264,7 @@ namespace NeosAnimationToolset
             Task task = Task.Run(() =>
                 {
                     int iter = 0;
-                    while (state.Value != 0 && state.Value != 3) { Thread.Sleep(10); iter += 1; }
+                    while (state.Value != 0) { Thread.Sleep(10); iter += 1; }
                 });
             task.Wait();
         }
@@ -261,6 +282,8 @@ namespace NeosAnimationToolset
             visual.LocalPosition = new float3(0, 0f, 0);
 
             PBS_Metallic material = visual.AttachComponent<PBS_Metallic>();
+            material.AlbedoColor.Value = RandomX.RGB;
+            material.EmissiveColor.Value = RandomX.RGB;
 
             visual.AttachComponent<SphereCollider>().Radius.Value = 0.07f;
 
@@ -279,6 +302,8 @@ namespace NeosAnimationToolset
             CreateExpandCollapseButton(holder);
             UniLog.Log("Creating parent/unparent button");
             CreateParentUnparentButton(holder);
+            UniLog.Log("Creating on off hearing button");
+            CreateActivateDeactivateHearingButton(holder);
             UniLog.Log("Done creating Animation control object");
         }
         private void CreateExpandCollapseButton(Slot holder)
@@ -291,6 +316,7 @@ namespace NeosAnimationToolset
             button_holder.AttachComponent<BoxCollider>().Size.Value = new float3(0.03f, 0.03f, 0.03f);
 
             PBS_Metallic material = holder.AttachComponent<PBS_Metallic>();
+            material.AlbedoColor.Value = new color(215f, 224f, 45f)/255f;
             BoxMesh mesh2 = button_holder.AttachMesh<BoxMesh>(material);
             mesh2.Size.Value = new float3(0.03f, 0.03f, 0.03f);
 
@@ -387,6 +413,7 @@ namespace NeosAnimationToolset
 
             PBS_Metallic material = holder.AttachComponent<PBS_Metallic>();
             BoxMesh mesh2 = button_holder.AttachMesh<BoxMesh>(material);
+            material.AlbedoColor.Value = new color(28f, 214f, 84f)/255f;
             mesh2.Size.Value = new float3(0.03f, 0.03f, 0.03f);
 
             PhysicalButton button2 = button_holder.AttachComponent<PhysicalButton>();
@@ -426,6 +453,36 @@ namespace NeosAnimationToolset
             setParent.OnDone.Target = booleanToggle.Toggle;
         }
 
+        private void CreateActivateDeactivateHearingButton(Slot holder)
+        {
+            Slot button_holder = holder.AddSlot("Hearing on off button");
+
+            button_holder.LocalRotation = floatQ.Euler(0f, 0f, 0f);
+            button_holder.LocalPosition = new float3(0.2f, 0, 0);
+
+            button_holder.AttachComponent<BoxCollider>().Size.Value = new float3(0.03f, 0.03f, 0.03f);
+
+            PBS_Metallic material = holder.AttachComponent<PBS_Metallic>();
+            BoxMesh mesh2 = button_holder.AttachMesh<BoxMesh>(material);
+            material.AlbedoColor.Value = new color(100f, 100f, 100f)/255f;
+            mesh2.Size.Value = new float3(0.03f, 0.03f, 0.03f);
+
+            PhysicalButton button2 = button_holder.AttachComponent<PhysicalButton>();
+            FrooxEngine.LogiX.Interaction.ButtonEvents touchableEvents2 = button_holder.AttachComponent<FrooxEngine.LogiX.Interaction.ButtonEvents>();
+            FrooxEngine.LogiX.ReferenceNode<IButton> refNode2 = button_holder.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IButton>>();
+            refNode2.RefTarget.Target = button2;
+            touchableEvents2.Button.Target = refNode2;
+
+            FrooxEngine.LogiX.ProgramFlow.BooleanToggle booleanToggle = button_holder.AttachComponent<FrooxEngine.LogiX.ProgramFlow.BooleanToggle>();
+            booleanToggle.State.Value = true;
+
+            touchableEvents2.Pressed.Target = booleanToggle.Toggle;
+
+            ValueDriver<bool> hearingDriver = button_holder.AttachComponent<ValueDriver<bool>>();
+            hearingDriver.DriveTarget.Target = hearing_slot.GetComponent<AudioOutput>()?.EnabledField;
+            hearingDriver.ValueSource.Target = booleanToggle.State;
+        }
+
         public async Task AttachToObject(Task task)
         {
             await task;
@@ -437,7 +494,6 @@ namespace NeosAnimationToolset
             foreach (ITrackable it in recordedSlots) { it.OnReplace(animator); }
             foreach (ITrackable it in recordedFields) { it.OnReplace(animator); }
 
-            CreateVisual();
             FrooxEngine.LogiX.Playback.PlaybackReadState playbackState = ruut.AttachComponent<FrooxEngine.LogiX.Playback.PlaybackReadState>();
             FrooxEngine.LogiX.ReferenceNode<IPlayable> refNodeState = ruut.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IPlayable>>();
             refNodeState.RefTarget.Target = animator;
@@ -474,7 +530,7 @@ namespace NeosAnimationToolset
                     driveRef.Target = (SyncPlayback)player.GetSyncMember(4);
                 }
             }
-            Slot hearing_slot = rootSlot.Target.AddSlot("heard sound");
+            hearing_slot = rootSlot.Target.AddSlot("heard sound");
             AudioOutput audio_output2 = hearing_slot.GetComponent<AudioOutput>();
             string[] files = Directory.GetFiles(reading_directory, "*_hearing.ogg");
             String audio_file = files.Length > 0 ? files[0] : null;
@@ -499,6 +555,8 @@ namespace NeosAnimationToolset
                 DriveRef<SyncPlayback> driveRef = (DriveRef<SyncPlayback>)playbackDrive.GetSyncMember(13);
                 driveRef.Target = (SyncPlayback)player.GetSyncMember(4);
             }
+
+            CreateVisual();
             foreach (ITrackable it in recordedSMR) { it.Clean(); }
             foreach (ITrackable it in recordedMR) { it.Clean(); }
             foreach (ITrackable it in recordedSlots) { it.Clean(); }
@@ -519,6 +577,7 @@ namespace NeosAnimationToolset
             if (usr == LocalUser)
             {
                 float t = (float)(base.Time.WorldTime - _startTime);
+                if (t < 0) return;
                 foreach (ITrackable it in recordedSMR) { it.OnUpdate(t); }
                 foreach (ITrackable it in recordedMR) { it.OnUpdate(t); }
                 foreach (ITrackable it in recordedSlots) { it.OnUpdate(t); }
