@@ -106,8 +106,10 @@ namespace NeosAnimationToolset
             {
                 if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
                 RefID user_id = user.ReferenceID;
-                trackedSlots[user_id] = new List<Tuple<BodyNode, TrackedSlot>>();
                 Slot rootSlot = user.Root?.Slot;
+                SimpleAvatarProtection protectionComponent = rootSlot?.GetComponentInChildren<SimpleAvatarProtection>();
+                if (protectionComponent != null) continue;
+                trackedSlots[user_id] = new List<Tuple<BodyNode, TrackedSlot>>();
 
                 if (record_audio_sources)
                 {
