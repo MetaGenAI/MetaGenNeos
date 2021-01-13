@@ -1,5 +1,5 @@
 ﻿/*
- * Based on the recording tool by Jeana and Lucas (https://github.com/jeanahelver/neosPlugins/blob/main/recordingTool/RecordingTool.cs)
+ * Based on the recording tool by Lucas and Jeana (https://github.com/jeanahelver/NeosAnimationToolset)
  */
 using System;
 using BaseX;
