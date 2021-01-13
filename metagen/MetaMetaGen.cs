@@ -92,6 +92,11 @@ namespace FrooxEngine.LogiX
             {
                 World world = worldManager.JoinSession(sessions);
                 StartTask(async () => await Userspace.FocusWhenReady(world));
+            } else
+            {
+                MessageManager.UserMessages userMessages = this.Engine.Cloud.Messages.GetUserMessages(msg.SenderId);
+                //CloudX.Shared.Message textMessage = userMessages.CreateTextMessage("Busy recording somewhere else. Try again in a bit!");
+                userMessages.SendTextMessage("Sorry. Busy recording somewhere else. Try again in a bit!");
             }
         }
         private void processCommand(string msg)
