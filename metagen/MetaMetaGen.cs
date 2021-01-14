@@ -85,19 +85,32 @@ namespace FrooxEngine.LogiX
         }
         private void processInvite(Message msg)
         {
+            //if (msg.SenderId == "U-guillefix") return;
+            string userName = this.Engine.Cloud.Friends.FindFriend(f => f.FriendUserId == msg.SenderId).FriendUsername;
+            if (userName == "badhaloninja" || userName == "marsmaantje" || userName == "oXoMaStErSoXo") return;
             SessionInfo sessionInfo = msg.ExtractContent<SessionInfo>();
-            WorldManager worldManager = FrooxEngine.Engine.Current.WorldManager;
-            List<Uri> sessions = sessionInfo.GetSessionURLs();
-            if (current_metagen == null ? true : !current_metagen.recording)
+            if (true || sessionInfo.Name.Contains("metagenbot")) //we could use this feature to ensure more consent
             {
-                World world = worldManager.JoinSession(sessions);
-                StartTask(async () => await Userspace.FocusWhenReady(world));
+                WorldManager worldManager = FrooxEngine.Engine.Current.WorldManager;
+                List<Uri> sessions = sessionInfo.GetSessionURLs();
+                if (current_metagen == null ? true : !current_metagen.recording)
+                {
+                    World world = worldManager.JoinSession(sessions);
+                    StartTask(async () => await Userspace.FocusWhenReady(world));
+                }
+                else
+                {
+                    MessageManager.UserMessages userMessages = this.Engine.Cloud.Messages.GetUserMessages(msg.SenderId);
+                    //CloudX.Shared.Message textMessage = userMessages.CreateTextMessage("Busy recording somewhere else. Try again in a bit!");
+                    userMessages.SendTextMessage("Sorry. Busy recording somewhere else. Try again in a bit!");
+                }
             } else
             {
                 MessageManager.UserMessages userMessages = this.Engine.Cloud.Messages.GetUserMessages(msg.SenderId);
                 //CloudX.Shared.Message textMessage = userMessages.CreateTextMessage("Busy recording somewhere else. Try again in a bit!");
-                userMessages.SendTextMessage("Sorry. Busy recording somewhere else. Try again in a bit!");
+                userMessages.SendTextMessage("Sorry. The session needs to have the string \"metagenbot\" somewhere in its name for me to join.");
             }
+
         }
         private void processCommand(string msg)
         {
