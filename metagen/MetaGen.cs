@@ -214,7 +214,7 @@ namespace metagen
 
                 if (recording && all_ready && recording_hearing_user != null && hearingRecorder==null? false : hearingRecorder.isRecording)
                 {
-                    Slot slot = recording_hearing_user.Root.Slot;
+                    Slot slot = recording_hearing_user.Root.HeadSlot;
                     hearingRecorder.UpdateTransform(slot.GlobalPosition, slot.GlobalRotation);
                 }
                 frame_index += 1;

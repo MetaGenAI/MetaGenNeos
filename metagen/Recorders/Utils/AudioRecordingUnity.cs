@@ -25,6 +25,7 @@ namespace UnityNeos
         public bool videoStartedRecording = false;
         AudioRecorder recorder;
         public MetaGen metagen_comp;
+        public FrooxEngine.Slot earSlot;
      
         void Awake()
         {
@@ -59,8 +60,10 @@ namespace UnityNeos
 
         public void UpdateTransform(float3 global_position, floatQ global_rotation)
         {
-            this.gameObject.transform.position = global_position.ToUnity();
-            this.gameObject.transform.rotation = global_rotation.ToUnity();
+            //this.gameObject.transform.position = global_position.ToUnity();
+            //this.gameObject.transform.rotation = global_rotation.ToUnity();
+            earSlot.GlobalPosition = global_position;
+            earSlot.GlobalRotation = global_rotation;
         }
 
         public void StartRecording()

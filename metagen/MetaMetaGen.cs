@@ -33,6 +33,7 @@ namespace FrooxEngine.LogiX
         User recording_hearing_user;
         World currentWorld;
         bool default_record_local_user = false;
+        Slot earsSlot;
         protected override void OnAttach()
         {
             base.OnAttach();
@@ -55,9 +56,9 @@ namespace FrooxEngine.LogiX
             //TODO: sync between audios and videos is not right!!
             UniLog.Log("Adding Audio Listener");
             GameObject gameObject = GameObject.Find("AudioListener");
-            if (gameObject == null) //must be on VR mode
+            if (!(LocalUser.HeadDevice == HeadOutputDevice.Screen)) //must be on VR mode
             {
-                gameObject = GameObject.Find("Camera (ears)");
+                //gameObject = GameObject.Find("Camera (ears)");
                 default_record_local_user = true;
             }
             //GameObject[] rootObjects = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
@@ -387,6 +388,9 @@ namespace FrooxEngine.LogiX
                 current_metagen.Initialize();
                 current_metagen.OnUserLeftCallback += MaybeResetHearingUserOnLeft;
                 current_metagen.OnUserJoinedCallback += MaybeResetHearingUserOnJoin;
+                earsSlot = world.AddSlot("AudioListener");
+                world.LocalUser.LocalUserRoot.OverrideEars.Target = earsSlot;
+                hearingRecorder.earSlot = earsSlot;
                 current_metagen.is_loaded = true;
             });
         }
