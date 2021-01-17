@@ -78,7 +78,6 @@ namespace metagen
             _saving_folder = Path.Combine(root_saving_folder,session_saving_folder,section.ToString());
             Directory.CreateDirectory(saving_folder);
             have_users_changed = false;
-            WriteUserMetadata();
         }
         public void StopSection()
         {
@@ -104,29 +103,6 @@ namespace metagen
             //we reset the indicator of whether a user has left or joined
             have_users_changed = false;
             return result;
-        }
-        private void WriteUserMetadata()
-        {
-            Dictionary<RefID, User>.ValueCollection users = this.World.AllUsers;
-            List<UserMetadata> user_metadatas = new List<UserMetadata>();
-            foreach(User user in users)
-            {
-                if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
-                user_metadatas.Add(new UserMetadata
-                {
-                    userRefId = user.ReferenceID.ToString(),
-                    userId = user.UserID,
-                    headDevice = user.HeadDevice.ToString(),
-                    platform = user.Platform.ToString(),
-                    bodyNodes = String.Join(",",user.BodyNodes.Select(n => n.ToString())),
-                    devices = String.Join(",", user.Devices.Where<SyncVar>((Func<SyncVar, bool>)(i => i.IsDictionary)).Select(d => d["Type"].GetValue<string>(true))),
-                });
-            }
-            using (var writer = new StreamWriter(Path.Combine(saving_folder,"user_metadata.csv")))
-            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
-            {
-                csv.WriteRecords(user_metadatas);
-            }
         }
         public List<string> CurrentWorldRecordings
         {

@@ -1,4 +1,7 @@
-﻿using System;
+﻿/* 
+ * This is like the Engine of MetaGen, which has the main event loop, and pointers to some of the other subsystems
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,8 +33,7 @@ namespace metagen
         public OutputState recording_state = OutputState.Stopped;
         private DateTime utcNow;
         private DateTime recordingBeginTime;
-        private DataManager dataManager;
-        public bool isRecordingPublicDomain = false;
+        public DataManager dataManager;
 
         public bool recording_hearing = false;
         public bool play_hearing = false;
@@ -49,14 +51,62 @@ namespace metagen
         public bool recording_streams = false;
         public bool play_streams = true;
         private PoseStreamRecorder streamRecorder;
-        private PoseStreamPlayer streamPlayer;
+        private UnifiedPayer streamPlayer;
 
         public RecordingTool animationRecorder;
         public bool recording_animation = false;
         public UnityNeos.AudioRecorderNeos hearingRecorder;
         public BotLogic botComponent;
+
+        public MetaDataManager metaDataManager;
+        public DataBase dataBase;
         int frame_index = 0;
         float MAX_CHUNK_LEN_MIN = 10f;
+        public event Action<User> OnUserLeftCallback;
+        public event Action<User> OnUserJoinedCallback;
+
+        public bool is_loaded = false;
+
+        //Metadata refers to the per-recording data about the user
+        public Dictionary<User, UserMetadata> userMetaData
+        {
+            get
+            {
+                return metaDataManager.userMetaData;
+            }
+        }
+        //the user data refers to the data about the user gotten from the database
+        public Dictionary<User, MetaGenUser> users
+        {
+            get
+            {
+                return metaDataManager.users;
+            }
+        }
+
+        public override void OnUserJoined(User user)
+        {
+            if (is_loaded && metaDataManager != null)
+            {
+                metaDataManager.GetUsers();
+                metaDataManager.AddUserMetaData(user);
+                botComponent.AddOverride(user);
+                OnUserJoinedCallback.Invoke(user);
+                UniLog.Log("USER JOINED " + user.UserID);
+            }
+        }
+
+        public override void OnUserLeft(User user)
+        {
+            if (is_loaded && metaDataManager != null)
+            {
+                metaDataManager.GetUsers();
+                metaDataManager.RemoveUserMetaData(user);
+                botComponent.RemoveOverride(user);
+                OnUserLeftCallback.Invoke(user);
+                UniLog.Log("USER LEFT " + user.UserID);
+            }
+        }
 
         public float recording_time
         {
@@ -69,6 +119,9 @@ namespace metagen
         protected override void OnAttach()
         {
             base.OnAttach();
+        }
+        public void Initialize()
+        {
             recording_streams = true;
             recording_animation = true;
             recording_voice = true;
@@ -81,11 +134,11 @@ namespace metagen
             streamRecorder = new PoseStreamRecorder(this);
             voiceRecorder = new VoiceRecorder(this);
             visionRecorder = new VisionRecorder(camera_resolution, this);
-            streamPlayer = new PoseStreamPlayer(dataManager, this);
+            streamPlayer = new UnifiedPayer(dataManager, this);
             animationRecorder = Slot.AttachComponent<RecordingTool>();
             animationRecorder.metagen_comp = this;
-            animationRecorder.dataManager = dataManager;
-            //StartRecording();
+            metaDataManager = new MetaDataManager(this);
+            metaDataManager.GetUserMetaData();
         }
         protected override void OnDispose()
         {
@@ -99,10 +152,10 @@ namespace metagen
             //UniLog.Log("HI from " + currentWorld.CorrespondingWorldId);
 
             //Start/Stop recording
-            if (this.Input.GetKeyDown(Key.R))
-            {
-                ToggleRecording();
-            }
+            //if (this.Input.GetKeyDown(Key.R))
+            //{
+            //    ToggleRecording();
+            //}
 
             //Start a new chunk, if we have been recording for 30 minutes, or start a new section, if a new user has left or joined
             if (recording && ((recording_time > MAX_CHUNK_LEN_MIN * 60 * 1000) || dataManager.ShouldStartNewSection()))
@@ -117,11 +170,12 @@ namespace metagen
             //TODO: make voice playback
             //TODO: add Locomotion to playback
             //TODO: controller stream playback?
+
             //Start/Stop playing
-            if (this.Input.GetKeyDown(Key.P))
-            {
-                TogglePlaying();
-            }
+            //if (this.Input.GetKeyDown(Key.P))
+            //{
+            //    TogglePlaying();
+            //}
 
             //TODO: make cameras for vision recording local to not affect the performance of others
             //TODO: record eye and mouth tracking data, haptics, and biometric data via some standard dynamic variables and things?
@@ -160,7 +214,8 @@ namespace metagen
 
                 if (recording && all_ready && recording_hearing_user != null && hearingRecorder==null? false : hearingRecorder.isRecording)
                 {
-                    hearingRecorder.UpdatePosition(recording_hearing_user.Root.Slot.GlobalPosition);
+                    Slot slot = recording_hearing_user.Root.Slot;
+                    hearingRecorder.UpdateTransform(slot.GlobalPosition, slot.GlobalRotation);
                 }
                 frame_index += 1;
 
@@ -198,11 +253,11 @@ namespace metagen
             recordingBeginTime = DateTime.UtcNow;
             //UniLog.Log(streamRecorder.isRecording.ToString());
             //UniLog.Log(recording_streams.ToString());
+            //metaDataManager.GetUserMetaData();
             
             //STREAMS
             if (recording_streams && !streamRecorder.isRecording)
             {
-                streamRecorder.saving_folder = dataManager.saving_folder;
                 streamRecorder.StartRecording();
                 //Record the first frame
                 streamRecorder.RecordStreams(0f);
@@ -213,7 +268,6 @@ namespace metagen
             {
                 animationRecorder = Slot.AttachComponent<RecordingTool>();
                 animationRecorder.metagen_comp = this;
-                animationRecorder.dataManager = dataManager;
                 animationRecorder.StartRecording();
                 //Record the first frame
                 animationRecorder.RecordFrame();
@@ -222,21 +276,18 @@ namespace metagen
             //AUDIO
             if (recording_voice && !voiceRecorder.isRecording)
             {
-                voiceRecorder.saving_folder = dataManager.saving_folder;
                 voiceRecorder.StartRecording();
             }
 
             //HEARING
             if (recording_hearing && !hearingRecorder.isRecording)
             {
-                hearingRecorder.saving_folder = dataManager.saving_folder;
                 hearingRecorder.StartRecording();
             }
 
             //VIDEO
             if (recording_vision && !visionRecorder.isRecording)
             {
-                visionRecorder.saving_folder = dataManager.saving_folder;
                 visionRecorder.StartRecording();
                 //Record the first frame
                 visionRecorder.RecordVision();
@@ -253,6 +304,7 @@ namespace metagen
             bool wait_hearing = false;
             bool wait_vision = false;
             bool wait_anim = false;
+            metaDataManager.WriteUserMetaData();
 
             //STREAMS
             if (streamRecorder.isRecording)
@@ -292,6 +344,14 @@ namespace metagen
             } catch (Exception e)
             {
                 UniLog.Log(">w< animation stopping failed");
+            }
+
+            foreach (var item in userMetaData)
+            {
+                User user = item.Key;
+                UserMetadata metadata = item.Value;
+                if (metadata.isRecording)
+                    dataBase.UpdateRecordedTime(user.UserID, recording_time/1000, metadata.isPublic); //in seconds
             }
 
             Task task = Task.Run(() =>
@@ -334,9 +394,9 @@ namespace metagen
                         World.RunSynchronously(() =>
                         {
                             animationRecorder.StopRecording();
+                            animationRecorder.WaitForFinish();
+                            Slot.RemoveComponent(animationRecorder);
                         });
-                        animationRecorder.WaitForFinish();
-                        Slot.RemoveComponent(animationRecorder);
                         wait_anim = false;
                     }
                 } catch (Exception e)

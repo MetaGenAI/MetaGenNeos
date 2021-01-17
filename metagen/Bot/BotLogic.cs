@@ -16,6 +16,7 @@ namespace metagen
         protected readonly SyncTime _recordingStarted;
         private MetaGenBotPanelUI panelUI;
         public metagen.MetaGen mg;
+        bool just_created_panel;
         public bool IsPlaying
         {
             get
@@ -41,11 +42,11 @@ namespace metagen
             {
                 if (mg.recording)
                 {
-                    mg.recording_animation = panelUI._animationsCheckbox.Target.State.Value;
-                    mg.recording_vision = panelUI._videoCheckbox.Target.State.Value;
                     mg.StopRecording();
                 } else
                 {
+                    mg.recording_animation = panelUI._animationsCheckbox.Target.State.Value;
+                    mg.recording_vision = panelUI._videoCheckbox.Target.State.Value;
                     mg.StartRecording();
                 }
             };
@@ -59,15 +60,72 @@ namespace metagen
                     int recording_index = Int32.Parse(panelUI._recordIndexField.Target.Text.Content.Value);
                     mg.play_hearing = panelUI._hearingCheckbox.Target.State.Value;
                     mg.play_voice = panelUI._voicesCheckbox.Target.State.Value;
-                    mg.isRecordingPublicDomain = panelUI._publicDomainCheckbox.Target.State.Value;
                     Slot avatar = panelUI._avatarRefField.Target.Reference.Target;
                     mg.StartPlaying(recording_index,avatar);
                 }
             };
+
+
+            just_created_panel = true;
+        }
+        public void AddOverride(User user)
+        {
+            //This is called by MetaGen when there is a change to the number of users
+            panelUI?.publicDomainOverride.SetOverride(user, mg.users[user].default_public);
+            panelUI?.recordUserOverride.SetOverride(user, mg.users[user].is_friend);
+        }
+        public void RemoveOverride(User user)
+        {
+            //This is called by MetaGen when there is a change to the number of users
+            panelUI?.publicDomainOverride.RemoveOverride(user);
+            panelUI?.recordUserOverride.RemoveOverride(user);
         }
         protected override void OnCommonUpdate()
         {
             base.OnCommonUpdate();
+
+            //Thing to run when the panel has finished attaching (I think theres a callback thing I could use instead but well)
+            if (mg.is_loaded && just_created_panel && panelUI?.publicDomainOverride != null && panelUI?.recordUserOverride != null)
+            {
+                UniLog.Log("AAAAAAAAAAAAAAAAAA");
+                UniLog.Log(mg.userMetaData.Count);
+                //mg.metaDataManager.GetUserMetaData();
+                foreach (var item in mg.userMetaData)
+                {
+                    User user = item.Key;
+                    UserMetadata data = item.Value;
+                    panelUI?.publicDomainOverride.SetOverride(user, data.isPublic);
+                }
+                foreach (var item in mg.userMetaData)
+                {
+                    User user = item.Key;
+                    UserMetadata data = item.Value;
+                    panelUI?.recordUserOverride.SetOverride(user, data.isRecording);
+                }
+                panelUI.recordUserOverride.Changed += (IChangeable a) =>
+                {
+                    SyncBag<ValueUserOverride<bool>.Override> overrides = (SyncBag<ValueUserOverride<bool>.Override>) panelUI.recordUserOverride.GetSyncMember(7);
+                    foreach (var item in overrides)
+                    {
+                        ValueUserOverride<bool>.Override ov = item.Value;
+                        //Perhaps make an API function for this
+                        mg.metaDataManager.userMetaData[ov.User.User.Target].isRecording = ov.Value.Value;
+                    }
+
+                };
+
+                panelUI.publicDomainOverride.Changed += (IChangeable a) =>
+                {
+                    SyncBag<ValueUserOverride<bool>.Override> overrides = (SyncBag<ValueUserOverride<bool>.Override>) panelUI.publicDomainOverride.GetSyncMember(7);
+                    foreach (var item in overrides)
+                    {
+                        ValueUserOverride<bool>.Override ov = item.Value;
+                        //Perhaps make an API function for this
+                        mg.metaDataManager.userMetaData[ov.User.User.Target].isPublic = ov.Value.Value;
+                    }
+                };
+                just_created_panel = false;
+            }
 
             //Update panel UI
             //string localized1 = this.GetLocalized("CameraCOntrol.OBS.Live", (string)null, (Dictionary<string, object>)null);
@@ -83,9 +141,12 @@ namespace metagen
             int num2 = num1 / 3600;
             int num3 = num1 / 60 % 60;
             int num4 = num1 % 60;
-            this.panelUI._recordingTime.Target.Content.Value = string.Format("{0}: {1:00}:{2:00}:{3:00}", (object)localized1, (object)num2, (object)num3, (object)num4);
-            this.UpdateButton((Button)this.panelUI._playButton, mg.playing_state, "Playing");
-            this.UpdateButton((Button)this.panelUI._recordButton, mg.recording_state, "Recording");
+            if (panelUI != null)
+            {
+                this.panelUI._recordingTime.Target.Content.Value = string.Format("{0}: {1:00}:{2:00}:{3:00}", (object)localized1, (object)num2, (object)num3, (object)num4);
+                this.UpdateButton((Button)this.panelUI._playButton, mg.playing_state, "Playing");
+                this.UpdateButton((Button)this.panelUI._recordButton, mg.recording_state, "Recording");
+            }
         }
 
         private void UpdateButton(Button button, OutputState state, string label)

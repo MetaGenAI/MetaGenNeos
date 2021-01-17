@@ -19,9 +19,12 @@ namespace metagen
         private List<string> current_users_ids = new List<string>();
         public int2 camera_resolution;
         public bool isRecording = false;
-        public string saving_folder;
         private MetaGen metagen_comp;
-        private string license;
+        public string saving_folder {
+            get {
+                return metagen_comp.dataManager.saving_folder;
+                }
+        }
         public VisionRecorder(int2 resolution, MetaGen component)
         {
             camera_resolution = resolution;
@@ -60,25 +63,27 @@ namespace metagen
                 }
             }
         }
+
         public void StartRecording()
         {
             World currentWorld = metagen_comp.World;
-            Dictionary<RefID, User>.ValueCollection users = currentWorld.AllUsers;
+            current_users_ids = new List<string>();
             currentWorld.RunSynchronously(() =>
             {
-                foreach (User user in users)
+                foreach (var item in metagen_comp.userMetaData)
                 {
-                if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
-                    RefID user_id = user.ReferenceID;
-                    current_users_ids.Add(user_id.ToString());
-                    Slot localSlot = user.Root.HeadSlot.AddLocalSlot("vision recorder camera");
-                    FrooxEngine.Camera camera = localSlot.AttachComponent<FrooxEngine.Camera>();
-                    camera.GetRenderSettings(camera_resolution);
-                    camera.NearClipping.Value = 0.15f;
-                    cameras[user_id] = camera;
-                    int fps = 30;
-                    license = metagen_comp.isRecordingPublicDomain ? "CC0" : "NA";
-                    visual_recorders[user_id] = new VideoRecorder(Path.Combine(saving_folder,user_id.ToString() + "_"+license+"_vision_tmp.avi"), camera_resolution.x, camera_resolution.y, fps, metagen_comp);
+                User user = item.Key;
+                UserMetadata metadata = item.Value;
+                if (!metadata.isRecording || (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser)) continue;
+                RefID user_id = user.ReferenceID;
+                current_users_ids.Add(user_id.ToString());
+                Slot localSlot = user.Root.HeadSlot.AddLocalSlot("vision recorder camera");
+                FrooxEngine.Camera camera = localSlot.AttachComponent<FrooxEngine.Camera>();
+                camera.GetRenderSettings(camera_resolution);
+                camera.NearClipping.Value = 0.15f;
+                cameras[user_id] = camera;
+                int fps = 30;
+                visual_recorders[user_id] = new VideoRecorder(Path.Combine(saving_folder,user_id.ToString() + "_vision_tmp.avi"), camera_resolution.x, camera_resolution.y, fps, metagen_comp);
                 }
                 UniLog.Log("Made visual recorder");
                 isRecording = true;
@@ -113,8 +118,8 @@ namespace metagen
             {
                 foreach (string user_id in current_users_ids)
                 {
-                    UniLog.Log("Moving " + Path.Combine(saving_folder, user_id + "_"+license+"_vision_tmp.avi"));
-                    File.Move(Path.Combine(saving_folder,user_id + "_"+license+"_vision_tmp.avi"), Path.Combine(saving_folder,user_id + "_"+license+"_vision.avi"));
+                    UniLog.Log("Moving " + Path.Combine(saving_folder, user_id + "_vision_tmp.avi"));
+                    File.Move(Path.Combine(saving_folder,user_id + "_vision_tmp.avi"), Path.Combine(saving_folder,user_id + "_vision.avi"));
                 }
             });
             task1.Wait();
@@ -130,7 +135,7 @@ namespace metagen
                 Task task2 = Task.Run(() =>
                 {
                     int iter = 0;
-                    while (!File.Exists(Path.Combine(saving_folder,user_id + "_"+license+"_vision.mp4")) && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
+                    while (!File.Exists(Path.Combine(saving_folder,user_id + "_vision.mp4")) && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
                 });
                 tasks[i] = task2;
             }

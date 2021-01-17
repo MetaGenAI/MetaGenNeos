@@ -19,10 +19,13 @@ namespace metagen
         private Dictionary<RefID, AudioRecorder> audio_recorders = new Dictionary<RefID, AudioRecorder>();
         private List<string> current_users_ids = new List<string>();
         public bool isRecording = false;
-        public string saving_folder;
         private MetaGen metagen_comp;
         public bool audio_sources_ready = false;
-        private string license;
+        public string saving_folder {
+            get {
+                return metagen_comp.dataManager.saving_folder;
+                }
+        }
 
         public VoiceRecorder(MetaGen component)
         {
@@ -58,10 +61,11 @@ namespace metagen
 
         public void StartRecording()
         {
-            Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
-            foreach (User user in users)
+            foreach (var item in metagen_comp.userMetaData)
             {
-                if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
+                User user = item.Key;
+                UserMetadata metadata = item.Value;
+                if (!metadata.isRecording || !metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
                 RefID user_id = user.ReferenceID;
                 current_users_ids.Add(user_id.ToString());
                 AvatarAudioOutputManager comp = user.Root.Slot.GetComponentInChildren<AvatarAudioOutputManager>();
@@ -75,8 +79,7 @@ namespace metagen
                 {
                     UniLog.Log("Sample rate");
                     UniLog.Log(metagen_comp.Engine.AudioSystem.Connector.SampleRate.ToString());
-                    license = metagen_comp.isRecordingPublicDomain ? "CC0" : "NA";
-                    audio_recorders[user_id] = new AudioRecorder(saving_folder + "/" + user_id.ToString() + "_"+license+"_voice_tmp", metagen_comp.Engine.AudioSystem.BufferSize, 1, metagen_comp.Engine.AudioSystem.SampleRate, 1);
+                    audio_recorders[user_id] = new AudioRecorder(saving_folder + "/" + user_id.ToString() + "_voice_tmp", metagen_comp.Engine.AudioSystem.BufferSize, 1, metagen_comp.Engine.AudioSystem.SampleRate, 1);
                     audio_recorders[user_id].StartWriting();
                 }
             }
@@ -93,7 +96,7 @@ namespace metagen
             {
                 foreach (string user_id in current_users_ids)
                 {
-                    File.Move(saving_folder + "/" + user_id + "_"+license+"_voice_tmp.wav", saving_folder + "/" + user_id + "_"+license+"_voice.wav");
+                    File.Move(saving_folder + "/" + user_id + "_voice_tmp.wav", saving_folder + "/" + user_id + "_voice.wav");
                 }
                 current_users_ids = new List<string>();
             });
@@ -112,7 +115,7 @@ namespace metagen
                 Task task2 = Task.Run(() =>
                 {
                     int iter = 0;
-                    while (!File.Exists(saving_folder + "/" + user_id + "_"+license+"_voice.ogg") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
+                    while (!File.Exists(saving_folder + "/" + user_id + "_voice.ogg") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
                 });
                 tasks[i] = task2;
             }

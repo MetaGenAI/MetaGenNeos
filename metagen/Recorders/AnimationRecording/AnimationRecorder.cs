@@ -45,7 +45,6 @@ namespace NeosAnimationToolset
 
         public string saving_folder;
         public MetaGen metagen_comp;
-        public DataManager dataManager;
         public Dictionary<RefID, List<Tuple<BodyNode, TrackedSlot>>> trackedSlots = new Dictionary<RefID, List<Tuple<BodyNode, TrackedSlot>>>();
         public Dictionary<RefID, TrackedSlot> audioSources = new Dictionary<RefID, TrackedSlot>();
         //public Dictionary<RefID, TrackedRig> trackedRigs = new Dictionary<RefID, TrackedRig>();
@@ -101,15 +100,20 @@ namespace NeosAnimationToolset
             trackedSlots = new Dictionary<RefID, List<Tuple<BodyNode, TrackedSlot>>>();
             recordedSlots?.Clear();
             //recordedRigs?.Clear();
-            Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
-            foreach (User user in users)
+            foreach (var item in metagen_comp.userMetaData)
             {
-                if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
+                User user = item.Key;
+                UserMetadata metadata = item.Value;
+                UniLog.Log("user "+user.UserName);
+                if (!metadata.isRecording || (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser)) continue;
                 RefID user_id = user.ReferenceID;
                 Slot rootSlot = user.Root?.Slot;
                 SimpleAvatarProtection protectionComponent = rootSlot?.GetComponentInChildren<SimpleAvatarProtection>();
                 if (protectionComponent != null) continue;
                 trackedSlots[user_id] = new List<Tuple<BodyNode, TrackedSlot>>();
+
+                UniLog.Log("creating animation for");
+                UniLog.Log(user_id);
 
                 if (record_audio_sources)
                 {
@@ -504,7 +508,7 @@ namespace NeosAnimationToolset
             playbackState.Source.Target = refNodeState;
             //AUDIO PLAY
             UniLog.Log("Attaching audio to exported!");
-            string reading_directory = dataManager.GetRecordingForWorld(metagen_comp.World, 0);
+            string reading_directory = metagen_comp.dataManager.GetRecordingForWorld(metagen_comp.World, 0);
             foreach(var item in audioSources)
             {
                 RefID user_id = item.Key;

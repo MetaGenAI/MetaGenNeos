@@ -15,7 +15,7 @@ using FrooxEngine.FinalIK;
 
 namespace metagen
 {
-    class PoseStreamPlayer
+    class UnifiedPayer
     {
         private DateTime utcNow;
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
@@ -46,7 +46,7 @@ namespace metagen
         DataManager dataManager;
         MetaGen metagen_comp;
         //TODO
-        public PoseStreamPlayer(DataManager dataMan, MetaGen component)
+        public UnifiedPayer(DataManager dataMan, MetaGen component)
         {
             dataManager = dataMan;
             metagen_comp = component;
@@ -215,8 +215,14 @@ namespace metagen
                 {
                     userMetadatas = csv.GetRecords<UserMetadata>().ToList();
                 }
+                if (userMetadatas.Where((u,i)=>(u.isPublic && u.isRecording)).Count() == 0)
+                {
+                    UniLog.Log("UwU playing an emtpy (or private) recording");
+                    metagen_comp.StopPlaying();
+                }
                 foreach (UserMetadata user in userMetadatas)
                 {
+                    if (!user.isRecording || !user.isPublic) continue; //at the moment we only allow playing back of public recording, for privacy reasons. In the future, we'll allow private access to the data
                     RefID user_id = RefID.Parse(user.userRefId);
                     UniLog.Log(user_id.ToString());
                     user_ids.Add(user_id);

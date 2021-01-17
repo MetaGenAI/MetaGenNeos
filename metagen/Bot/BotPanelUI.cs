@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using metagen;
 
 namespace FrooxEngine
 {
@@ -21,22 +22,27 @@ namespace FrooxEngine
         public readonly SyncRef<Checkbox> _videoCheckbox;
         public readonly SyncRef<Checkbox> _voicesCheckbox;
         public readonly SyncRef<Checkbox> _publicDomainCheckbox;
+        public readonly SyncRef<Checkbox> _recordUserCheckbox;
         public readonly SyncRef<Checkbox> _hearingCheckbox;
         public readonly SyncRef<ReferenceField<Slot>> _avatarRefField;
         public readonly SyncTime _recordingStarted;
         public readonly SyncRef<Sync<bool>> record_button_pressed;
         public readonly SyncRef<Sync<bool>> play_button_pressed;
         public readonly SyncRef<Text> _recordingTime;
+        public ValueUserOverride<bool> publicDomainOverride;
+        public ValueUserOverride<bool> recordUserOverride;
         public bool IsRecording = false;
         public bool IsPlaying = false;
         private NeosSwapCanvasPanel panel;
         public event Action ToggleRecording;
         public event Action TogglePlaying;
+        MetaGen mg;
 
         protected override void OnAttach()
         {
             base.OnAttach();
-            float2 float2 = new float2(2300f, 5700f);
+            mg = this.Slot.GetComponent<BotLogic>().mg;
+            float2 float2 = new float2(2300f, 5900f);
             this.CanvasSize = float2 * 1.0f;
             this.PhysicalHeight = this.Slot.Parent.LocalScaleToGlobal(0.3f);
             this.Panel.ShowHeader.Value = false;
@@ -106,15 +112,24 @@ namespace FrooxEngine
             Text text1 = uiBuilder1.Text("<b>This recording system is currenlty in Beta. Expect bugs</b>. MetaGen is a project to generate a public dataset of VR experiences, for use in scientific research, and development of AI technologies.");
             uiBuilder1.Style.MinHeight = 32f;
 
+            //Recording checkbox
+            uiBuilder1.Style.PreferredHeight = 100f;
+            uiBuilder1.Style.MinHeight = 100f;
+            Checkbox checkbox_record_user = uiBuilder1.Checkbox("Record me (local)",false);
+            this._recordUserCheckbox.Target = checkbox_record_user;
+            recordUserOverride = uiBuilder1.Current.AttachComponent<ValueUserOverride<bool>>();
+            recordUserOverride.Target.Target = checkbox_record_user.State;
+
             //Data submission checkbox
             uiBuilder1.Style.MinHeight = 350f;
-            Text text2 = uiBuilder1.Text("<b>By checking this box you agree to license the recorded data as CC0 (Public domain), as part of the MetaGen Public Dataset (intended for research in AI and other sciences). By GDPR you can also request for your data to be deleted at any point, even if you checked the box.</b>");
+            Text text2 = uiBuilder1.Text("<b>By checking this box you agree to license the recorded data as CC0 (Public domain), as part of the MetaGen Public Dataset (intended for research in AI and other sciences).</b>");
             text2.HorizontalAlign.Value = CodeX.TextHorizontalAlignment.Left;
             uiBuilder1.Style.PreferredHeight = 100f;
             uiBuilder1.Style.MinHeight = 100f;
-            Checkbox checkbox0 = uiBuilder1.Checkbox("Public domain",false);
-            this._publicDomainCheckbox.Target = checkbox0;
-
+            Checkbox checkbox_public_domain = uiBuilder1.Checkbox("Public domain",false);
+            this._publicDomainCheckbox.Target = checkbox_public_domain;
+            publicDomainOverride = uiBuilder1.Current.AttachComponent<ValueUserOverride<bool>>();
+            publicDomainOverride.Target.Target = checkbox_public_domain.State;
 
             //recording time
             uiBuilder1.Style.PreferredHeight = 75f;
@@ -128,7 +143,7 @@ namespace FrooxEngine
             uiBuilder1.Style.MinHeight = 100f;
 
             //animation checkpoint
-            Checkbox animCheckbox = uiBuilder1.Checkbox("Record animation",true);
+            Checkbox animCheckbox = uiBuilder1.Checkbox("Generate animation",false);
             this._animationsCheckbox.Target = animCheckbox;
 
             //video checkpoint
@@ -206,12 +221,12 @@ namespace FrooxEngine
             base.OnCommonUpdate();
 
             //Check control variables from panel UI
-            if (record_button_pressed.Target.Value)
+            if (record_button_pressed != null & record_button_pressed.Target.Value)
             {
                 record_button_pressed.Target.Value = false;
                 ToggleRecording?.Invoke();
             }
-            if (play_button_pressed.Target.Value)
+            if (play_button_pressed != null & play_button_pressed.Target.Value)
             {
                 play_button_pressed.Target.Value = false;
                 TogglePlaying?.Invoke();

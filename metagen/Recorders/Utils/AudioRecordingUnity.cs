@@ -24,7 +24,6 @@ namespace UnityNeos
         public bool isRecording = false;
         public bool videoStartedRecording = false;
         AudioRecorder recorder;
-        private string license;
         public MetaGen metagen_comp;
      
         void Awake()
@@ -58,16 +57,17 @@ namespace UnityNeos
         //    //}
         //}
 
-        public void UpdatePosition(float3 global_position)
+        public void UpdateTransform(float3 global_position, floatQ global_rotation)
         {
             this.gameObject.transform.position = global_position.ToUnity();
+            this.gameObject.transform.rotation = global_rotation.ToUnity();
         }
 
         public void StartRecording()
         {
             //Guid g = Guid.NewGuid();
-            license = metagen_comp.isRecordingPublicDomain ? "CC0" : "NA";
-            recorder = new AudioRecorder(Path.Combine(saving_folder,userID+"_"+license+"_hearing_tmp"), bufferSize, numBuffers, outputRate);
+            saving_folder = metagen_comp.dataManager.saving_folder;
+            recorder = new AudioRecorder(Path.Combine(saving_folder,userID+"_hearing_tmp"), bufferSize, numBuffers, outputRate);
             recorder.StartWriting();
             isRecording = true;
             print("hearing rec start");
@@ -79,7 +79,7 @@ namespace UnityNeos
             recorder.WriteHeader();
             //Task task = Task.Run(() =>
             //{
-            File.Move(Path.Combine(saving_folder,userID + "_"+license+"_hearing_tmp.wav"), Path.Combine(saving_folder,userID + "_"+license+"_hearing.wav"));
+            File.Move(Path.Combine(saving_folder,userID + "_hearing_tmp.wav"), Path.Combine(saving_folder,userID + "_hearing.wav"));
             //});
             //task.Wait();
 
@@ -96,7 +96,7 @@ namespace UnityNeos
                 Task task2 = Task.Run(() =>
                 {
                     int iter = 0;
-                    while (!File.Exists(saving_folder + "/" + user_id + "_"+license+"_hearing.ogg") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
+                    while (!File.Exists(saving_folder + "/" + user_id + "_hearing.ogg") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
                 });
                 tasks[i] = task2;
             }

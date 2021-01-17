@@ -20,8 +20,12 @@ namespace metagen
         public Dictionary<RefID, FingerPoseStreamManager> finger_stream_drivers = new Dictionary<RefID, FingerPoseStreamManager>();
         public List<RefID> current_users = new List<RefID>();
         public bool isRecording = false;
-        public string saving_folder;
         private MetaGen metagen_comp;
+        public string saving_folder {
+            get {
+                return metagen_comp.dataManager.saving_folder;
+                }
+        }
         public PoseStreamRecorder(MetaGen component)
         {
             metagen_comp = component;
@@ -130,13 +134,13 @@ namespace metagen
         }
         public void StartRecording()
         {
-            Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
-            foreach (User user in users)
+            foreach (var userItem in metagen_comp.userMetaData)
             {
-                if (user == metagen_comp.World.LocalUser) continue;
+                User user = userItem.Key;
+                UserMetadata metadata = userItem.Value;
+                if (!metadata.isRecording || !metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
                 RefID user_id = user.ReferenceID;
-                String license = metagen_comp.isRecordingPublicDomain ? "CC0" : "NA";
-                output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_"+license+"_streams.dat", FileMode.Create, FileAccess.ReadWrite);
+                output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_streams.dat", FileMode.Create, FileAccess.ReadWrite);
 
                 BitWriterStream bitstream = new BitWriterStream(output_fss[user_id]);
                 output_writers[user_id] = new BitBinaryWriterX(bitstream);
