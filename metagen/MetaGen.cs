@@ -230,12 +230,19 @@ namespace metagen
         }
         protected override void OnAudioUpdate()
         {
-            base.OnAudioUpdate();
-            if (recording && voiceRecorder==null? false : voiceRecorder.isRecording)
+            try
             {
-                //UniLog.Log("recording voice");
-                voiceRecorder.RecordAudio();
+                base.OnAudioUpdate();
+                if (recording && voiceRecorder == null ? false : voiceRecorder.isRecording)
+                {
+                    //UniLog.Log("recording voice");
+                    voiceRecorder.RecordAudio();
+                }
+            } catch (Exception e)
+            {
+                UniLog.Log("Hecc, exception in metagen.OnAudioUpdate:" + e.Message);
             }
+
         }
 
         public void StartRecording()

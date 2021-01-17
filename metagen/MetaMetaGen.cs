@@ -265,7 +265,15 @@ namespace FrooxEngine.LogiX
         {
             if (currentWorld != null)
             {
-                Userspace.LeaveSession(currentWorld);
+                try
+                {
+                    if (currentWorld.IsAuthority) Userspace.LeaveSession(currentWorld);
+                    else Userspace.EndSession(currentWorld);
+                } catch (Exception e)
+                {
+                    UniLog.Log("Exception when leaving/ending session: " + e.Message);
+                }
+
             }
             foreach(var item in metagens)
             {
