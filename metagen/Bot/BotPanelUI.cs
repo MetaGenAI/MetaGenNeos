@@ -48,7 +48,7 @@ namespace FrooxEngine
             this.Panel.ShowHeader.Value = false;
             this.Panel.ShowHandle.Value = false;
             Slot holder = this.Slot.Parent.AddSlot("panel holder");
-            holder.Tag = "Developer";
+            //holder.Tag = "Developer";
             holder.LocalPosition = new float3(0f, 1.5f, 1f);
             this.Slot.DestroyChildren();
             panel = holder.AttachComponent<NeosSwapCanvasPanel>();
