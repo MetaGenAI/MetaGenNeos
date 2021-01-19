@@ -149,6 +149,8 @@ namespace FrooxEngine.LogiX
                     default:
                         break;
                 }
+                MessageManager.UserMessages userMessages = this.Engine.Cloud.Messages.GetUserMessages(msg.SenderId);
+                userMessages.MarkAllRead();
             });
         }
         private void processInvite(Message msg)
