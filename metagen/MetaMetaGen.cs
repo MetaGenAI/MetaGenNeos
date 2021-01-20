@@ -43,6 +43,7 @@ namespace FrooxEngine.LogiX
             awaiter.GetResult();
             this.StartTask(()=>Task.Run(metagen.Util.MediaConverter.Run));
         }
+
         protected override void OnPaste()
         {
             base.OnPaste();
@@ -56,11 +57,13 @@ namespace FrooxEngine.LogiX
             //TODO: sync between audios and videos is not right!!
             UniLog.Log("Adding Audio Listener");
             GameObject gameObject = GameObject.Find("AudioListener");
+            default_record_local_user = true;
             if (!(LocalUser.HeadDevice == HeadOutputDevice.Screen)) //must be on VR mode
             {
                 //gameObject = GameObject.Find("Camera (ears)");
                 default_record_local_user = true;
             }
+
             //GameObject[] rootObjects = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
             //GameObject gameObject = rootObjects[0];
             //for (int i = 0; i < rootObjects.Length; i++)
@@ -254,9 +257,15 @@ namespace FrooxEngine.LogiX
         protected override void OnCommonUpdate()
         {
             if (current_metagen == null ? false : current_metagen.recording)
-                FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Busy;
+            {
+                if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Busy)
+                    FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Busy;
+            }
             else
-                FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Online;
+            {
+                if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Online)
+                    FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Online;
+            }
 
             if (dataBase != null && dataBase.should_update)
             {
@@ -408,7 +417,7 @@ namespace FrooxEngine.LogiX
         {
             UniLog.Log("remove world " + world.RawName);
             //current_session_id = FrooxEngine.Engine.Current.WorldManager.FocusedWorld.SessionId;
-            if (world.SessionId != null & metagens.ContainsKey(world.SessionId))
+            if (world.SessionId != null && metagens.ContainsKey(world.SessionId))
                 metagens.Remove(world.SessionId);
         }
     }

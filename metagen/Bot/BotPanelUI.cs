@@ -221,12 +221,12 @@ namespace FrooxEngine
             base.OnCommonUpdate();
 
             //Check control variables from panel UI
-            if (record_button_pressed != null & record_button_pressed.Target.Value)
+            if (record_button_pressed != null && record_button_pressed.Target.Value)
             {
                 record_button_pressed.Target.Value = false;
                 ToggleRecording?.Invoke();
             }
-            if (play_button_pressed != null & play_button_pressed.Target.Value)
+            if (play_button_pressed != null && play_button_pressed.Target.Value)
             {
                 play_button_pressed.Target.Value = false;
                 TogglePlaying?.Invoke();

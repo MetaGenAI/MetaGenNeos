@@ -51,9 +51,10 @@ namespace metagen
                         audio_recorders[user_id].ConvertAndWrite(buffer);
                     } else
                     {
-                        UniLog.Log("Restarting audio recording coz audio output source target was null!");
-                        StopRecording();
-                        StartRecording();
+                        UniLog.Log("Audio Output Source target was null! (hmm should we restart it?). Did it happen coz a user left (in which case we shouldn't restart it), or something else?");
+                        //UniLog.Log("Restarting audio recording coz audio output source target was null!");
+                        //StopRecording();
+                        //StartRecording();
                     }
                 }
             }

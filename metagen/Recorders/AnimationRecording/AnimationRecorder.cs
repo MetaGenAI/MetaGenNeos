@@ -118,13 +118,17 @@ namespace NeosAnimationToolset
                 if (record_audio_sources)
                 {
                     AvatarAudioOutputManager comp = user.Root.Slot.GetComponentInChildren<AvatarAudioOutputManager>();
-                    AudioOutput audio_output = comp.AudioOutput.Target;
-                    Slot containingSlot = audio_output.Slot;
-                    TrackedSlot trackedSlot = recordedSlots.Add();
-                    trackedSlot.slot.Target = containingSlot;
-                    trackedSlot.ResultType.Value = ResultTypeEnum.COPY_COMPONENTS;
-                    trackedSlot.position.Value = true;
-                    audioSources[user_id] = trackedSlot;
+                    if (comp != null)
+                    {
+                        AudioOutput audio_output = comp.AudioOutput.Target;
+                        Slot containingSlot = audio_output.Slot;
+                        TrackedSlot trackedSlot = recordedSlots.Add();
+                        trackedSlot.slot.Target = containingSlot;
+                        trackedSlot.ResultType.Value = ResultTypeEnum.COPY_COMPONENTS;
+                        trackedSlot.position.Value = true;
+                        audioSources[user_id] = trackedSlot;
+                        UniLog.Log("Added audio source for animation recorder");
+                    }
                 }
 
                 if (record_proxies)
@@ -211,24 +215,31 @@ namespace NeosAnimationToolset
                             trackedRenderer.recordScales.Value = true;
                         }
                     }
+                    UniLog.Log("Added skinned meshes for animation recorder");
 
-                    foreach(MeshRenderer meshRenderer in rootSlot?.GetComponentInChildren<AvatarRoot>().Slot.GetComponentsInChildren<MeshRenderer>())
+                    List<MeshRenderer> meshRenderers = rootSlot?.GetComponentInChildren<AvatarRoot>()?.Slot.GetComponentsInChildren<MeshRenderer>();
+                    if (meshRenderers != null)
                     {
-                        if (meshRenderer.Enabled && meshRenderer.Slot.IsActive && !(meshRenderer is SkinnedMeshRenderer))
+                        foreach(MeshRenderer meshRenderer in meshRenderers)
                         {
-                            if (meshRenderer.Slot.GetComponent<InteractionLaser>() != null) continue;
-                            if (meshRenderer.Slot.GetComponentInParents<InteractionLaser>() != null) continue;
-                            TrackedMeshRenderer trackedRenderer = recordedMR.Add();
-                            trackedRenderer.renderer.Target = meshRenderer;
-                            trackedRenderer.recordScales.Value = true;
+                            if (meshRenderer.Enabled && meshRenderer.Slot.IsActive && !(meshRenderer is SkinnedMeshRenderer))
+                            {
+                                if (meshRenderer.Slot.GetComponent<InteractionLaser>() != null) continue;
+                                if (meshRenderer.Slot.GetComponentInParents<InteractionLaser>() != null) continue;
+                                TrackedMeshRenderer trackedRenderer = recordedMR.Add();
+                                trackedRenderer.renderer.Target = meshRenderer;
+                                trackedRenderer.recordScales.Value = true;
+                            }
                         }
                     }
+                    UniLog.Log("Added non-skinned meshes for animation recorder");
 
                 }
             }
 
             animation = new AnimX(1f);
-            recordingUser.Target = LocalUser;
+            UniLog.Log(metagen_comp.LocalUser);
+            recordingUser.Target = metagen_comp.LocalUser;
             _startTime.Value = base.Time.WorldTime;
             state.Value = 1;
             foreach (ITrackable it in recordedSMR) { it.OnStart(this); it.OnUpdate(0); }
@@ -253,7 +264,7 @@ namespace NeosAnimationToolset
         }
         public void StopRecording()
         {
-            StartTask(async () => { 
+            StartTask(async () => {
                 try
                 {
                     await this.AttachToObject(bakeAsyncTask);
@@ -285,6 +296,7 @@ namespace NeosAnimationToolset
             holder.LocalRotation = floatQ.Euler(0f, 0f, 0f);
             holder.LocalPosition = new float3(0, 1.5f, 0);
             Slot visual = holder.AddSlot("Main button");
+            Slot logix_slot = holder.AddSlot("Logix");
 
             visual.LocalRotation = floatQ.Euler(0f, 0f, 0f);
             visual.LocalPosition = new float3(0, 0f, 0);
@@ -300,8 +312,8 @@ namespace NeosAnimationToolset
 
             holder.AttachComponent<Grabbable>();
             PhysicalButton button = visual.AttachComponent<PhysicalButton>();
-            FrooxEngine.LogiX.Interaction.ButtonEvents touchableEvents = visual.AttachComponent<FrooxEngine.LogiX.Interaction.ButtonEvents>();
-            FrooxEngine.LogiX.ReferenceNode<IButton> refNode = visual.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IButton>>();
+            FrooxEngine.LogiX.Interaction.ButtonEvents touchableEvents = logix_slot.AttachComponent<FrooxEngine.LogiX.Interaction.ButtonEvents>();
+            FrooxEngine.LogiX.ReferenceNode<IButton> refNode = logix_slot.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IButton>>();
             refNode.RefTarget.Target = button;
             touchableEvents.Button.Target = refNode;
             touchableEvents.Pressed.Target = animator.Play;
@@ -317,6 +329,7 @@ namespace NeosAnimationToolset
         private void CreateExpandCollapseButton(Slot holder)
         {
             Slot button_holder = holder.AddSlot("Expand collapse button");
+            Slot logix_slot = holder.AddSlot("Logix");
 
             button_holder.LocalRotation = floatQ.Euler(0f, 0f, 0f);
             button_holder.LocalPosition = new float3(0.1f, 0, 0);
@@ -329,40 +342,43 @@ namespace NeosAnimationToolset
             mesh2.Size.Value = new float3(0.03f, 0.03f, 0.03f);
 
             PhysicalButton button2 = button_holder.AttachComponent<PhysicalButton>();
-            FrooxEngine.LogiX.Interaction.ButtonEvents touchableEvents2 = button_holder.AttachComponent<FrooxEngine.LogiX.Interaction.ButtonEvents>();
-            FrooxEngine.LogiX.ReferenceNode<IButton> refNode2 = button_holder.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IButton>>();
+
+            //LOGIX
+            FrooxEngine.LogiX.Interaction.ButtonEvents touchableEvents2 = logix_slot.AttachComponent<FrooxEngine.LogiX.Interaction.ButtonEvents>();
+            FrooxEngine.LogiX.ReferenceNode<IButton> refNode2 = logix_slot.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IButton>>();
             refNode2.RefTarget.Target = button2;
             touchableEvents2.Button.Target = refNode2;
 
-            FrooxEngine.LogiX.Animation.Tweening.TweenValueNode<float3> tween = button_holder.AttachComponent<FrooxEngine.LogiX.Animation.Tweening.TweenValueNode<float3>>();
-            FrooxEngine.LogiX.ReferenceNode<IField<float3>> refNode3 = button_holder.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IField<float3>>>();
+
+            FrooxEngine.LogiX.Animation.Tweening.TweenValueNode<float3> tween = logix_slot.AttachComponent<FrooxEngine.LogiX.Animation.Tweening.TweenValueNode<float3>>();
+            FrooxEngine.LogiX.ReferenceNode<IField<float3>> refNode3 = logix_slot.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IField<float3>>>();
             refNode3.RefTarget.Target = rootSlot.Target.Scale_Field;
             tween.Target.Target = refNode3;
-            ValueField<float3> valueField1 = button_holder.AttachComponent<ValueField<float3>>();
+            ValueField<float3> valueField1 = logix_slot.AttachComponent<ValueField<float3>>();
             valueField1.Value.Value = new float3(1f, 1f, 1f);
-            ValueField<float3> valueField2 = button_holder.AttachComponent<ValueField<float3>>();
+            ValueField<float3> valueField2 = logix_slot.AttachComponent<ValueField<float3>>();
             valueField2.Value.Value = new float3(0f, 0f, 0f);
-            ValueField<float> tweenDuration = button_holder.AttachComponent<ValueField<float>>();
+            ValueField<float> tweenDuration = logix_slot.AttachComponent<ValueField<float>>();
             tweenDuration.Value.Value = 1.0f;
             tween.From.Target = valueField1.Value;
             tween.To.Target = valueField2.Value;
             tween.Duration.Target = tweenDuration.Value;
 
-            FrooxEngine.LogiX.Animation.Tweening.TweenValueNode<float3> tweenUp = button_holder.AttachComponent<FrooxEngine.LogiX.Animation.Tweening.TweenValueNode<float3>>();
-            FrooxEngine.LogiX.ReferenceNode<IField<float3>> refNode3b = button_holder.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IField<float3>>>();
+            FrooxEngine.LogiX.Animation.Tweening.TweenValueNode<float3> tweenUp = logix_slot.AttachComponent<FrooxEngine.LogiX.Animation.Tweening.TweenValueNode<float3>>();
+            FrooxEngine.LogiX.ReferenceNode<IField<float3>> refNode3b = logix_slot.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IField<float3>>>();
             refNode3b.RefTarget.Target = rootSlot.Target.Scale_Field;
             tweenUp.Target.Target = refNode3b;
-            ValueField<float3> tweenUpFrom = button_holder.AttachComponent<ValueField<float3>>();
+            ValueField<float3> tweenUpFrom = logix_slot.AttachComponent<ValueField<float3>>();
             tweenUpFrom.Value.Value = new float3(0f, 0f, 0f);
-            ValueField<float3> tweenUpTo = button_holder.AttachComponent<ValueField<float3>>();
+            ValueField<float3> tweenUpTo = logix_slot.AttachComponent<ValueField<float3>>();
             tweenUpTo.Value.Value = new float3(1f, 1f, 1f);
-            ValueField<float> tweenUpDuration = button_holder.AttachComponent<ValueField<float>>();
+            ValueField<float> tweenUpDuration = logix_slot.AttachComponent<ValueField<float>>();
             tweenUpDuration.Value.Value = 1.0f;
             tweenUp.From.Target = tweenUpFrom.Value;
             tweenUp.To.Target = tweenUpTo.Value;
             tweenUp.Duration.Target = tweenUpDuration.Value;
 
-            FrooxEngine.LogiX.WorldModel.SetParent setParent = button_holder.AttachComponent<FrooxEngine.LogiX.WorldModel.SetParent>();
+            FrooxEngine.LogiX.WorldModel.SetParent setParent = logix_slot.AttachComponent<FrooxEngine.LogiX.WorldModel.SetParent>();
             //FrooxEngine.LogiX.IReferenceNode refNode4 = button_holder.AttachComponent<FrooxEngine.LogiX.ReferenceNode<Slot>>();
             FrooxEngine.LogiX.ReferenceNode<Slot> referenceNode = (FrooxEngine.LogiX.ReferenceNode<Slot>) FrooxEngine.LogiX.LogixHelper.GetReferenceNode(rootSlot.Target, Slot.GetType());
             FrooxEngine.LogiX.ReferenceNode<Slot> referenceNode2 = (FrooxEngine.LogiX.ReferenceNode<Slot>) FrooxEngine.LogiX.LogixHelper.GetReferenceNode(holder, Slot.GetType());
@@ -374,24 +390,24 @@ namespace NeosAnimationToolset
             referenceNode.Slot.SetParent(button_holder);
             referenceNode.ActiveVisual.Destroy();
 
-            FrooxEngine.LogiX.WorldModel.SetParent setParent2 = button_holder.AttachComponent<FrooxEngine.LogiX.WorldModel.SetParent>();
+            FrooxEngine.LogiX.WorldModel.SetParent setParent2 = logix_slot.AttachComponent<FrooxEngine.LogiX.WorldModel.SetParent>();
             //FrooxEngine.LogiX.IReferenceNode refNode4 = button_holder.AttachComponent<FrooxEngine.LogiX.ReferenceNode<Slot>>();
             FrooxEngine.LogiX.ReferenceNode<Slot> referenceNodeB = (FrooxEngine.LogiX.ReferenceNode<Slot>) FrooxEngine.LogiX.LogixHelper.GetReferenceNode(rootSlot.Target, Slot.GetType());
             //refNode4.SetRefTarget(rootSlot.Target);
             setParent2.Instance.Target = referenceNodeB;
             referenceNodeB.Slot.SetParent(button_holder);
             referenceNodeB.ActiveVisual.Destroy();
-            FrooxEngine.LogiX.WorldModel.RootSlot rootSlotNode = button_holder.AttachComponent<FrooxEngine.LogiX.WorldModel.RootSlot>();
+            FrooxEngine.LogiX.WorldModel.RootSlot rootSlotNode = logix_slot.AttachComponent<FrooxEngine.LogiX.WorldModel.RootSlot>();
             setParent2.NewParent.Target = rootSlotNode;
             setParent2.OnDone.Target = tweenUp.Tween;
 
-            FrooxEngine.LogiX.ProgramFlow.IfNode ifNode1 = button_holder.AttachComponent<FrooxEngine.LogiX.ProgramFlow.IfNode>();
+            FrooxEngine.LogiX.ProgramFlow.IfNode ifNode1 = logix_slot.AttachComponent<FrooxEngine.LogiX.ProgramFlow.IfNode>();
             touchableEvents2.Pressed.Target = ifNode1.Run;
             ifNode1.True.Target = setParent.DoSetParent;
             ifNode1.False.Target = setParent2.DoSetParent;
             setParent.OnDone.Target = tween.Tween;
 
-            FrooxEngine.LogiX.ProgramFlow.BooleanToggle booleanToggle = button_holder.AttachComponent<FrooxEngine.LogiX.ProgramFlow.BooleanToggle>();
+            FrooxEngine.LogiX.ProgramFlow.BooleanToggle booleanToggle = logix_slot.AttachComponent<FrooxEngine.LogiX.ProgramFlow.BooleanToggle>();
             booleanToggle.State.Value = true;
             ifNode1.Condition.Target = booleanToggle.State;
 
@@ -413,6 +429,7 @@ namespace NeosAnimationToolset
         private void CreateParentUnparentButton(Slot holder)
         {
             Slot button_holder = holder.AddSlot("Parent unparent button");
+            Slot logix_slot = holder.AddSlot("Logix");
 
             button_holder.LocalRotation = floatQ.Euler(0f, 0f, 0f);
             button_holder.LocalPosition = new float3(0.15f, 0, 0);
@@ -425,35 +442,37 @@ namespace NeosAnimationToolset
             mesh2.Size.Value = new float3(0.03f, 0.03f, 0.03f);
 
             PhysicalButton button2 = button_holder.AttachComponent<PhysicalButton>();
-            FrooxEngine.LogiX.Interaction.ButtonEvents touchableEvents2 = button_holder.AttachComponent<FrooxEngine.LogiX.Interaction.ButtonEvents>();
-            FrooxEngine.LogiX.ReferenceNode<IButton> refNode2 = button_holder.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IButton>>();
+
+            //LOGIX
+            FrooxEngine.LogiX.Interaction.ButtonEvents touchableEvents2 = logix_slot.AttachComponent<FrooxEngine.LogiX.Interaction.ButtonEvents>();
+            FrooxEngine.LogiX.ReferenceNode<IButton> refNode2 = logix_slot.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IButton>>();
             refNode2.RefTarget.Target = button2;
             touchableEvents2.Button.Target = refNode2;
 
-            FrooxEngine.LogiX.WorldModel.SetParent setParent = button_holder.AttachComponent<FrooxEngine.LogiX.WorldModel.SetParent>();
+            FrooxEngine.LogiX.WorldModel.SetParent setParent = logix_slot.AttachComponent<FrooxEngine.LogiX.WorldModel.SetParent>();
             FrooxEngine.LogiX.ReferenceNode<Slot> referenceNode = (FrooxEngine.LogiX.ReferenceNode<Slot>) FrooxEngine.LogiX.LogixHelper.GetReferenceNode(rootSlot.Target, Slot.GetType());
             FrooxEngine.LogiX.ReferenceNode<Slot> referenceNode2 = (FrooxEngine.LogiX.ReferenceNode<Slot>) FrooxEngine.LogiX.LogixHelper.GetReferenceNode(holder, Slot.GetType());
             setParent.Instance.Target = referenceNode;
             setParent.NewParent.Target = referenceNode2;
-            referenceNode2.Slot.SetParent(button_holder);
+            referenceNode2.Slot.SetParent(logix_slot);
             referenceNode2.ActiveVisual.Destroy();
-            referenceNode.Slot.SetParent(button_holder);
+            referenceNode.Slot.SetParent(logix_slot);
             referenceNode.ActiveVisual.Destroy();
 
-            FrooxEngine.LogiX.WorldModel.SetParent setParent2 = button_holder.AttachComponent<FrooxEngine.LogiX.WorldModel.SetParent>();
+            FrooxEngine.LogiX.WorldModel.SetParent setParent2 = logix_slot.AttachComponent<FrooxEngine.LogiX.WorldModel.SetParent>();
             FrooxEngine.LogiX.ReferenceNode<Slot> referenceNodeB = (FrooxEngine.LogiX.ReferenceNode<Slot>) FrooxEngine.LogiX.LogixHelper.GetReferenceNode(rootSlot.Target, Slot.GetType());
             setParent2.Instance.Target = referenceNodeB;
-            referenceNodeB.Slot.SetParent(button_holder);
+            referenceNodeB.Slot.SetParent(logix_slot);
             referenceNodeB.ActiveVisual.Destroy();
-            FrooxEngine.LogiX.WorldModel.RootSlot rootSlotNode = button_holder.AttachComponent<FrooxEngine.LogiX.WorldModel.RootSlot>();
+            FrooxEngine.LogiX.WorldModel.RootSlot rootSlotNode = logix_slot.AttachComponent<FrooxEngine.LogiX.WorldModel.RootSlot>();
             setParent2.NewParent.Target = rootSlotNode;
 
-            FrooxEngine.LogiX.ProgramFlow.IfNode ifNode1 = button_holder.AttachComponent<FrooxEngine.LogiX.ProgramFlow.IfNode>();
+            FrooxEngine.LogiX.ProgramFlow.IfNode ifNode1 = logix_slot.AttachComponent<FrooxEngine.LogiX.ProgramFlow.IfNode>();
             touchableEvents2.Pressed.Target = ifNode1.Run;
             ifNode1.True.Target = setParent.DoSetParent;
             ifNode1.False.Target = setParent2.DoSetParent;
 
-            FrooxEngine.LogiX.ProgramFlow.BooleanToggle booleanToggle = button_holder.AttachComponent<FrooxEngine.LogiX.ProgramFlow.BooleanToggle>();
+            FrooxEngine.LogiX.ProgramFlow.BooleanToggle booleanToggle = logix_slot.AttachComponent<FrooxEngine.LogiX.ProgramFlow.BooleanToggle>();
             booleanToggle.State.Value = true;
             ifNode1.Condition.Target = booleanToggle.State;
 
@@ -464,7 +483,7 @@ namespace NeosAnimationToolset
         private void CreateActivateDeactivateHearingButton(Slot holder)
         {
             Slot button_holder = holder.AddSlot("Hearing on off button");
-
+            Slot logix_slot = holder.AddSlot("Logix");
             button_holder.LocalRotation = floatQ.Euler(0f, 0f, 0f);
             button_holder.LocalPosition = new float3(0.2f, 0, 0);
 
@@ -476,24 +495,28 @@ namespace NeosAnimationToolset
             mesh2.Size.Value = new float3(0.03f, 0.03f, 0.03f);
 
             PhysicalButton button2 = button_holder.AttachComponent<PhysicalButton>();
-            FrooxEngine.LogiX.Interaction.ButtonEvents touchableEvents2 = button_holder.AttachComponent<FrooxEngine.LogiX.Interaction.ButtonEvents>();
-            FrooxEngine.LogiX.ReferenceNode<IButton> refNode2 = button_holder.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IButton>>();
+
+            //LOGIX
+            FrooxEngine.LogiX.Interaction.ButtonEvents touchableEvents2 = logix_slot.AttachComponent<FrooxEngine.LogiX.Interaction.ButtonEvents>();
+            FrooxEngine.LogiX.ReferenceNode<IButton> refNode2 = logix_slot.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IButton>>();
             refNode2.RefTarget.Target = button2;
             touchableEvents2.Button.Target = refNode2;
 
-            FrooxEngine.LogiX.ProgramFlow.BooleanToggle booleanToggle = button_holder.AttachComponent<FrooxEngine.LogiX.ProgramFlow.BooleanToggle>();
+            FrooxEngine.LogiX.ProgramFlow.BooleanToggle booleanToggle = logix_slot.AttachComponent<FrooxEngine.LogiX.ProgramFlow.BooleanToggle>();
             booleanToggle.State.Value = true;
 
             touchableEvents2.Pressed.Target = booleanToggle.Toggle;
 
-            ValueDriver<bool> hearingDriver = button_holder.AttachComponent<ValueDriver<bool>>();
+            ValueDriver<bool> hearingDriver = logix_slot.AttachComponent<ValueDriver<bool>>();
             hearingDriver.DriveTarget.Target = hearing_slot.GetComponent<AudioOutput>()?.EnabledField;
             hearingDriver.ValueSource.Target = booleanToggle.State;
         }
 
         public async Task AttachToObject(Task task)
         {
+            UniLog.Log("Wait till bake");
             await task;
+            UniLog.Log("Spawning animation");
             Slot ruut = rootSlot.Target;
             animator = ruut.AttachComponent<Animator>();
             animator.Clip.Target = _result.Target;
@@ -501,6 +524,7 @@ namespace NeosAnimationToolset
             foreach (ITrackable it in recordedMR) { it.OnReplace(animator); }
             foreach (ITrackable it in recordedSlots) { it.OnReplace(animator); }
             foreach (ITrackable it in recordedFields) { it.OnReplace(animator); }
+            UniLog.Log("Replaced ITrackables");
 
             FrooxEngine.LogiX.Playback.PlaybackReadState playbackState = ruut.AttachComponent<FrooxEngine.LogiX.Playback.PlaybackReadState>();
             FrooxEngine.LogiX.ReferenceNode<IPlayable> refNodeState = ruut.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IPlayable>>();
@@ -602,6 +626,7 @@ namespace NeosAnimationToolset
 
         protected async Task bakeAsync()
         {
+            UniLog.Log("Baking animation");
             Slot root = rootSlot.Target;
             float t = (float)(base.Time.WorldTime - _startTime);
             animation.GlobalDuration = t;
@@ -610,16 +635,21 @@ namespace NeosAnimationToolset
             foreach (ITrackable it in recordedMR) { it.OnUpdate(t); it.OnStop(); }
             foreach (ITrackable it in recordedSlots) { it.OnUpdate(t); it.OnStop(); }
             foreach (ITrackable it in recordedFields) { it.OnUpdate(t); it.OnStop(); }
-            await default(ToBackground);
+            UniLog.Log("Stopped ITrackables");
+            //await default(ToBackground);
 
             string tempFilePath = Engine.LocalDB.GetTempFilePath("animx");
             animation.SaveToFile(tempFilePath);
             Uri uri = Engine.LocalDB.ImportLocalAsset(tempFilePath, LocalDB.ImportLocation.Move);
 
-            await default(ToWorld);
-            _result.Target = (root ?? Slot).AttachComponent<StaticAnimationProvider>();
-            _result.Target.URL.Value = uri;
-            state.Value = 3;
+            //await default(ToWorld);
+            World.RunSynchronously(() =>
+            {
+                _result.Target = (root ?? Slot).AttachComponent<StaticAnimationProvider>();
+                _result.Target.URL.Value = uri;
+                state.Value = 3;
+                UniLog.Log("Baked animation! ^^");
+            });
         }
     }
 }
