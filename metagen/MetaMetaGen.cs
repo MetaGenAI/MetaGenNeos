@@ -57,7 +57,7 @@ namespace FrooxEngine.LogiX
             //TODO: sync between audios and videos is not right!!
             UniLog.Log("Adding Audio Listener");
             GameObject gameObject = GameObject.Find("AudioListener");
-            default_record_local_user = true;
+            //default_record_local_user = true;
             if (!(LocalUser.HeadDevice == HeadOutputDevice.Screen)) //must be on VR mode
             {
                 //gameObject = GameObject.Find("Camera (ears)");

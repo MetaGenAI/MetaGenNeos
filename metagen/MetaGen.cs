@@ -112,7 +112,7 @@ namespace metagen
         {
             get
             {
-                return (float)(DateTime.UtcNow - recordingBeginTime).TotalMilliseconds;
+                return (float)(recording ? (DateTime.UtcNow - recordingBeginTime).TotalMilliseconds : 0f);
             }
         }
 
@@ -140,11 +140,11 @@ namespace metagen
             metaDataManager = new MetaDataManager(this);
             metaDataManager.GetUserMetaData();
         }
-        protected override void OnDispose()
-        {
-            base.OnDispose();
-            StopRecording();
-        }
+        //protected override void OnDispose()
+        //{
+        //    base.OnDispose();
+        //    StopRecording();
+        //}
         protected override void OnCommonUpdate()
         {
             base.OnCommonUpdate();
@@ -313,6 +313,17 @@ namespace metagen
             bool wait_anim = false;
             metaDataManager.WriteUserMetaData();
 
+            if (recording)
+            {
+                foreach (var item in userMetaData)
+                {
+                    User user = item.Key;
+                    UserMetadata metadata = item.Value;
+                    if (metadata.isRecording)
+                        dataBase.UpdateRecordedTime(user.UserID, recording_time/1000, metadata.isPublic); //in seconds
+                }
+            }
+
             //STREAMS
             if (streamRecorder.isRecording)
             {
@@ -353,13 +364,6 @@ namespace metagen
                 UniLog.Log(">w< animation stopping failed");
             }
 
-            foreach (var item in userMetaData)
-            {
-                User user = item.Key;
-                UserMetadata metadata = item.Value;
-                if (metadata.isRecording)
-                    dataBase.UpdateRecordedTime(user.UserID, recording_time/1000, metadata.isPublic); //in seconds
-            }
 
             Task task = Task.Run(() =>
             {
