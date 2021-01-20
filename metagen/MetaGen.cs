@@ -304,13 +304,6 @@ namespace metagen
         public void StopRecording()
         {
             UniLog.Log("Stop recording");
-            recording = false;
-            recording_state = OutputState.Stopping;
-            bool wait_streams = false;
-            bool wait_voices = false;
-            bool wait_hearing = false;
-            bool wait_vision = false;
-            bool wait_anim = false;
             metaDataManager.WriteUserMetaData();
 
             if (recording)
@@ -323,6 +316,14 @@ namespace metagen
                         dataBase.UpdateRecordedTime(user.UserID, recording_time/1000, metadata.isPublic); //in seconds
                 }
             }
+
+            recording = false;
+            recording_state = OutputState.Stopping;
+            bool wait_streams = false;
+            bool wait_voices = false;
+            bool wait_hearing = false;
+            bool wait_vision = false;
+            bool wait_anim = false;
 
             //STREAMS
             if (streamRecorder.isRecording)
