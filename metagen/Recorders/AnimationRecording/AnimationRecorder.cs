@@ -208,7 +208,7 @@ namespace NeosAnimationToolset
                             TrackedSkinnedMeshRenderer trackedRenderer = recordedSMR.Add();
                             trackedRenderer.renderer.Target = meshRenderer;
                             trackedRenderer.recordBlendshapes.Value = true;
-                            trackedRenderer.recordScales.Value = true;
+                            //trackedRenderer.recordScales.Value = true;
                         }
                     }
 
