@@ -48,7 +48,7 @@ namespace FrooxEngine
             this.Panel.ShowHeader.Value = false;
             this.Panel.ShowHandle.Value = false;
             Slot holder = this.Slot.Parent.AddSlot("panel holder");
-            holder.Tag = "Developer";
+            //holder.Tag = "Developer";
             holder.LocalPosition = new float3(0f, 1.5f, 1f);
             this.Slot.DestroyChildren();
             panel = holder.AttachComponent<NeosSwapCanvasPanel>();
@@ -221,12 +221,12 @@ namespace FrooxEngine
             base.OnCommonUpdate();
 
             //Check control variables from panel UI
-            if (record_button_pressed != null & record_button_pressed.Target.Value)
+            if (record_button_pressed != null && record_button_pressed.Target.Value)
             {
                 record_button_pressed.Target.Value = false;
                 ToggleRecording?.Invoke();
             }
-            if (play_button_pressed != null & play_button_pressed.Target.Value)
+            if (play_button_pressed != null && play_button_pressed.Target.Value)
             {
                 play_button_pressed.Target.Value = false;
                 TogglePlaying?.Invoke();
