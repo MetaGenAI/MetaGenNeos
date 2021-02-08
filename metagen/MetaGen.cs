@@ -240,7 +240,7 @@ namespace metagen
                 }
             } catch (Exception e)
             {
-                UniLog.Log("Hecc, exception in metagen.OnAudioUpdate:" + e.Message);
+                //UniLog.Log("Hecc, exception in metagen.OnAudioUpdate:" + e.Message);
             }
 
         }
