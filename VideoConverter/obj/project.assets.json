@@ -8,19 +8,23 @@
     ".NETCoreApp,Version=v3.1": []
   },
   "packageFolders": {
-    "C:\\Users\\Paperspace\\.nuget\\packages\\": {}
+    "C:\\Users\\guill\\.nuget\\packages\\": {},
+    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Paperspace\\MetaGenNeos\\VideoConverter\\StandaloneVideoConverter.csproj",
+      "projectUniqueName": "C:\\Users\\guill\\Documents\\code\\metagen\\MetaGenNeos\\VideoConverter\\StandaloneVideoConverter.csproj",
       "projectName": "StandaloneVideoConverter",
-      "projectPath": "C:\\Users\\Paperspace\\MetaGenNeos\\VideoConverter\\StandaloneVideoConverter.csproj",
-      "packagesPath": "C:\\Users\\Paperspace\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Paperspace\\MetaGenNeos\\VideoConverter\\obj\\",
+      "projectPath": "C:\\Users\\guill\\Documents\\code\\metagen\\MetaGenNeos\\VideoConverter\\StandaloneVideoConverter.csproj",
+      "packagesPath": "C:\\Users\\guill\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\guill\\Documents\\code\\metagen\\MetaGenNeos\\VideoConverter\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+      ],
       "configFilePaths": [
-        "C:\\Users\\Paperspace\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\guill\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
