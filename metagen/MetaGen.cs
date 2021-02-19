@@ -212,11 +212,9 @@ namespace metagen
                     animationRecorder.RecordFrame();
                 }
 
-                if (recording && all_ready && recording_hearing_user != null && hearingRecorder==null? false : hearingRecorder.isRecording)
-                {
-                    Slot slot = recording_hearing_user.Root.HeadSlot;
-                    hearingRecorder.UpdateTransform(slot.GlobalPosition, slot.GlobalRotation);
-                }
+                //if (recording && all_ready && recording_hearing_user != null && hearingRecorder==null? false : hearingRecorder.isRecording)
+                //{
+                //}
                 frame_index += 1;
 
                 utcNow = DateTime.UtcNow;
@@ -226,6 +224,8 @@ namespace metagen
                     streamPlayer.PlayStreams();
                 }
             }
+            Slot slot = recording_hearing_user.Root.HeadSlot;
+            hearingRecorder.UpdateTransform(slot.GlobalPosition, slot.GlobalRotation);
 
         }
         protected override void OnAudioUpdate()
@@ -240,7 +240,7 @@ namespace metagen
                 }
             } catch (Exception e)
             {
-                UniLog.Log("Hecc, exception in metagen.OnAudioUpdate:" + e.Message);
+                //UniLog.Log("Hecc, exception in metagen.OnAudioUpdate:" + e.Message);
             }
 
         }

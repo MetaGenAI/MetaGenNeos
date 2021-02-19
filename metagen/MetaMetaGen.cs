@@ -33,6 +33,7 @@ namespace FrooxEngine.LogiX
         User recording_hearing_user;
         World currentWorld;
         bool default_record_local_user = false;
+        bool is_in_VR_mode = false;
         Slot earsSlot;
         protected override void OnAttach()
         {
@@ -62,6 +63,7 @@ namespace FrooxEngine.LogiX
             {
                 //gameObject = GameObject.Find("Camera (ears)");
                 default_record_local_user = true;
+                is_in_VR_mode = true;
             }
 
             //GameObject[] rootObjects = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
@@ -256,15 +258,18 @@ namespace FrooxEngine.LogiX
 
         protected override void OnCommonUpdate()
         {
-            if (current_metagen == null ? false : current_metagen.recording)
+            if (!is_in_VR_mode)
             {
-                if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Busy)
-                    FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Busy;
-            }
-            else
-            {
-                if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Online)
-                    FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Online;
+                if (current_metagen == null ? false : current_metagen.recording)
+                {
+                    if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Busy)
+                        FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Busy;
+                }
+                else
+                {
+                    if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Online)
+                        FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Online;
+                }
             }
 
             if (dataBase != null && dataBase.should_update)
