@@ -42,7 +42,8 @@ namespace FrooxEngine.LogiX
             ASDF.asdf(this.Engine);
             Job<Slot> awaiter = SlotHelper.TransferToWorld(this.Slot, Userspace.UserspaceWorld).GetAwaiter();
             awaiter.GetResult();
-            this.StartTask(()=>Task.Run(metagen.Util.MediaConverter.Run));
+            //Start the co-routine which checks for newly generated media files, and converts them
+            this.StartTask(() => Task.Run(metagen.Util.MediaConverter.Run));
         }
 
         protected override void OnPaste()
@@ -58,7 +59,7 @@ namespace FrooxEngine.LogiX
             //TODO: sync between audios and videos is not right!!
             UniLog.Log("Adding Audio Listener");
             GameObject gameObject = GameObject.Find("AudioListener");
-            //default_record_local_user = true;
+            default_record_local_user = true;
             if (!(LocalUser.HeadDevice == HeadOutputDevice.Screen)) //must be on VR mode
             {
                 //gameObject = GameObject.Find("Camera (ears)");
@@ -353,7 +354,7 @@ namespace FrooxEngine.LogiX
         private void ResetHearingUser()
         {
             World world = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
-            UniLog.Log("Reset hearing user for world " + world.ToString());
+            UniLog.Log("Reset hearing user for world " + world.CorrespondingWorldId);
             Dictionary<RefID, User>.ValueCollection users = world.AllUsers;
             recording_hearing_user = world.LocalUser;
             foreach (User user in users)
@@ -363,11 +364,14 @@ namespace FrooxEngine.LogiX
                 //    recording_hearing_user = user;
                 //    break;
                 //}
-                MetaGenUser user_data = dataBase.GetUserData(user.UserID);
-                if (user_data.default_public && user_data.default_recording)
+                if (user.UserID != null)
                 {
-                    recording_hearing_user = user;
-                    break;
+                    MetaGenUser user_data = dataBase.GetUserData(user.UserID);
+                    if (user_data.default_public && user_data.default_recording)
+                    {
+                        recording_hearing_user = user;
+                        break;
+                    }
                 }
             }
             SetHearingUser(recording_hearing_user);
