@@ -639,7 +639,8 @@ namespace NeosAnimationToolset
             //await default(ToBackground);
 
             string tempFilePath = Engine.LocalDB.GetTempFilePath("animx");
-            animation.SaveToFile(tempFilePath);
+            animation.SaveToFile(tempFilePath, AnimX.Encoding.LZMA);
+            //animation.SaveToFile(tempFilePath, AnimX.Encoding.Plain);
             Uri uri = Engine.LocalDB.ImportLocalAsset(tempFilePath, LocalDB.ImportLocation.Move);
 
             //await default(ToWorld);

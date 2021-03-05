@@ -17,6 +17,7 @@ namespace FrooxEngine
         public readonly Sync<bool> _active;
         public readonly SyncRef<Button> _playButton;
         public readonly SyncRef<Button> _recordButton;
+        public readonly SyncRef<Button> _swapUIButton;
         public readonly SyncRef<TextField> _recordIndexField;
         public readonly SyncRef<Checkbox> _animationsCheckbox;
         public readonly SyncRef<Checkbox> _videoCheckbox;
@@ -25,9 +26,11 @@ namespace FrooxEngine
         public readonly SyncRef<Checkbox> _recordUserCheckbox;
         public readonly SyncRef<Checkbox> _hearingCheckbox;
         public readonly SyncRef<ReferenceField<Slot>> _avatarRefField;
+        public readonly SyncRef<ReferenceField<Slot>> _uiTemplateRefField;
         public readonly SyncTime _recordingStarted;
         public readonly SyncRef<Sync<bool>> record_button_pressed;
         public readonly SyncRef<Sync<bool>> play_button_pressed;
+        public readonly SyncRef<Sync<bool>> swapUI_button_pressed;
         public readonly SyncRef<Text> _recordingTime;
         public ValueUserOverride<bool> publicDomainOverride;
         public ValueUserOverride<bool> recordUserOverride;
@@ -36,13 +39,17 @@ namespace FrooxEngine
         private NeosSwapCanvasPanel panel;
         public event Action ToggleRecording;
         public event Action TogglePlaying;
+        public event Action SwapUI;
         MetaGen mg;
+        public string ui_template;
+        public readonly SyncRef<ReferenceField<Slot>> _UITemplateField;
+        public Slot UISlot = null;
 
         protected override void OnAttach()
         {
             base.OnAttach();
             mg = this.Slot.GetComponent<BotLogic>().mg;
-            float2 float2 = new float2(2300f, 5900f);
+            float2 float2 = new float2(2300f, 6600f);
             this.CanvasSize = float2 * 1.0f;
             this.PhysicalHeight = this.Slot.Parent.LocalScaleToGlobal(0.3f);
             this.Panel.ShowHeader.Value = false;
@@ -59,6 +66,7 @@ namespace FrooxEngine
             panel.Panel.ShowHandle.Value = false;
             record_button_pressed.Target = holder.AttachComponent<ValueField<bool>>().Value;
             play_button_pressed.Target = holder.AttachComponent<ValueField<bool>>().Value;
+            swapUI_button_pressed.Target = holder.AttachComponent<ValueField<bool>>().Value;
             this.OpenConnectedPanel();
             //this._container.Target.SetParent(this.World.RootSlot);
             //var t = typeof(NeosPanel);
@@ -82,6 +90,72 @@ namespace FrooxEngine
         //    LocaleString text2 = "CameraControl.OBS.ReturnToConnect".AsLocaleKey((string)null, true, (Dictionary<string, IField>)null);
         //    uiBuilder.Button(in text2, new ButtonEventHandler(this.OnReturnToConnect));
         //}
+
+        public void LinkUISlot()
+        {
+            //Slot slot = UISlot.Duplicate();
+            Slot slot = UISlot ?? _uiTemplateRefField.Target.Slot;
+            DynamicVariableSpace space = slot.FindSpace("UIVariables");
+            if (space == null)
+            {
+                return;
+            }
+
+            //Recording checkbox
+            Checkbox recording_checkbox;
+            space.TryReadValue<Checkbox>("recording_checkbox", out recording_checkbox);
+            this._recordUserCheckbox.Target = recording_checkbox;
+
+            //Data submission checkbox
+            Checkbox public_checkbox;
+            space.TryReadValue<Checkbox>("public_checkbox", out public_checkbox);
+            this._publicDomainCheckbox.Target = public_checkbox;
+
+            //Recording time
+            Text recording_time_text;
+            space.TryReadValue<Text>("recording_time_text", out recording_time_text);
+            this._recordingTime.Target = recording_time_text;
+
+            //Animation checkbox
+            Checkbox animation_checkbox;
+            space.TryReadValue<Checkbox>("animation_checkbox", out animation_checkbox);
+            this._animationsCheckbox.Target = animation_checkbox;
+
+            //Video checkbox
+            Checkbox video_checkbox;
+            space.TryReadValue<Checkbox>("video_checkbox", out video_checkbox);
+            this._videoCheckbox.Target = video_checkbox;
+
+            //Record button
+            Button record_button;
+            space.TryReadValue<Button>("record_button", out record_button);
+            this._recordButton.Target = record_button;
+
+            //Recording index
+            TextField recording_index;
+            space.TryReadValue<TextField>("recording_index", out recording_index);
+            this._recordIndexField.Target = recording_index;
+
+            //Voices checkbox
+            Checkbox voices_checkbox;
+            space.TryReadValue<Checkbox>("voices_checkbox", out voices_checkbox);
+            this._voicesCheckbox.Target = voices_checkbox;
+
+            //Hearing checkbox
+            Checkbox hearing_checkbox;
+            space.TryReadValue<Checkbox>("hearing_checkbox", out hearing_checkbox);
+            this._hearingCheckbox.Target = hearing_checkbox;
+
+            //Avatar ref
+            ReferenceField<Slot> avatar_ref_field;
+            space.TryReadValue<ReferenceField<Slot>>("avatar_ref_field", out avatar_ref_field);
+            this._avatarRefField.Target = avatar_ref_field;
+
+            //Play button
+            Button play_button;
+            space.TryReadValue<Button>("play_button", out play_button);
+            this._playButton.Target = play_button;
+        }
 
         private void OpenConnectedPanel()
         {
@@ -142,11 +216,11 @@ namespace FrooxEngine
             uiBuilder1.Style.PreferredHeight = 100f;
             uiBuilder1.Style.MinHeight = 100f;
 
-            //animation checkpoint
+            //animation checkbox
             Checkbox animCheckbox = uiBuilder1.Checkbox("Generate animation",false);
             this._animationsCheckbox.Target = animCheckbox;
 
-            //video checkpoint
+            //video checkbox
             Checkbox videoCheckbox = uiBuilder1.Checkbox("Record vision",true);
             this._videoCheckbox.Target = videoCheckbox;
 
@@ -193,7 +267,7 @@ namespace FrooxEngine
             Text text7 = uiBuilder1.Text("Avatar slot:");
             uiBuilder1.Next("Root");
             ReferenceField<Slot> refField = uiBuilder1.Current.AttachComponent<ReferenceField<Slot>>();
-            _avatarRefField.Target = refField;
+            this._avatarRefField.Target = refField;
             RefEditor avatarRefEditor = uiBuilder1.Current.AttachComponent<RefEditor>();
             avatarRefEditor.Setup(refField.Reference);
 
@@ -208,12 +282,25 @@ namespace FrooxEngine
             comp2.SetValue.Value = true;
             comp2.TargetValue.Target = play_button_pressed.Target;
 
-            //SyncRef<Checkbox> autoMirror = this._autoMirror;
-            //LocaleString localeString8 = "CameraControl.OBS.AutoMirror".AsLocaleKey((string)null, true, (Dictionary<string, IField>)null);
-            //Checkbox checkbox = uiBuilder1.Checkbox(localeString8, true, true, 4f);
-            //autoMirror.Target = checkbox;
-            //this._autoMirror.Target.State.SyncWithSetting<bool>("InteractiveCamera.AutoMirror", SettingSync.LocalChange.UpdateSetting);
-            //this._active.Value = true;
+            //UI slot ref
+            uiBuilder1.Style.PreferredHeight = 75f;
+            uiBuilder1.Style.MinHeight = 75f;
+            Text text8 = uiBuilder1.Text("UI slot:");
+            uiBuilder1.Next("Root");
+            ReferenceField<Slot> refField2 = uiBuilder1.Current.AttachComponent<ReferenceField<Slot>>();
+            this._uiTemplateRefField.Target = refField2;
+            RefEditor uiTemplateRefEditor = uiBuilder1.Current.AttachComponent<RefEditor>();
+            uiTemplateRefEditor.Setup(refField2.Reference);
+
+            uiBuilder1.Style.MinHeight = 100f;
+            uiBuilder1.Style.PreferredHeight = 100f;
+
+            //swapUI button
+            Button button3 = uiBuilder1.Button("");
+            this._swapUIButton.Target = button3;
+            ButtonValueSet<bool> comp3 = button2.Slot.AttachComponent<ButtonValueSet<bool>>();
+            comp3.SetValue.Value = true;
+            comp3.TargetValue.Target = swapUI_button_pressed.Target;
 
         }
         protected override void OnCommonUpdate()
@@ -230,6 +317,11 @@ namespace FrooxEngine
             {
                 play_button_pressed.Target.Value = false;
                 TogglePlaying?.Invoke();
+            }
+            if (swapUI_button_pressed != null && swapUI_button_pressed.Target.Value)
+            {
+                swapUI_button_pressed.Target.Value = false;
+                SwapUI?.Invoke();
             }
         }
     }

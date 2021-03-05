@@ -65,6 +65,11 @@ namespace metagen
                 }
             };
 
+            panelUI.SwapUI += () =>
+            {
+                panelUI.LinkUISlot();
+            };
+
 
             just_created_panel = true;
         }

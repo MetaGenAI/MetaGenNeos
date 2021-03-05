@@ -45,7 +45,7 @@ namespace metagen
 
         public bool recording_vision = false;
         public bool play_vision = false;
-        public int2 camera_resolution = new int2(256, 256);
+        public int2 camera_resolution = new int2(512,512);
         private VisionRecorder visionRecorder;
 
         public bool recording_streams = false;
@@ -185,7 +185,8 @@ namespace metagen
             //Record one frame of video and streams (audio is handled on the audioRecorder itself via a function tied to the audio system of Neos)
             //We condition on deltaT to be as close to 30fps as possible
             float deltaT = (float)(DateTime.UtcNow - utcNow).TotalMilliseconds;
-            if (deltaT > 33.3333)
+            int new_frame = (int)Math.Floor(recording_time / 33.33333f);
+            if (new_frame > frame_index)
             {
                 bool streams_ok = (streamRecorder == null ? false : streamRecorder.isRecording) || !recording_streams;
                 bool vision_ok = (visionRecorder == null ? false : visionRecorder.isRecording) || !recording_vision;
