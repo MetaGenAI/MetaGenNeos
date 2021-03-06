@@ -44,7 +44,7 @@ namespace metagen
                     {
                         Bitmap2D bmp = await cameras[user_id].RenderToBitmap(camera_resolution);
                         visual_recorders[user_id].WriteFrame(bmp.ConvertTo(CodeX.TextureFormat.BGRA32).RawData);
-                        UniLog.Log(DateTime.UtcNow.ToMillisecondTimeString());
+                        //UniLog.Log(DateTime.UtcNow.ToMillisecondTimeString());
                     }));
                     //TODO: sync video
                     //task.Wait();

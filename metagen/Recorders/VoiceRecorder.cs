@@ -24,7 +24,7 @@ namespace metagen
         public string saving_folder {
             get {
                 return metagen_comp.dataManager.saving_folder;
-                }
+            }
         }
 
         public VoiceRecorder(MetaGen component)

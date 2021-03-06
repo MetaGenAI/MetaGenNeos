@@ -33,6 +33,7 @@ namespace metagen
         public OutputState recording_state = OutputState.Stopped;
         private DateTime utcNow;
         private DateTime recordingBeginTime;
+        private DateTime playingBeginTime;
         public DataManager dataManager;
 
         public bool recording_hearing = false;
@@ -55,12 +56,18 @@ namespace metagen
 
         public RecordingTool animationRecorder;
         public bool recording_animation = false;
+
+        public BvhRecorder bvhRecorder;
+        public bool recording_bvh = true;
+
         public UnityNeos.AudioRecorderNeos hearingRecorder;
+
         public BotLogic botComponent;
 
         public MetaDataManager metaDataManager;
         public DataBase dataBase;
-        int frame_index = 0;
+        int recording_frame_index = 0;
+        int playing_frame_index = 0;
         float MAX_CHUNK_LEN_MIN = 10f;
         public event Action<User> OnUserLeftCallback;
         public event Action<User> OnUserJoinedCallback;
@@ -115,6 +122,13 @@ namespace metagen
                 return (float)(recording ? (DateTime.UtcNow - recordingBeginTime).TotalMilliseconds : 0f);
             }
         }
+        public float playing_time
+        {
+            get
+            {
+                return (float)(playing ? (DateTime.UtcNow - playingBeginTime).TotalMilliseconds : 0f);
+            }
+        }
 
         protected override void OnAttach()
         {
@@ -133,6 +147,7 @@ namespace metagen
             dataManager.metagen_comp = this;
             streamRecorder = new PoseStreamRecorder(this);
             voiceRecorder = new VoiceRecorder(this);
+            bvhRecorder = new BvhRecorder(this);
             visionRecorder = new VisionRecorder(camera_resolution, this);
             streamPlayer = new UnifiedPayer(dataManager, this);
             animationRecorder = Slot.AttachComponent<RecordingTool>();
@@ -186,7 +201,7 @@ namespace metagen
             //We condition on deltaT to be as close to 30fps as possible
             float deltaT = (float)(DateTime.UtcNow - utcNow).TotalMilliseconds;
             int new_frame = (int)Math.Floor(recording_time / 33.33333f);
-            if (new_frame > frame_index)
+            if (new_frame > recording_frame_index)
             {
                 bool streams_ok = (streamRecorder == null ? false : streamRecorder.isRecording) || !recording_streams;
                 bool vision_ok = (visionRecorder == null ? false : visionRecorder.isRecording) || !recording_vision;
@@ -213,17 +228,27 @@ namespace metagen
                     animationRecorder.RecordFrame();
                 }
 
+                if (recording && all_ready && bvhRecorder==null? false : bvhRecorder.isRecording)
+                {
+                    bvhRecorder.RecordFrame();
+                }
+
                 //if (recording && all_ready && recording_hearing_user != null && hearingRecorder==null? false : hearingRecorder.isRecording)
                 //{
                 //}
-                frame_index += 1;
+                recording_frame_index += 1;
 
                 utcNow = DateTime.UtcNow;
+            }
+            new_frame = (int)Math.Floor(playing_time / 33.33333f);
+            if (new_frame > playing_frame_index)
+            {
                 if (playing)
                 {
-                    //UniLog.Log("playing streams");
+                    UniLog.Log("playing streams");
                     streamPlayer.PlayStreams();
                 }
+                playing_frame_index += 1;
             }
             Slot slot = recording_hearing_user.Root.HeadSlot;
             hearingRecorder.UpdateTransform(slot.GlobalPosition, slot.GlobalRotation);
@@ -255,7 +280,7 @@ namespace metagen
                 dataManager.StartSection();
             recording = true;
             recording_state = OutputState.Starting;
-            frame_index = 0;
+            recording_frame_index = 0;
             //Set the recordings time to now
             utcNow = DateTime.UtcNow;
             recordingBeginTime = DateTime.UtcNow;
@@ -279,6 +304,12 @@ namespace metagen
                 animationRecorder.StartRecording();
                 //Record the first frame
                 animationRecorder.RecordFrame();
+            }
+
+            //BVH
+            if (recording_bvh && !bvhRecorder.isRecording)
+            {
+                bvhRecorder.StartRecording();
             }
 
             //AUDIO
@@ -352,6 +383,12 @@ namespace metagen
             {
                 visionRecorder.StopRecording();
                 wait_vision = true;
+            }
+
+            //BVH
+            if (bvhRecorder.isRecording)
+            {
+                bvhRecorder.StopRecording();
             }
 
             try
@@ -442,10 +479,8 @@ namespace metagen
             UniLog.Log("Start playing");
             playing = true;
             playing_state = OutputState.Started;
-            frame_index = 0;
-            //Set the recordings time to now
-            utcNow = DateTime.UtcNow;
-            recordingBeginTime = DateTime.UtcNow;
+            playingBeginTime = DateTime.UtcNow;
+            playing_frame_index = 0;
             if (!streamPlayer.isPlaying)
                 streamPlayer.StartPlaying(recording_index, avatar_template);
         }

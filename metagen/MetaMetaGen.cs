@@ -261,16 +261,16 @@ namespace FrooxEngine.LogiX
         {
             if (!is_in_VR_mode)
             {
-                if (current_metagen == null ? false : current_metagen.recording)
-                {
-                    if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Busy)
-                        FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Busy;
-                }
-                else
-                {
-                    if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Online)
-                        FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Online;
-                }
+                //if (current_metagen == null ? false : current_metagen.recording)
+                //{
+                //    if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Busy)
+                //        FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Busy;
+                //}
+                //else
+                //{
+                //    if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Online)
+                //        FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Online;
+                //}
             }
 
             if (dataBase != null && dataBase.should_update)

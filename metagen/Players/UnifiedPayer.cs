@@ -82,6 +82,7 @@ namespace metagen
                                 slot = avatarObject.Slot;
                             }
 
+                            UniLog.Log(slot);
                             //READ transform
                             float x, y, z, w;
                             //Scale stream
@@ -93,8 +94,8 @@ namespace metagen
                                 float3 scale = new float3(x, y, z);
                                 scale = avatarObject.Slot.Parent.LocalScaleToSpace(scale, slot.Parent);
                                 slot.LocalScale = scale;
-                                //UniLog.Log(slot.LocalScale.ToString());
-                            }
+                            //UniLog.Log(slot.LocalScale.ToString());
+                        }
                             //Position stream
                             if (available_streams.Item2)
                             {
