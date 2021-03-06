@@ -58,7 +58,7 @@ namespace metagen
         public bool recording_animation = false;
 
         public BvhRecorder bvhRecorder;
-        public bool recording_bvh = true;
+        public bool recording_bvh = false;
 
         public UnityNeos.AudioRecorderNeos hearingRecorder;
 
