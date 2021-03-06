@@ -34,6 +34,7 @@ namespace FrooxEngine.LogiX
         World currentWorld;
         bool default_record_local_user = false;
         bool is_in_VR_mode = false;
+        bool auto_set_status = false;
         Slot earsSlot;
         protected override void OnAttach()
         {
@@ -261,15 +262,24 @@ namespace FrooxEngine.LogiX
         {
             if (!is_in_VR_mode)
             {
-                if (current_metagen == null ? false : current_metagen.recording)
+                if (auto_set_status)
                 {
-                    if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Busy)
-                        FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Busy;
+                    if (current_metagen == null ? false : current_metagen.recording)
+                    {
+                        if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Busy)
+                            FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Busy;
+                    }
+                    else
+                    {
+                        if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Online)
+                            FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Online;
+                    }
                 }
-                else
+
+                if (this.Engine.WorldManager.FocusedWorld?.LocalUser?.ActiveVoiceMode != VoiceMode.Mute)
                 {
-                    if (FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus != OnlineStatus.Online)
-                        FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Online;
+                    this.InputInterface.IsMuted = true;
+                    this.Engine.WorldManager.FocusedWorld.LocalUser.VoiceMode = VoiceMode.Mute;
                 }
             }
 
