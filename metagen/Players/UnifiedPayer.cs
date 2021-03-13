@@ -12,6 +12,7 @@ using CsvHelper;
 using System.Globalization;
 using System.Reflection;
 using FrooxEngine.FinalIK;
+using NeosAnimationToolset;
 
 namespace metagen
 {
@@ -43,8 +44,10 @@ namespace metagen
         bool avatars_finished_loading = false;
         World World;
         public bool isPlaying;
+        public bool generateAnimation = false;
         DataManager dataManager;
         MetaGen metagen_comp;
+        RecordingTool animationRecorder;
         //TODO
         public UnifiedPayer(DataManager dataMan, MetaGen component)
         {
@@ -181,6 +184,10 @@ namespace metagen
                             }
                         }
                     }
+                    if (generateAnimation)
+                    {
+                        animationRecorder.RecordFrame();
+                    }
                 } catch (Exception e)
                 {
                     UniLog.Log("OwO: "+e.Message);
@@ -204,6 +211,14 @@ namespace metagen
         {
             try
             {
+                if (generateAnimation)
+                {
+                    metagen_comp.World.RunSynchronously(() =>
+                    {
+                        animationRecorder = metagen_comp.Slot.AttachComponent<RecordingTool>();
+                        animationRecorder.metagen_comp = metagen_comp;
+                    });
+                }
                 //Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
                 avatarManager = new metagen.AvatarManager();
                 //string reading_directory = dataManager.LastRecordingForWorld(metagen_comp.World);
@@ -221,6 +236,7 @@ namespace metagen
                     UniLog.Log("UwU playing an emtpy (or private) recording");
                     metagen_comp.StopPlaying();
                 }
+                Dictionary<RefID, AudioOutput> audio_outputs = new Dictionary<RefID, AudioOutput>();
                 foreach (UserMetadata user in userMetadatas)
                 {
                     if (!user.isRecording || !user.isPublic) continue; //at the moment we only allow playing back of public recording, for privacy reasons. In the future, we'll allow private access to the data
@@ -394,6 +410,7 @@ namespace metagen
                         if (File.Exists(audio_file))
                         {
                             AudioOutput audio_output = avatar.GetComponentInChildren<AudioOutput>();
+                            audio_outputs[user_id] = audio_output;
                             if (audio_output.Source.Target != null) audio_output = audio_output.Slot.AttachComponent<AudioOutput>();
                             VisemeAnalyzer visemeAnalyzer = avatar.GetComponentInChildren<VisemeAnalyzer>();
                             audio_output.Volume.Value = 1f;
@@ -422,6 +439,10 @@ namespace metagen
                 }
                 avatars_finished_loading = true;
                 isPlaying = true;
+                if (generateAnimation)
+                {
+                    animationRecorder.StartRecordingAvatars(avatars, audio_outputs);
+                }
             } catch (Exception e)
             {
                 UniLog.Log("TwT: " + e.Message);
@@ -447,7 +468,33 @@ namespace metagen
             //        i += 1;
             //    }
             //}
-
+            if (generateAnimation)
+            {
+                animationRecorder.PreStopRecording();
+                metagen_comp.World.RunSynchronously(() =>
+                {
+                    animationRecorder.StopRecording();
+                });
+                Task.Run(() =>
+                {
+                    animationRecorder.WaitForFinish();
+                    metagen_comp.World.RunSynchronously(() =>
+                    {
+                        UniLog.Log("AVATARS COUNT KEK");
+                        UniLog.Log(avatars.Count);
+                        metagen_comp.Slot.RemoveComponent(animationRecorder);
+                        foreach (var item in avatars)
+                        {
+                            Slot slot = item.Value;
+                            slot.Destroy();
+                        }
+                        avatars = new Dictionary<RefID, Slot>();
+                        finger_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
+                        hand_posers = new Dictionary<RefID, Dictionary<Chirality, HandPoser>>();
+                        finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
+                    });
+                });
+            }
             output_fss = new Dictionary<RefID, FileStream>();
             output_readers = new Dictionary<RefID, BitBinaryReaderX>();
             fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>>();
@@ -457,16 +504,6 @@ namespace metagen
             user_ids = new List<RefID>();
             avatarManager.avatar_template = null;
             avatarManager.has_prepared_avatar = false;
-            foreach (var item in avatars)
-            {
-                Slot slot = item.Value;
-                slot.Destroy();
-
-            }
-            avatars = new Dictionary<RefID, Slot>();
-            finger_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
-            hand_posers = new Dictionary<RefID, Dictionary<Chirality, HandPoser>>();
-            finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
             isPlaying = false;
         }
     }

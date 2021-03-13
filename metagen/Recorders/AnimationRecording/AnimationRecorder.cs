@@ -248,6 +248,77 @@ namespace NeosAnimationToolset
             foreach (ITrackable it in recordedFields) { it.OnStart(this); it.OnUpdate(0); }
             //foreach (ACMngr field in trackedFields) { field.OnStart(this); }
         }
+
+        public void StartRecordingAvatars(Dictionary<RefID,Slot> avatar_roots, Dictionary<RefID,AudioOutput> audio_outputs)
+        {
+            Slot holder = World.RootSlot.AddSlot("holder");
+            rootSlot.Target = holder;
+            bool record_audio_sources = true;
+            bool record_smr = true;
+            foreach (var item in avatar_roots)
+            {
+                RefID user_id = item.Key;
+                Slot rootSlot = item.Value;
+                if (record_audio_sources)
+                {
+                    if (audio_outputs[user_id] != null)
+                    {
+                        AudioOutput audio_output = audio_outputs[user_id];
+                        Slot containingSlot = audio_output.Slot;
+                        TrackedSlot trackedSlot = recordedSlots.Add();
+                        trackedSlot.slot.Target = containingSlot;
+                        trackedSlot.ResultType.Value = ResultTypeEnum.COPY_COMPONENTS;
+                        trackedSlot.position.Value = true;
+                        audioSources[user_id] = trackedSlot;
+                        UniLog.Log("Added audio source for animation recorder");
+                    }
+                }
+
+                if (record_smr)
+                {
+                    foreach(SkinnedMeshRenderer meshRenderer in rootSlot?.GetComponentsInChildren<SkinnedMeshRenderer>())
+                    {
+                        if (meshRenderer.Enabled && meshRenderer.Slot.IsActive)
+                        {
+                            TrackedSkinnedMeshRenderer trackedRenderer = recordedSMR.Add();
+                            trackedRenderer.renderer.Target = meshRenderer;
+                            trackedRenderer.recordBlendshapes.Value = true;
+                            //trackedRenderer.recordScales.Value = true;
+                        }
+                    }
+                    UniLog.Log("Added skinned meshes for animation recorder");
+
+                    List<MeshRenderer> meshRenderers = rootSlot?.GetComponentInChildren<AvatarRoot>()?.Slot.GetComponentsInChildren<MeshRenderer>();
+                    if (meshRenderers != null)
+                    {
+                        foreach(MeshRenderer meshRenderer in meshRenderers)
+                        {
+                            if (meshRenderer.Enabled && meshRenderer.Slot.IsActive && !(meshRenderer is SkinnedMeshRenderer))
+                            {
+                                if (meshRenderer.Slot.GetComponent<InteractionLaser>() != null) continue;
+                                if (meshRenderer.Slot.GetComponentInParents<InteractionLaser>() != null) continue;
+                                TrackedMeshRenderer trackedRenderer = recordedMR.Add();
+                                trackedRenderer.renderer.Target = meshRenderer;
+                                trackedRenderer.recordScales.Value = true;
+                            }
+                        }
+                    }
+                    UniLog.Log("Added non-skinned meshes for animation recorder");
+
+                }
+            }
+
+            animation = new AnimX(1f);
+            UniLog.Log(metagen_comp.LocalUser);
+            recordingUser.Target = metagen_comp.LocalUser;
+            _startTime.Value = base.Time.WorldTime;
+            state.Value = 1;
+            foreach (ITrackable it in recordedSMR) { it.OnStart(this); it.OnUpdate(0); }
+            foreach (ITrackable it in recordedMR) { it.OnStart(this); it.OnUpdate(0); }
+            foreach (ITrackable it in recordedSlots) { it.OnStart(this); it.OnUpdate(0); }
+            foreach (ITrackable it in recordedFields) { it.OnStart(this); it.OnUpdate(0); }
+            //foreach (ACMngr field in trackedFields) { field.OnStart(this); }
+        }
         public void PreStopRecording()
         {
             state.Value = 2;
@@ -628,9 +699,13 @@ namespace NeosAnimationToolset
         {
             UniLog.Log("Baking animation");
             Slot root = rootSlot.Target;
+            UniLog.Log("HI");
             float t = (float)(base.Time.WorldTime - _startTime);
+            UniLog.Log("HO");
+            UniLog.Log(animation);
             animation.GlobalDuration = t;
 
+            UniLog.Log("Stopping ITrackables");
             foreach (ITrackable it in recordedSMR) { it.OnUpdate(t); it.OnStop(); }
             foreach (ITrackable it in recordedMR) { it.OnUpdate(t); it.OnStop(); }
             foreach (ITrackable it in recordedSlots) { it.OnUpdate(t); it.OnStop(); }
@@ -644,13 +719,14 @@ namespace NeosAnimationToolset
             Uri uri = Engine.LocalDB.ImportLocalAsset(tempFilePath, LocalDB.ImportLocation.Move);
 
             //await default(ToWorld);
-            World.RunSynchronously(() =>
-            {
-                _result.Target = (root ?? Slot).AttachComponent<StaticAnimationProvider>();
-                _result.Target.URL.Value = uri;
-                state.Value = 3;
-                UniLog.Log("Baked animation! ^^");
-            });
+            Task task = Task.Run(() => World.RunSynchronously(() =>
+              {
+                  _result.Target = (root ?? Slot).AttachComponent<StaticAnimationProvider>();
+                  _result.Target.URL.Value = uri;
+                  state.Value = 3;
+                  UniLog.Log("Baked animation! ^^");
+              }));
+            await task;
         }
     }
 }

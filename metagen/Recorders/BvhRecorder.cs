@@ -15,6 +15,7 @@ namespace metagen
         public MetaGen metagen_comp;
         Dictionary<RefID, IKSolverVR.References> boness = new Dictionary<RefID, IKSolverVR.References>();
         Dictionary<RefID, StreamWriter> fileWriters = new Dictionary<RefID, StreamWriter>();
+        Dictionary<RefID, string> filenames = new Dictionary<RefID, string>();
         public bool isRecording = false;
         Dictionary<BodyNode, int> boneDepths = new Dictionary<BodyNode, int>(){
             {BodyNode.Hips, 0},
@@ -119,6 +120,7 @@ namespace metagen
                         {
                             Slot bone = bones[node];
                             float3 rot = bone.LocalRotationToSpace(floatQ.Identity, bones[boneParents[node]]).EulerAngles;
+                            //float3 rot = bone.LocalRotation.EulerAngles;
                             //float3 pos = bone.LocalPointToSpace(float3.Zero, bones[boneParents[node]]);
                             //float3 rot = floatQ.LookRotation(pos).EulerAngles;
                             fileWriters[user_id].Write(string.Format("{0:0.000000}\t{1:0.000000}\t{2:0.000000}", rot.Z, rot.X, rot.Y) + "\t");
@@ -146,7 +148,9 @@ namespace metagen
                 {
                     IKSolverVR solver = (IKSolverVR) comp.GetIKSolver();
                     boness[user_id] = solver.BoneReferences;
-                    fileWriters[user_id] =  new System.IO.StreamWriter(saving_folder + "/" + user_id.ToString() + "_mocap.bvh");
+                    string filename = saving_folder + "/" + user_id.ToString() + "_mocap.bvh";
+                    fileWriters[user_id] =  new System.IO.StreamWriter(filename);
+                    filenames[user_id] = filename;
                     BvhHeaderWrite(fileWriters[user_id], boness[user_id]);
                 }
             }
@@ -182,6 +186,7 @@ namespace metagen
                     Slot bone = bones[node];
                     //float3 pos = bone.LocalPosition;
                     float3 pos = bone.LocalPointToSpace(new float3(0f, 0f, 0f), bones[boneParents[node]]);
+                    pos = pos*bone.GlobalScale;
                     writer.WriteLine(tabs + "JOINT\t" + node.ToString());
                     writer.WriteLine(tabs + "{");
                     writer.WriteLine(tabs + "\t" + "OFFSET\t"+ string.Format("{0:0.000000}\t{1:0.000000}\t{2:0.000000}", pos.X, pos.Y, pos.Z));
@@ -203,8 +208,16 @@ namespace metagen
             boness = new Dictionary<RefID, IKSolverVR.References>();
             foreach(var item in fileWriters)
             {
+                RefID user_id = item.Key;
                 StreamWriter writer = item.Value;
                 writer.Close();
+                metagen_comp.RunSynchronously(() =>
+                {
+                    string filename = filenames[user_id];
+                    UniLog.Log("Import bvh file");
+                    Slot s = metagen_comp.LocalUserSpace.AddSlot(Path.GetFileName(filename), true);
+                    metagen_comp.StartGlobalTask((Func<Task>)(async () => await UniversalImporter.ImportRawFile(s, filename)));
+                });
             }
             fileWriters = new Dictionary<RefID, StreamWriter>();
         }
