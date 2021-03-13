@@ -16,7 +16,7 @@ using NeosAnimationToolset;
 
 namespace metagen
 {
-    class UnifiedPayer
+    class UnifiedPayer : IPlayer
     {
         private DateTime utcNow;
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
@@ -43,7 +43,8 @@ namespace metagen
         Task avatar_loading_task;
         bool avatars_finished_loading = false;
         World World;
-        public bool isPlaying;
+        public bool isPlaying { get; set; }
+
         public bool generateAnimation = false;
         DataManager dataManager;
         MetaGen metagen_comp;
@@ -199,6 +200,11 @@ namespace metagen
 
 
         }
+        public void StartPlaying()
+        {
+            StartPlaying(0, null);
+        }
+
         public void StartPlaying(int recording_index = 0, Slot avatar_template = null)
         {
             this.recording_index = recording_index;

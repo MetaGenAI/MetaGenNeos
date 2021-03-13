@@ -53,6 +53,8 @@ namespace metagen
         public bool play_streams = true;
         private PoseStreamRecorder streamRecorder;
         private UnifiedPayer streamPlayer;
+        public bool use_grpc_player = true;
+        private GrpcPlayer grpcStreamPlayer;
 
         public RecordingTool animationRecorder;
         public bool recording_animation = false;
@@ -150,6 +152,7 @@ namespace metagen
             bvhRecorder = new BvhRecorder(this);
             visionRecorder = new VisionRecorder(camera_resolution, this);
             streamPlayer = new UnifiedPayer(dataManager, this);
+            grpcStreamPlayer = new GrpcPlayer(dataManager, this);
             animationRecorder = Slot.AttachComponent<RecordingTool>();
             animationRecorder.metagen_comp = this;
             metaDataManager = new MetaDataManager(this);
@@ -246,7 +249,13 @@ namespace metagen
                 if (playing)
                 {
                     UniLog.Log("playing streams");
-                    streamPlayer.PlayStreams();
+                    if (use_grpc_player)
+                    {
+                        grpcStreamPlayer.PlayStreams();
+                    } else
+                    {
+                        streamPlayer.PlayStreams();
+                    }
                 }
                 playing_frame_index += 1;
             }
@@ -481,13 +490,22 @@ namespace metagen
             playing_state = OutputState.Started;
             playingBeginTime = DateTime.UtcNow;
             playing_frame_index = 0;
-            if (!streamPlayer.isPlaying)
-                streamPlayer.StartPlaying(recording_index, avatar_template);
+            if (use_grpc_player)
+            {
+                if (!grpcStreamPlayer.isPlaying)
+                    grpcStreamPlayer.StartPlaying();
+            } else
+            {
+                if (!streamPlayer.isPlaying)
+                    streamPlayer.StartPlaying(recording_index, avatar_template);
+            }
         }
         public void StopPlaying()
         {
             UniLog.Log("Stop playing");
             playing = false;
+            if (grpcStreamPlayer.isPlaying)
+                grpcStreamPlayer.StopPlaying();
             if (streamPlayer.isPlaying)
                 streamPlayer.StopPlaying();
             playing_state = OutputState.Stopped;
