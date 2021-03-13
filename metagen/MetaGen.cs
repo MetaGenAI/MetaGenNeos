@@ -46,7 +46,7 @@ namespace metagen
 
         public bool recording_vision = false;
         public bool play_vision = false;
-        public int2 camera_resolution = new int2(512,512);
+        public int2 camera_resolution = new int2(64,64);
         private VisionRecorder visionRecorder;
 
         public bool recording_streams = false;

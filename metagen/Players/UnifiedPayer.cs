@@ -500,6 +500,19 @@ namespace metagen
                         finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
                     });
                 });
+            } else
+            {
+                UniLog.Log("AVATARS COUNT KEK");
+                UniLog.Log(avatars.Count);
+                foreach (var item in avatars)
+                {
+                    Slot slot = item.Value;
+                    slot.Destroy();
+                }
+                avatars = new Dictionary<RefID, Slot>();
+                finger_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
+                hand_posers = new Dictionary<RefID, Dictionary<Chirality, HandPoser>>();
+                finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
             }
             output_fss = new Dictionary<RefID, FileStream>();
             output_readers = new Dictionary<RefID, BitBinaryReaderX>();
