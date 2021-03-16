@@ -170,6 +170,14 @@ namespace metagen
                         numValidNodes += 1;
                     }
                 }
+                float3 avatar_root_scale = user.Root.Slot.GetComponentInChildren<AvatarRoot>().Scale.Value;
+                float3 relative_avatar_scale = user.Root.Slot.GetComponentInChildren<AvatarRoot>().Slot.LocalScale / avatar_root_scale;
+                //WRITE version identifier
+                output_writers[user_id].Write(1000); //int
+                //WRITE relative avatar scale
+                output_writers[user_id].Write(relative_avatar_scale.x); //float
+                output_writers[user_id].Write(relative_avatar_scale.y); //float
+                output_writers[user_id].Write(relative_avatar_scale.z); //float
                 //WRITE the number of body nodes
                 output_writers[user_id].Write(numValidNodes); //int
                 foreach (var item in avatar_stream_drivers[user_id])

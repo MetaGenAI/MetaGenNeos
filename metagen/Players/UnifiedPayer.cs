@@ -46,20 +46,22 @@ namespace metagen
         public bool isPlaying { get; set; }
 
         public bool generateAnimation = false;
+        public bool generateBvh = false;
         DataManager dataManager;
         MetaGen metagen_comp;
         RecordingTool animationRecorder;
+        BvhRecorder bvhRecorder;
         //TODO
         public UnifiedPayer(DataManager dataMan, MetaGen component)
         {
             dataManager = dataMan;
             metagen_comp = component;
             World = component.World;
+            bvhRecorder = new BvhRecorder(metagen_comp);
         }
         public void PlayStreams()
         {
             if (!avatars_finished_loading) return;
-            World currentWorld = metagen_comp.World;
             //currentWorld.RunSynchronously(() =>
             //{
                 try
@@ -187,7 +189,26 @@ namespace metagen
                     }
                     if (generateAnimation)
                     {
-                        animationRecorder.RecordFrame();
+                        try
+                        {
+                            animationRecorder.RecordFrame();
+                        } catch (Exception e)
+                        {
+                            UniLog.Log("Error at animation recording: "+e.Message);
+                            UniLog.Log(e.StackTrace);
+                        }
+                    }
+
+                    if (generateBvh)
+                    {
+                        try
+                        {
+                            bvhRecorder.RecordFrame();
+                        } catch (Exception e)
+                        {
+                            UniLog.Log("Error at Bvh recording: "+e.Message);
+                            UniLog.Log(e.StackTrace);
+                        }
                     }
                 } catch (Exception e)
                 {
@@ -273,8 +294,19 @@ namespace metagen
 
                     //READ absolute time
                     output_readers[user_id].ReadSingle();
-                    //READ number of body nodes
-                    int numBodyNodes = output_readers[user_id].ReadInt32();
+                    //READ version identifier
+                    int version_number = output_readers[user_id].ReadInt32();
+                    float3 relative_avatar_scale = new float3(1f, 1f, 1f);
+                    int numBodyNodes = version_number;
+                    if (version_number >= 1000)
+                    {
+                        //READ relative avatar scale
+                        relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 0);
+                        relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 1);
+                        relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 2);
+                        //READ number of body nodes
+                        numBodyNodes = output_readers[user_id].ReadInt32();
+                    }
                     for (int i = 0; i < numBodyNodes; i++)
                     {
                         //READ body node type
@@ -287,6 +319,8 @@ namespace metagen
                         bool rot_exists = output_readers[user_id].ReadBoolean();
                         BodyNode bodyNodeType = (BodyNode)nodeInt;
                         VRIKAvatar avatarIK = avatar.GetComponentInChildren<VRIKAvatar>();
+                        avatarIK.IK.Target.Solver.SimulationSpace.Target = avatar;
+                        avatarIK.IK.Target.Solver.OffsetSpace.Target = avatar;
 
                         bool node_found = false;
                         foreach (IAvatarObject comp in components)
@@ -298,11 +332,15 @@ namespace metagen
                                     UniLog.Log((comp.Node, scale_exists, pos_exists, rot_exists));
                                     if (bodyNodeType == BodyNode.Root)
                                     {
-                                        proxy_slots[user_id][bodyNodeType] = avatar;
-                                    } else
-                                    {
-                                        proxy_slots[user_id][bodyNodeType] = comp.Slot;
+                                        comp.Slot.LocalScale = comp.Slot.LocalScale * relative_avatar_scale;
                                     }
+                                    //if (bodyNodeType == BodyNode.Root)
+                                    //{
+                                    //    proxy_slots[user_id][bodyNodeType] = avatar;
+                                    //} else
+                                    //{
+                                    //    proxy_slots[user_id][bodyNodeType] = comp.Slot;
+                                    //}
                                     //AvatarObjectSlot connected_comp = comp.EquippingSlot;
                                     comp.Equip(comp2);
                                     if (bodyNodeType != BodyNode.Root)
@@ -449,6 +487,11 @@ namespace metagen
                 {
                     animationRecorder.StartRecordingAvatars(avatars, audio_outputs);
                 }
+                if (generateBvh)
+                {
+                    Guid g = Guid.NewGuid();
+                    bvhRecorder.StartRecordingAvatars(avatars, g.ToString());
+                }
             } catch (Exception e)
             {
                 UniLog.Log("TwT: " + e.Message);
@@ -474,21 +517,33 @@ namespace metagen
             //        i += 1;
             //    }
             //}
-            if (generateAnimation)
+            if (generateAnimation || generateBvh)
             {
-                animationRecorder.PreStopRecording();
-                metagen_comp.World.RunSynchronously(() =>
+                if (generateBvh)
                 {
-                    animationRecorder.StopRecording();
-                });
-                Task.Run(() =>
+                    bvhRecorder.StopRecording();
+                }
+                if (generateAnimation)
                 {
-                    animationRecorder.WaitForFinish();
+                    animationRecorder.PreStopRecording();
                     metagen_comp.World.RunSynchronously(() =>
                     {
-                        UniLog.Log("AVATARS COUNT KEK");
-                        UniLog.Log(avatars.Count);
-                        metagen_comp.Slot.RemoveComponent(animationRecorder);
+                        animationRecorder.StopRecording();
+                    });
+                }
+                Task.Run(() =>
+                {
+                    if (generateAnimation)
+                    {
+                        animationRecorder.WaitForFinish();
+                    }
+                    metagen_comp.World.RunSynchronously(() =>
+                    {
+                        UniLog.Log("Removing avatars");
+                        if (generateAnimation)
+                        {
+                            metagen_comp.Slot.RemoveComponent(animationRecorder);
+                        }
                         foreach (var item in avatars)
                         {
                             Slot slot = item.Value;

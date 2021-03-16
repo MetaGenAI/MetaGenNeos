@@ -20,11 +20,13 @@ namespace FrooxEngine
         public readonly SyncRef<Button> _swapUIButton;
         public readonly SyncRef<TextField> _recordIndexField;
         public readonly SyncRef<Checkbox> _animationsCheckbox;
+        public readonly SyncRef<Checkbox> _generateBvhCheckbox;
         public readonly SyncRef<Checkbox> _videoCheckbox;
         public readonly SyncRef<Checkbox> _voicesCheckbox;
         public readonly SyncRef<Checkbox> _publicDomainCheckbox;
         public readonly SyncRef<Checkbox> _recordUserCheckbox;
         public readonly SyncRef<Checkbox> _hearingCheckbox;
+        public readonly SyncRef<Checkbox> _externalSourceCheckbox;
         public readonly SyncRef<ReferenceField<Slot>> _avatarRefField;
         public readonly SyncRef<ReferenceField<Slot>> _uiTemplateRefField;
         public readonly SyncTime _recordingStarted;
@@ -49,7 +51,7 @@ namespace FrooxEngine
         {
             base.OnAttach();
             mg = this.Slot.GetComponent<BotLogic>().mg;
-            float2 float2 = new float2(2300f, 6600f);
+            float2 float2 = new float2(2300f, 7600f);
             this.CanvasSize = float2 * 1.0f;
             this.PhysicalHeight = this.Slot.Parent.LocalScaleToGlobal(0.3f);
             this.Panel.ShowHeader.Value = false;
@@ -121,6 +123,11 @@ namespace FrooxEngine
             space.TryReadValue<Checkbox>("animation_checkbox", out animation_checkbox);
             this._animationsCheckbox.Target = animation_checkbox;
 
+            //Generate Bvh checkbox
+            Checkbox generate_bvh_checkbox;
+            space.TryReadValue<Checkbox>("generate_bvh_checkbox", out generate_bvh_checkbox);
+            this._generateBvhCheckbox.Target = generate_bvh_checkbox;
+
             //Video checkbox
             Checkbox video_checkbox;
             space.TryReadValue<Checkbox>("video_checkbox", out video_checkbox);
@@ -145,6 +152,11 @@ namespace FrooxEngine
             Checkbox hearing_checkbox;
             space.TryReadValue<Checkbox>("hearing_checkbox", out hearing_checkbox);
             this._hearingCheckbox.Target = hearing_checkbox;
+
+            //External source checkbox
+            Checkbox external_source_checkbox;
+            space.TryReadValue<Checkbox>("external_source_checkbox", out external_source_checkbox);
+            this._externalSourceCheckbox.Target = external_source_checkbox;
 
             //Avatar ref
             ReferenceField<Slot> avatar_ref_field;
@@ -220,6 +232,11 @@ namespace FrooxEngine
             Checkbox animCheckbox = uiBuilder1.Checkbox("Generate animation",false);
             this._animationsCheckbox.Target = animCheckbox;
 
+            //Generate bvh checkpoint
+            Checkbox checkbox5 = uiBuilder1.Checkbox("Generate bvh", false);
+            this._generateBvhCheckbox.Target = checkbox5;
+
+
             //video checkbox
             Checkbox videoCheckbox = uiBuilder1.Checkbox("Record vision",true);
             this._videoCheckbox.Target = videoCheckbox;
@@ -260,6 +277,10 @@ namespace FrooxEngine
             //Hearing checkpoint
             Checkbox checkbox2 = uiBuilder1.Checkbox("Hearing", false);
             this._hearingCheckbox.Target = checkbox2;
+
+            //External source checkpoint
+            Checkbox checkbox3 = uiBuilder1.Checkbox("External source", false);
+            this._externalSourceCheckbox.Target = checkbox3;
 
             //Avatar ref
             uiBuilder1.Style.PreferredHeight = 75f;

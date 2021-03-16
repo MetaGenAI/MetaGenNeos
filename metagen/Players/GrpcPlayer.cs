@@ -45,7 +45,9 @@ namespace metagen
         World World;
         public bool isPlaying { get; set; }
         RecordingTool animationRecorder;
-        public bool generateAnimation = false;
+        BvhRecorder bvhRecorder;
+        public bool generateAnimation = true;
+        public bool generateBvh = true;
         DataManager dataManager;
         MetaGen metagen_comp;
         private DataComm.DataCommClient client;
@@ -57,6 +59,7 @@ namespace metagen
             dataManager = dataMan;
             metagen_comp = component;
             World = component.World;
+            bvhRecorder = new BvhRecorder(metagen_comp);
         }
 
         public void PlayStreams()
@@ -231,6 +234,10 @@ namespace metagen
                 {
                     animationRecorder.RecordFrame();
                 }
+                if (generateBvh)
+                {
+                    bvhRecorder.RecordFrame();
+                }
             }
             catch (Exception e)
             {
@@ -272,6 +279,7 @@ namespace metagen
                 avatarManager = new metagen.AvatarManager();
                 List<UserMetadata> userMetadatas = new List<UserMetadata>();
                 userMetadatas.Add(new UserMetadata { userId = "U-test", bodyNodes = "", devices = "", headDevice = "", isPublic = true, isRecording = true, platform = "", userRefId = "ID2B00" });
+                Dictionary<RefID, AudioOutput> audio_outputs = new Dictionary<RefID, AudioOutput>();
                 foreach (UserMetadata user in userMetadatas)
                 {
                     if (!user.isRecording || !user.isPublic) continue; //at the moment we only allow playing back of public recording, for privacy reasons. In the future, we'll allow private access to the data
@@ -418,6 +426,7 @@ namespace metagen
                     }
                     UniLog.Log("got finger rotation vars");
                     //AUDIO PLAY
+                    audio_outputs[user_id] = null;
                     //UniLog.Log("Setting up audio!");
                     //avatar.GetComponentInChildren<AudioOutput>().Source.Target = null;
                     //for (int i = 0; i < 2; i++)
@@ -469,6 +478,10 @@ namespace metagen
                 {
                     animationRecorder.StartRecordingAvatars(avatars, audio_outputs);
                 }
+                if (generateBvh)
+                {
+                    bvhRecorder.StartRecordingAvatars(avatars);
+                }
             }
             catch (Exception e)
             {
@@ -487,16 +500,60 @@ namespace metagen
             user_ids = new List<RefID>();
             avatarManager.avatar_template = null;
             avatarManager.has_prepared_avatar = false;
-            foreach (var item in avatars)
+            if (generateAnimation || generateBvh)
             {
-                Slot slot = item.Value;
-                slot.Destroy();
-
+                if (generateBvh)
+                {
+                    bvhRecorder.StopRecording();
+                }
+                if (generateAnimation)
+                {
+                    animationRecorder.PreStopRecording();
+                    metagen_comp.World.RunSynchronously(() =>
+                    {
+                        animationRecorder.StopRecording();
+                    });
+                }
+                Task.Run(() =>
+                {
+                    if (generateAnimation)
+                    {
+                        animationRecorder.WaitForFinish();
+                    }
+                    metagen_comp.World.RunSynchronously(() =>
+                    {
+                        UniLog.Log("AVATARS COUNT KEK");
+                        UniLog.Log(avatars.Count);
+                        if (generateAnimation)
+                        {
+                            metagen_comp.Slot.RemoveComponent(animationRecorder);
+                        }
+                        foreach (var item in avatars)
+                        {
+                            Slot slot = item.Value;
+                            slot.Destroy();
+                        }
+                        avatars = new Dictionary<RefID, Slot>();
+                        finger_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
+                        hand_posers = new Dictionary<RefID, Dictionary<Chirality, HandPoser>>();
+                        finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
+                    });
+                });
             }
-            avatars = new Dictionary<RefID, Slot>();
-            finger_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
-            hand_posers = new Dictionary<RefID, Dictionary<Chirality, HandPoser>>();
-            finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
+            else
+            {
+                UniLog.Log("AVATARS COUNT KEK");
+                UniLog.Log(avatars.Count);
+                foreach (var item in avatars)
+                {
+                    Slot slot = item.Value;
+                    slot.Destroy();
+                }
+                avatars = new Dictionary<RefID, Slot>();
+                finger_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
+                hand_posers = new Dictionary<RefID, Dictionary<Chirality, HandPoser>>();
+                finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
+            }
             isPlaying = false;
         }
         public BodyNode[] VNetcBodyNodeConverter = new BodyNode[28] {

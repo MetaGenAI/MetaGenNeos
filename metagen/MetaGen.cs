@@ -53,14 +53,15 @@ namespace metagen
         public bool play_streams = true;
         private PoseStreamRecorder streamRecorder;
         private UnifiedPayer streamPlayer;
-        public bool use_grpc_player = true;
+        public bool use_grpc_player = false;
+        public bool generate_animation_play = true;
         private GrpcPlayer grpcStreamPlayer;
 
         public RecordingTool animationRecorder;
         public bool recording_animation = false;
 
         public BvhRecorder bvhRecorder;
-        public bool recording_bvh = false;
+        public bool recording_bvh = true;
 
         public UnityNeos.AudioRecorderNeos hearingRecorder;
 
@@ -248,7 +249,7 @@ namespace metagen
             {
                 if (playing)
                 {
-                    UniLog.Log("playing streams");
+                    //UniLog.Log("playing streams");
                     if (use_grpc_player)
                     {
                         grpcStreamPlayer.PlayStreams();
@@ -492,10 +493,14 @@ namespace metagen
             playing_frame_index = 0;
             if (use_grpc_player)
             {
+                grpcStreamPlayer.generateAnimation = generate_animation_play;
+                grpcStreamPlayer.generateBvh = recording_bvh;
                 if (!grpcStreamPlayer.isPlaying)
-                    grpcStreamPlayer.StartPlaying();
+                    grpcStreamPlayer.StartPlaying(avatar_template);
             } else
             {
+                streamPlayer.generateAnimation = generate_animation_play;
+                streamPlayer.generateBvh = recording_bvh;
                 if (!streamPlayer.isPlaying)
                     streamPlayer.StartPlaying(recording_index, avatar_template);
             }
