@@ -40,7 +40,7 @@ namespace FrooxEngine.LogiX
         {
             base.OnAttach();
 
-            ASDF.asdf(this.Engine);
+            //ASDF.asdf(this.Engine);
             Job<Slot> awaiter = SlotHelper.TransferToWorld(this.Slot, Userspace.UserspaceWorld).GetAwaiter();
             awaiter.GetResult();
             //Start the co-routine which checks for newly generated media files, and converts them
