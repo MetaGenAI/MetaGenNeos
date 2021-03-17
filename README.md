@@ -23,7 +23,7 @@ You can visit http://metagen.ai/ to find more about the vision and motivation be
 
 The basic functionality is the same as explained in the release of Metagenbot Beta, you can check the videos:
 
-* [Video in English here](https://www.youtube.com/watch?v=PgQmuIQYoBE&ab_channel=GuillermoValle)
+* [Video in English here](https://www.youtube.com/watch?v=PgQmuIQYoBE&ab_channel=GuillermoValle) ([another video by sirkitree](https://www.youtube.com/watch?v=79xguu735XE&ab_channel=sirkitree))
 * [Video in Japanese here](https://twitter.com/sleeping_vrc/status/1355868840081510400) (thanks sleepingkaikai!)
 
 ### Recording
