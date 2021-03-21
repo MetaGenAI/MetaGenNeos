@@ -90,6 +90,22 @@ namespace metagen
                 userMetaData[user] = thisUserMetadata;
             }
         }
+        public void UpdateUserPublic(User user, bool isPublic)
+        {
+            if (!userMetaData.ContainsKey(user))
+            {
+                AddUserMetaData(user);
+            }
+            userMetaData[user].isPublic = isPublic;
+        }
+        public void UpdateUserRecording(User user, bool isRecording)
+        {
+            if (!userMetaData.ContainsKey(user))
+            {
+                AddUserMetaData(user);
+            }
+            userMetaData[user].isRecording = isRecording;
+        }
         public void WriteUserMetaData()
         {
             List<UserMetadata> user_metadatas = new List<UserMetadata>();

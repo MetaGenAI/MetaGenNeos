@@ -321,29 +321,52 @@ namespace NeosAnimationToolset
         }
         public void PreStopRecording()
         {
-            state.Value = 2;
-            bakeAsyncTask = StartTask(async () => { 
-                try
-                {
-                    await this.bakeAsync();
-                } catch (Exception e)
-                {
-                    UniLog.Log("OwO error in bakeAsync: " + e.Message);
-                    UniLog.Log(e.StackTrace);
-                }
-            });
+            //state.Value = 2;
+            //bakeAsyncTask = Task.Run(async () => { 
+            //    try
+            //    {
+            //        await this.bakeAsync();
+            //        World.RunSynchronously(() =>
+            //        {
+            //            this.AttachToObject();
+            //        });
+            //    } catch (Exception e)
+            //    {
+            //        UniLog.Log("OwO error in bakeAsync: " + e.Message);
+            //        UniLog.Log(e.StackTrace);
+            //    }
+            //});
         }
         public void StopRecording()
         {
-            StartTask(async () => {
+            //StartTask(async () => {
+            //    try
+            //    {
+
+            //    } catch (Exception e)
+            //    {
+            //        UniLog.Log("OwO error in AttachToObject: " + e.Message);
+            //        UniLog.Log(e.StackTrace);
+            //        state.Value = 4; //error
+            //    }
+            //});
+            World.RunSynchronously(() =>
+            {
+                state.Value = 2;
+            });
+            bakeAsyncTask = Task.Run(async () => {
                 try
                 {
-                    await this.AttachToObject(bakeAsyncTask);
-                } catch (Exception e)
+                    await this.bakeAsync();
+                    World.RunSynchronously(() =>
+                    {
+                        this.AttachToObject();
+                    });
+                }
+                catch (Exception e)
                 {
-                    UniLog.Log("OwO error in AttachToObject: " + e.Message);
+                    UniLog.Log("OwO error in bakeAsync: " + e.Message);
                     UniLog.Log(e.StackTrace);
-                    state.Value = 4; //error
                 }
             });
         }
@@ -583,10 +606,10 @@ namespace NeosAnimationToolset
             hearingDriver.ValueSource.Target = booleanToggle.State;
         }
 
-        public async Task AttachToObject(Task task)
+        public void AttachToObject()
         {
-            UniLog.Log("Wait till bake");
-            await task;
+            //UniLog.Log("Wait till bake");
+            //await task;
             UniLog.Log("Spawning animation");
             Slot ruut = rootSlot.Target;
             animator = ruut.AttachComponent<Animator>();

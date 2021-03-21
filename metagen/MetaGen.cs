@@ -77,11 +77,14 @@ namespace metagen
 
         public bool is_loaded = false;
 
+        private List<User> current_users = new List<User>();
+
         //Metadata refers to the per-recording data about the user
         public Dictionary<User, UserMetadata> userMetaData
         {
             get
             {
+                //metaDataManager.GetUserMetaData(); //Have to refresh here to be sure. The OnUserJoin and OnUserLeft functions don't seem to be working
                 return metaDataManager.userMetaData;
             }
         }
@@ -98,6 +101,7 @@ namespace metagen
         {
             if (is_loaded && metaDataManager != null)
             {
+                current_users.Add(user);
                 metaDataManager.GetUsers();
                 metaDataManager.AddUserMetaData(user);
                 botComponent.AddOverride(user);
@@ -110,6 +114,7 @@ namespace metagen
         {
             if (is_loaded && metaDataManager != null)
             {
+                current_users.Remove(user);
                 metaDataManager.GetUsers();
                 metaDataManager.RemoveUserMetaData(user);
                 botComponent.RemoveOverride(user);
@@ -157,6 +162,10 @@ namespace metagen
             animationRecorder = Slot.AttachComponent<RecordingTool>();
             animationRecorder.metagen_comp = this;
             metaDataManager = new MetaDataManager(this);
+            foreach (User user in World.AllUsers)
+            {
+                current_users.Add(user);
+            }
             metaDataManager.GetUserMetaData();
         }
         //protected override void OnDispose()
@@ -168,6 +177,23 @@ namespace metagen
         {
             base.OnCommonUpdate();
             World currentWorld = this.World;
+
+            foreach (User user in World.AllUsers)
+            {
+                if (!current_users.Contains(user))
+                {
+                    OnUserJoined(user);
+                }
+            }
+
+            foreach (User user in current_users)
+            {
+                if (!World.AllUsers.Contains(user))
+                {
+                    OnUserLeft(user);
+                }
+            }
+
             //UniLog.Log("HI from " + currentWorld.CorrespondingWorldId);
 
             //Start/Stop recording
@@ -451,10 +477,10 @@ namespace metagen
                     //ANIMATION
                     if (wait_anim)
                     {
+                        animationRecorder.StopRecording();
+                        animationRecorder.WaitForFinish();
                         World.RunSynchronously(() =>
                         {
-                            animationRecorder.StopRecording();
-                            animationRecorder.WaitForFinish();
                             Slot.RemoveComponent(animationRecorder);
                         });
                         wait_anim = false;
@@ -530,7 +556,7 @@ namespace metagen
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            botComponent.Destroy();
+            botComponent.Slot.Destroy();
         }
 
     }
