@@ -5,7 +5,7 @@ This plugin allows one to record all users in a session. It is able to record:
 * Hearing (stereoscopic, from the perspective of one user)
 * Vision (records video from the perspective of the users)
 
-This plugin is what metagenbot is running (minus a trick to connect to sessions that aren't running the plugin). This release is inteded to be used as a normal Neos plugin, i.e. either locally or with other users running the plugin. Metagenbot is provided for convenience, but recording locally usually gives the best results for single-person recordings. If you want to use metagenbot for multi-person recordings, you can either invite it if it's online, or contact me [@guillefix](https://twitter.com/guillefix) if it isn't online, or if you want maximum performance or other special requirements for your usecase.
+This plugin is what the [NeosVR metagenbot](https://www.youtube.com/watch?v=PgQmuIQYoBE&ab_channel=GuillermoValle) is running (minus a trick to connect to sessions that aren't running the plugin). This release is inteded to be used as a normal Neos plugin, i.e. either locally or with other users running the plugin. Metagenbot is provided for convenience, but recording locally usually gives the best results for single-person recordings. If you want to use metagenbot for multi-person recordings, you can either invite it if it's online, or contact me [@guillefix](https://twitter.com/guillefix) if it isn't online, or if you want maximum performance or other special requirements for your usecase.
 
 You can visit http://metagen.ai/ to find more about the vision and motivation behind this tool beyond helping people make awesome stuff :)
 
