@@ -144,7 +144,7 @@ namespace metagen
                 VRIK comp = rootSlot.GetComponentInChildren<VRIK>();
                 if (comp != null)
                 {
-                    IKSolverVR solver = (IKSolverVR) comp.GetIKSolver();
+                    IKSolverVR solver = (IKSolverVR) comp.Solver;
                     boness[user_id] = solver.BoneReferences;
                     string filename = "";
                     if (override_filename != null)
