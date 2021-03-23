@@ -347,7 +347,7 @@ namespace NeosAnimationToolset
         }
         public void PreStopRecording()
         {
-            //state.Value = 2;
+            state.Value = 2;
             //bakeAsyncTask = Task.Run(async () => { 
             //    try
             //    {
@@ -376,10 +376,7 @@ namespace NeosAnimationToolset
             //        state.Value = 4; //error
             //    }
             //});
-            World.RunSynchronously(() =>
-            {
-                state.Value = 2;
-            });
+
             bakeAsyncTask = Task.Run(async () => {
                 try
                 {
