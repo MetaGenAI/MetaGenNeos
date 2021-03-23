@@ -204,6 +204,7 @@ namespace FrooxEngine
             Checkbox checkbox_record_user = uiBuilder1.Checkbox("Record me (local)",false);
             this._recordUserCheckbox.Target = checkbox_record_user;
             recordUserOverride = uiBuilder1.Current.AttachComponent<ValueUserOverride<bool>>();
+            recordUserOverride.CreateOverrideOnWrite.Value = true;
             recordUserOverride.Target.Target = checkbox_record_user.State;
 
             //Data submission checkbox

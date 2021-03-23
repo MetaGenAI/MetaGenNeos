@@ -88,7 +88,7 @@ namespace metagen
                                 slot = avatarObject.Slot;
                             }
 
-                            UniLog.Log(slot);
+                            //UniLog.Log(slot);
                             //READ transform
                             float x, y, z, w;
                             //Scale stream

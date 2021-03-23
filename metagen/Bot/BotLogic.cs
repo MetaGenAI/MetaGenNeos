@@ -117,8 +117,7 @@ namespace metagen
                     foreach (var item in overrides)
                     {
                         ValueUserOverride<bool>.Override ov = item.Value;
-                        //Perhaps make an API function for this
-                        mg.metaDataManager.userMetaData[ov.User.User.Target].isRecording = ov.Value.Value;
+                        mg.metaDataManager.UpdateUserRecording(ov.User.User.Target, ov.Value.Value);
                     }
 
                 };
@@ -129,8 +128,7 @@ namespace metagen
                     foreach (var item in overrides)
                     {
                         ValueUserOverride<bool>.Override ov = item.Value;
-                        //Perhaps make an API function for this
-                        mg.metaDataManager.userMetaData[ov.User.User.Target].isPublic = ov.Value.Value;
+                        mg.metaDataManager.UpdateUserPublic(ov.User.User.Target, ov.Value.Value);
                     }
                 };
                 just_created_panel = false;

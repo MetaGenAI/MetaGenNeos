@@ -68,6 +68,7 @@ namespace metagen
 
         public void UpdateRecordedTime(string userID, float time, bool is_public = false)
         {
+            UniLog.Log("Updating recorded time " + userID);
             if (_userData.ContainsKey(userID))
             {
                 _userData[userID].total_recorded += time;
@@ -121,6 +122,7 @@ namespace metagen
 
         public void SaveDatabase()
         {
+            UniLog.Log("Saving database");
             _should_update = false;
             try {
                 List<MetaGenUser> userDatas = new List<MetaGenUser>();

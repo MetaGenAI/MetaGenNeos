@@ -52,6 +52,8 @@ namespace NeosAnimationToolset
         private Slot hearing_slot;
         private Task bakeAsyncTask;
 
+        public bool track_tagged_slots = true;
+
         //public int animationTrackIndex = 0;
 
         //public readonly SyncList<ACMngr> trackedFields;
@@ -205,19 +207,43 @@ namespace NeosAnimationToolset
                 }
                 if (record_smr)
                 {
-                    foreach(SkinnedMeshRenderer meshRenderer in rootSlot?.GetComponentsInChildren<SkinnedMeshRenderer>())
+                    List<SkinnedMeshRenderer> skinnedMeshRenderers = rootSlot?.GetComponentsInChildren<SkinnedMeshRenderer>();
+                    Slot extra_slots_holder = null;
+                    if (track_tagged_slots)
                     {
-                        if (meshRenderer.Enabled && meshRenderer.Slot.IsActive)
+                        extra_slots_holder = World.RootSlot.FindChild((Slot s) => s.Name == "metagen holder");
+                        List<SkinnedMeshRenderer> extraSkinnedMeshRenderers = extra_slots_holder?.GetComponentsInChildren<SkinnedMeshRenderer>();
+                        if (extraSkinnedMeshRenderers != null)
                         {
-                            TrackedSkinnedMeshRenderer trackedRenderer = recordedSMR.Add();
-                            trackedRenderer.renderer.Target = meshRenderer;
-                            trackedRenderer.recordBlendshapes.Value = true;
-                            //trackedRenderer.recordScales.Value = true;
+                            if (skinnedMeshRenderers == null) skinnedMeshRenderers = new List<SkinnedMeshRenderer>();
+                            skinnedMeshRenderers.AddRange(extraSkinnedMeshRenderers);
                         }
                     }
-                    UniLog.Log("Added skinned meshes for animation recorder");
+                    if (skinnedMeshRenderers != null)
+                    {
+                        foreach (SkinnedMeshRenderer meshRenderer in skinnedMeshRenderers)
+                        {
+                            if (meshRenderer.Enabled && meshRenderer.Slot.IsActive)
+                            {
+                                TrackedSkinnedMeshRenderer trackedRenderer = recordedSMR.Add();
+                                trackedRenderer.renderer.Target = meshRenderer;
+                                trackedRenderer.recordBlendshapes.Value = true;
+                                //trackedRenderer.recordScales.Value = true;
+                            }
+                        }
+                        UniLog.Log("Added skinned meshes for animation recorder");
+                    }
 
                     List<MeshRenderer> meshRenderers = rootSlot?.GetComponentInChildren<AvatarRoot>()?.Slot.GetComponentsInChildren<MeshRenderer>();
+                    if (track_tagged_slots)
+                    {
+                        List<MeshRenderer> extraMeshRenderers = extra_slots_holder?.GetComponentsInChildren<MeshRenderer>();
+                        if (extraMeshRenderers != null)
+                        {
+                            if (meshRenderers == null) meshRenderers = new List<MeshRenderer>();
+                            meshRenderers.AddRange(extraMeshRenderers);
+                        }
+                    }
                     if (meshRenderers != null)
                     {
                         foreach(MeshRenderer meshRenderer in meshRenderers)
@@ -321,29 +347,52 @@ namespace NeosAnimationToolset
         }
         public void PreStopRecording()
         {
-            state.Value = 2;
-            bakeAsyncTask = StartTask(async () => { 
-                try
-                {
-                    await this.bakeAsync();
-                } catch (Exception e)
-                {
-                    UniLog.Log("OwO error in bakeAsync: " + e.Message);
-                    UniLog.Log(e.StackTrace);
-                }
-            });
+            //state.Value = 2;
+            //bakeAsyncTask = Task.Run(async () => { 
+            //    try
+            //    {
+            //        await this.bakeAsync();
+            //        World.RunSynchronously(() =>
+            //        {
+            //            this.AttachToObject();
+            //        });
+            //    } catch (Exception e)
+            //    {
+            //        UniLog.Log("OwO error in bakeAsync: " + e.Message);
+            //        UniLog.Log(e.StackTrace);
+            //    }
+            //});
         }
         public void StopRecording()
         {
-            StartTask(async () => {
+            //StartTask(async () => {
+            //    try
+            //    {
+
+            //    } catch (Exception e)
+            //    {
+            //        UniLog.Log("OwO error in AttachToObject: " + e.Message);
+            //        UniLog.Log(e.StackTrace);
+            //        state.Value = 4; //error
+            //    }
+            //});
+            World.RunSynchronously(() =>
+            {
+                state.Value = 2;
+            });
+            bakeAsyncTask = Task.Run(async () => {
                 try
                 {
-                    await this.AttachToObject(bakeAsyncTask);
-                } catch (Exception e)
+                    await this.bakeAsync();
+                    World.RunSynchronously(() =>
+                    {
+                        this.AttachToObject();
+                    });
+                }
+                catch (Exception e)
                 {
-                    UniLog.Log("OwO error in AttachToObject: " + e.Message);
+                    UniLog.Log("OwO error in bakeAsync: " + e.Message);
                     UniLog.Log(e.StackTrace);
-                    state.Value = 4; //error
                 }
             });
         }
@@ -583,10 +632,10 @@ namespace NeosAnimationToolset
             hearingDriver.ValueSource.Target = booleanToggle.State;
         }
 
-        public async Task AttachToObject(Task task)
+        public void AttachToObject()
         {
-            UniLog.Log("Wait till bake");
-            await task;
+            //UniLog.Log("Wait till bake");
+            //await task;
             UniLog.Log("Spawning animation");
             Slot ruut = rootSlot.Target;
             animator = ruut.AttachComponent<Animator>();
