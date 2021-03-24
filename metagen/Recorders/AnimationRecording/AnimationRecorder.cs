@@ -348,6 +348,19 @@ namespace NeosAnimationToolset
         public void PreStopRecording()
         {
             state.Value = 2;
+            UniLog.Log("HI");
+            float t = (float)(base.Time.WorldTime - _startTime);
+            UniLog.Log("HO");
+            UniLog.Log(animation);
+            animation.GlobalDuration = t;
+
+            UniLog.Log("Stopping ITrackables");
+            foreach (ITrackable it in recordedSMR) { it.OnUpdate(t); it.OnStop(); }
+            foreach (ITrackable it in recordedMR) { it.OnUpdate(t); it.OnStop(); }
+            foreach (ITrackable it in recordedSlots) { it.OnUpdate(t); it.OnStop(); }
+            foreach (ITrackable it in recordedFields) { it.OnUpdate(t); it.OnStop(); }
+            UniLog.Log("Stopped ITrackables");
+            //await default(ToBackground);
             //bakeAsyncTask = Task.Run(async () => { 
             //    try
             //    {
@@ -745,19 +758,6 @@ namespace NeosAnimationToolset
         {
             UniLog.Log("Baking animation");
             Slot root = rootSlot.Target;
-            UniLog.Log("HI");
-            float t = (float)(base.Time.WorldTime - _startTime);
-            UniLog.Log("HO");
-            UniLog.Log(animation);
-            animation.GlobalDuration = t;
-
-            UniLog.Log("Stopping ITrackables");
-            foreach (ITrackable it in recordedSMR) { it.OnUpdate(t); it.OnStop(); }
-            foreach (ITrackable it in recordedMR) { it.OnUpdate(t); it.OnStop(); }
-            foreach (ITrackable it in recordedSlots) { it.OnUpdate(t); it.OnStop(); }
-            foreach (ITrackable it in recordedFields) { it.OnUpdate(t); it.OnStop(); }
-            UniLog.Log("Stopped ITrackables");
-            //await default(ToBackground);
 
             string tempFilePath = Engine.LocalDB.GetTempFilePath("animx");
             animation.SaveToFile(tempFilePath, AnimX.Encoding.LZMA);
