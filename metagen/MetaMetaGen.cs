@@ -153,10 +153,7 @@ namespace FrooxEngine.LogiX
                         processCommand(msg);
                         break;
                     case CloudX.Shared.MessageType.SessionInvite:
-                        if (is_in_VR_mode)
-                        {
                             processInvite(msg);
-                        }
                         break;
                     default:
                         break;

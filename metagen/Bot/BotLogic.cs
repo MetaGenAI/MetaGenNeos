@@ -14,7 +14,7 @@ namespace metagen
     public class BotLogic : Component
     {
         protected readonly SyncTime _recordingStarted;
-        private MetaGenBotPanelUI panelUI;
+        public MetaGenBotPanelUI panelUI;
         public metagen.MetaGen mg;
         bool just_created_panel;
         public bool IsPlaying

@@ -46,6 +46,7 @@ namespace FrooxEngine
         public string ui_template;
         public readonly SyncRef<ReferenceField<Slot>> _UITemplateField;
         public Slot UISlot = null;
+        public Slot panelSlot = null;
 
         protected override void OnAttach()
         {
@@ -57,6 +58,7 @@ namespace FrooxEngine
             this.Panel.ShowHeader.Value = false;
             this.Panel.ShowHandle.Value = false;
             Slot holder = this.Slot.Parent.AddSlot("panel holder");
+            panelSlot = holder;
             //holder.Tag = "Developer";
             holder.LocalPosition = new float3(0f, 1.5f, 1f);
             this.Slot.DestroyChildren();
