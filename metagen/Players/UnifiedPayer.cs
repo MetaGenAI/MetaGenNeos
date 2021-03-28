@@ -112,7 +112,7 @@ namespace metagen
                                 position = avatarObject.Slot.Parent.LocalPointToSpace(position, slot.Parent);
                                 slot.LocalPosition = position;
                             //UniLog.Log(slot.LocalPosition.ToString());
-                            }
+                        }
                             //Rotation stream
                             if (available_streams.Item3)
                             {
@@ -247,6 +247,7 @@ namespace metagen
                     });
                 }
                 //Dictionary<RefID, User>.ValueCollection users = metagen_comp.World.AllUsers;
+                //if (avatarManager==null) avatarManager = new metagen.AvatarManager();
                 avatarManager = new metagen.AvatarManager();
                 //string reading_directory = dataManager.LastRecordingForWorld(metagen_comp.World);
                 string reading_directory = dataManager.GetRecordingForWorld(metagen_comp.World, this.recording_index);
@@ -418,7 +419,7 @@ namespace metagen
                             //UniLog.Log(fingerSegment == null ? "null" : this.World.CorrespondingWorldId);
                             if (fingerSegment != null && fingerSegment.Root.Target != null)//&& fingerSegment.RotationDrive.IsLinkValid)
                             {
-                                UniLog.Log(nodee.ToString());
+                                //UniLog.Log(nodee.ToString());
                                 //fingerSegment.RotationDrive.Target.ReleaseLink(fingerSegment.RotationDrive.Target.DirectLink);
                                 finger_slots[user_id][nodee] = fingerSegment.Root.Target;
                                 proxy_slots[user_id][nodee] = fingerSegment.Root.Target;
@@ -437,6 +438,9 @@ namespace metagen
                     //AUDIO PLAY
                     UniLog.Log("Setting up audio!");
                     avatar.GetComponentInChildren<AudioOutput>().Source.Target = null;
+                    AvatarAudioOutputManager avatarAudioOutputManager    = avatar.GetComponentInChildren<AvatarAudioOutputManager>();
+                    AudioOutput audio_output = avatarAudioOutputManager ?.AudioOutput.Target;
+                    avatarAudioOutputManager    ?.Slot.RemoveComponent(avatarAudioOutputManager );
                     for (int i = 0; i < 2; i++)
                     {
                         string audio_file;
@@ -453,9 +457,10 @@ namespace metagen
                         }
                         if (File.Exists(audio_file))
                         {
-                            AudioOutput audio_output = avatar.GetComponentInChildren<AudioOutput>();
-                            audio_outputs[user_id] = audio_output;
+                            //AudioOutput audio_output = avatar.GetComponentInChildren<AudioOutput>();
+                            if (audio_output == null) audio_output = avatar.AttachComponent<AudioOutput>();
                             if (audio_output.Source.Target != null) audio_output = audio_output.Slot.AttachComponent<AudioOutput>();
+                            audio_outputs[user_id] = audio_output;
                             VisemeAnalyzer visemeAnalyzer = avatar.GetComponentInChildren<VisemeAnalyzer>();
                             audio_output.Volume.Value = 1f;
                             audio_output.Enabled = true;

@@ -424,7 +424,7 @@ namespace NeosAnimationToolset
             //Slot ruut = rootSlot.Target;
             Slot holder = World.RootSlot.AddSlot("Animation");
             holder.LocalRotation = floatQ.Euler(0f, 0f, 0f);
-            holder.LocalPosition = new float3(0, 1.5f, 0);
+            holder.LocalPosition = metagen_comp.Slot.GlobalPosition + new float3(0.5f, 0, 0);
             Slot visual = holder.AddSlot("Main button");
             Slot logix_slot = holder.AddSlot("Logix");
 

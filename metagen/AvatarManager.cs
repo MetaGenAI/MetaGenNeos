@@ -36,6 +36,14 @@ namespace metagen
         }
         public async Task<Slot> GetAvatar()
         {
+            //if (avatar_template == null)
+            //{
+            //    Slot slot = await SpawnDefaultAvatar();
+            //    avatar_template = slot;
+            //    slot.ActiveSelf = false;
+            //}
+            //return await DuplicateAvatarTemplate();
+
             //TaskAwaiter<Slot> awaiter;
             Task<Slot> task;
             if (avatar_template == null)
@@ -63,13 +71,17 @@ namespace metagen
         {
             World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
             TaskCompletionSource<Slot> task = new TaskCompletionSource<Slot>();
-            currentWorld.RunSynchronously(async () => { 
+            currentWorld.RunSynchronously(() => {
+                //Slot slot = avatar_template.Duplicate();
+                //slot = PrepareAvatar(slot);
+                //task.SetResult(slot);
                 if (!has_prepared_avatar)
                 {
                     avatar_template = PrepareAvatar(avatar_template.Duplicate());
                     has_prepared_avatar = true;
                     task.SetResult(avatar_template);
-                } else
+                }
+                else
                 {
                     Slot slot = avatar_template.Duplicate();
                     //    task.SetResultAndFinish(slot);
@@ -110,6 +122,7 @@ namespace metagen
         public Slot PrepareAvatar(Slot slot)
         {
             //Slot fake_root = null;
+            slot.ActiveSelf = true;
             World currentWorld = FrooxEngine.Engine.Current.WorldManager.FocusedWorld;
             //TaskCompletionSource<Slot> task = new TaskCompletionSource<Slot>();
             //currentWorld.RunSynchronously(() =>
@@ -135,7 +148,7 @@ namespace metagen
                     avatarScale = ((AvatarRoot)comp).Scale;
                     comp2 = fake_root.AttachComponent<AvatarObjectSlot>();
                     comp2.Node.Value = comp.Node;
-                    comp2.Equipped.Target = comp;
+                    comp2.Equipped.ForceLink(comp);
                     comp2.IsTracking.Value = false;
                     //comp.Equip(comp2);
                 }
@@ -144,7 +157,7 @@ namespace metagen
                     Slot new_proxy = fake_root.AddSlot(comp.Name);
                     comp2 = new_proxy.AttachComponent<AvatarObjectSlot>();
                     comp2.Node.Value = comp.Node;
-                    comp2.Equipped.Target = comp;
+                    comp2.Equipped.ForceLink(comp);
                     comp2.IsTracking.Value = false;
                     //comp.Equip(comp2);
                     //((AvatarPoseNode)comp).IsTracking.Value = true;

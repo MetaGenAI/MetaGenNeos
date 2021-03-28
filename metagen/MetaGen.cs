@@ -117,7 +117,7 @@ namespace metagen
                 current_users.Remove(user);
                 metaDataManager.GetUsers();
                 metaDataManager.RemoveUserMetaData(user);
-                botComponent.RemoveOverride(user);
+                //botComponent.RemoveOverride(user);
                 OnUserLeftCallback.Invoke(user);
                 UniLog.Log("USER LEFT " + user.UserID);
             }

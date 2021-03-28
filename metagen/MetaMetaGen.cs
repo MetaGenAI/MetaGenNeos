@@ -63,6 +63,7 @@ namespace FrooxEngine.LogiX
             //default_record_local_user = true;
             if (!(LocalUser.HeadDevice == HeadOutputDevice.Screen)) //must be on VR mode
             {
+                UniLog.Log("VR mode!");
                 //gameObject = GameObject.Find("Camera (ears)");
                 default_record_local_user = true;
                 is_in_VR_mode = true;
@@ -87,7 +88,8 @@ namespace FrooxEngine.LogiX
             FrooxEngine.Engine.Current.WorldManager.WorldRemoved += RemoveWorld;
             //FrooxEngine.Engine.Current.WorldManager.WorldAdded += AddWorld;
             FrooxEngine.Engine.Current.WorldManager.WorldFocused += FocusedWorld;
-            FrooxEngine.Engine.Current.Cloud.Messages.OnMessageReceived += ProcessMessage;
+            if (!is_in_VR_mode)
+                FrooxEngine.Engine.Current.Cloud.Messages.OnMessageReceived += ProcessMessage;
             //FrooxEngine.Engine.Current.Cloud.Friends.FriendRequestCountChanged += ProcessFriendRequest;
             FrooxEngine.Engine.Current.Cloud.Friends.FriendAdded += ProcessFriendRequest;
             FrooxEngine.Engine.Current.Cloud.Friends.FriendRequestCountChanged += ProcessFriendRequest2;
@@ -151,7 +153,10 @@ namespace FrooxEngine.LogiX
                         processCommand(msg);
                         break;
                     case CloudX.Shared.MessageType.SessionInvite:
-                        processInvite(msg);
+                        if (is_in_VR_mode)
+                        {
+                            processInvite(msg);
+                        }
                         break;
                     default:
                         break;
@@ -290,7 +295,7 @@ namespace FrooxEngine.LogiX
         }
         private void FocusedWorld(World world)
         {
-            if (currentWorld != null)
+            if (currentWorld != null && !is_in_VR_mode)
             {
                 try
                 {
@@ -302,6 +307,7 @@ namespace FrooxEngine.LogiX
                 }
 
             }
+            bool is_there_metagen_in_world = false;
             foreach(var item in metagens)
             {
                 try
@@ -309,6 +315,8 @@ namespace FrooxEngine.LogiX
                     MetaGen metagen = item.Value;
                     metagen.StopPlaying();
                     metagen.StopRecording();
+                    //metagen.Destroy();
+                    if (metagen.World == world) is_there_metagen_in_world = true;
                 } catch (Exception e)
                 {
                     UniLog.Log("owo Exception when stopping the metagens when focusing a new world");
@@ -317,7 +325,7 @@ namespace FrooxEngine.LogiX
             }
             current_session_id = world.SessionId;
             currentWorld = world;
-            AddWorld(world);
+            if (!is_there_metagen_in_world) AddWorld(world);
         }
         private void ResetCurrentMetaGen()
         {
@@ -368,20 +376,18 @@ namespace FrooxEngine.LogiX
             UniLog.Log("Reset hearing user for world " + world.CorrespondingWorldId);
             Dictionary<RefID, User>.ValueCollection users = world.AllUsers;
             recording_hearing_user = world.LocalUser;
-            foreach (User user in users)
+            if (!is_in_VR_mode)
             {
-                //if (user.IsHost)
-                //{
-                //    recording_hearing_user = user;
-                //    break;
-                //}
-                if (user.UserID != null)
+                foreach (User user in users)
                 {
-                    MetaGenUser user_data = dataBase.GetUserData(user.UserID);
-                    if (user_data.default_public && user_data.default_recording)
+                    if (user.UserID != null)
                     {
-                        recording_hearing_user = user;
-                        break;
+                        MetaGenUser user_data = dataBase.GetUserData(user.UserID);
+                        if (user_data.default_public && user_data.default_recording)
+                        {
+                            recording_hearing_user = user;
+                            break;
+                        }
                     }
                 }
             }
