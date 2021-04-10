@@ -373,14 +373,14 @@ namespace FrooxEngine.LogiX
             UniLog.Log("Reset hearing user for world " + world.CorrespondingWorldId);
             Dictionary<RefID, User>.ValueCollection users = world.AllUsers;
             recording_hearing_user = world.LocalUser;
-            if (!is_in_VR_mode)
+            if (!is_in_VR_mode || !default_record_local_user)
             {
                 foreach (User user in users)
                 {
                     if (user.UserID != null)
                     {
                         MetaGenUser user_data = dataBase.GetUserData(user.UserID);
-                        if (user_data.default_public && user_data.default_recording)
+                        if (user != world.LocalUser && user_data.default_public && user_data.default_recording)
                         {
                             recording_hearing_user = user;
                             break;
