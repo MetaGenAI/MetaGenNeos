@@ -13,12 +13,14 @@ namespace metagen
 {
     class FaceStreamRecorder : IRecorder
     {
-        public Dictionary<RefID, BitBinaryWriterX> output_writers = new Dictionary<RefID, BitBinaryWriterX>();
-        public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
-        public Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>> avatar_stream_drivers = new Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>>();
-        public Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>>();
-        public Dictionary<RefID, FingerPoseStreamManager> finger_stream_drivers = new Dictionary<RefID, FingerPoseStreamManager>();
-        public List<RefID> current_users = new List<RefID>();
+        public Dictionary<RefID, BitBinaryWriterX> eye_output_writers = new Dictionary<RefID, BitBinaryWriterX>();
+        public Dictionary<RefID, BitBinaryWriterX> mouth_output_writers = new Dictionary<RefID, BitBinaryWriterX>();
+        public Dictionary<RefID, FileStream> eye_output_fss = new Dictionary<RefID, FileStream>();
+        public Dictionary<RefID, FileStream> mouth_output_fss = new Dictionary<RefID, FileStream>();
+        public Dictionary<RefID, EyeTrackingStreamManager> eye_streams = new Dictionary<RefID, EyeTrackingStreamManager>();
+        public Dictionary<RefID, MouthTrackingStreamManager> mouth_streams = new Dictionary<RefID, MouthTrackingStreamManager>();
+        public List<RefID> current_eye_tracking_users = new List<RefID>();
+        public List<RefID> current_mouth_tracking_users = new List<RefID>();
         public bool isRecording = false;
         private MetaGen metagen_comp;
         public string saving_folder {
@@ -26,109 +28,82 @@ namespace metagen
                 return metagen_comp.dataManager.saving_folder;
                 }
         }
-        public PoseStreamRecorder(MetaGen component)
+        public FaceStreamRecorder(MetaGen component)
         {
             metagen_comp = component;
         }
+
+        void WriteEyeStreams(EyeTrackingStreamManager.EyeStreams eyeStreams, BinaryWriterX writer)
+        {
+            writer.Write(eyeStreams.IsTracking.Target.Value); //bool
+            writer.Write(eyeStreams.Position.Target.Value.x); //float
+            writer.Write(eyeStreams.Position.Target.Value.y); //float
+            writer.Write(eyeStreams.Position.Target.Value.z); //float
+            writer.Write(eyeStreams.Direction.Target.Value.x); //float
+            writer.Write(eyeStreams.Direction.Target.Value.y); //float
+            writer.Write(eyeStreams.Direction.Target.Value.z); //float
+            writer.Write(eyeStreams.Openness.Target.Value); //float
+            writer.Write(eyeStreams.Widen.Target.Value); //float
+            writer.Write(eyeStreams.Squeeze.Target.Value); //float
+            writer.Write(eyeStreams.Frown.Target.Value); //float
+            writer.Write(eyeStreams.PupilDiameter.Target.Value); //float
+        }
+        void WriteMouthStreams(MouthTrackingStreamManager mouthStreams, BinaryWriterX writer)
+        {
+            writer.Write(mouthStreams.IsTracking.Target.Value); //bool
+            writer.Write(mouthStreams.Jaw.Target.Value.x); //float
+            writer.Write(mouthStreams.Jaw.Target.Value.y); //float
+            writer.Write(mouthStreams.Jaw.Target.Value.z); //float
+            writer.Write(mouthStreams.JawOpen.Target.Value); //float
+            writer.Write(mouthStreams.Tongue.Target.Value.x); //float
+            writer.Write(mouthStreams.Tongue.Target.Value.y); //float
+            writer.Write(mouthStreams.Tongue.Target.Value.z); //float
+            writer.Write(mouthStreams.TongueRoll.Target.Value); //float
+            writer.Write(mouthStreams.LipUpperLeftRaise.Target.Value); //float
+            writer.Write(mouthStreams.LipUpperRightRaise.Target.Value); //float
+            writer.Write(mouthStreams.LipLowerLeftaise.Target.Value); //float
+            writer.Write(mouthStreams.LipLowerRightRaise.Target.Value); //float
+            writer.Write(mouthStreams.LipUpperHorizontal.Target.Value); //float
+            writer.Write(mouthStreams.LipLowerHorizontal.Target.Value); //float
+            writer.Write(mouthStreams.MouthLeftSmileFrown.Target.Value); //float
+            writer.Write(mouthStreams.MouthRightSmileFrown.Target.Value); //float
+            writer.Write(mouthStreams.MouthPout.Target.Value); //float
+            writer.Write(mouthStreams.LipTopOverturn.Target.Value); //float
+            writer.Write(mouthStreams.LipBottomOverturn.Target.Value); //float
+            writer.Write(mouthStreams.LipTopOverUnder.Target.Value); //float
+            writer.Write(mouthStreams.LipBottomOverUnder.Target.Value); //float
+            writer.Write(mouthStreams.CheekLeftPuffSuck.Target.Value); //float
+            writer.Write(mouthStreams.CheekRightPuffSuck.Target.Value); //float
+        }
         public void RecordStreams(float deltaT)
         {
-            foreach (RefID user_id in current_users)
+            foreach (RefID user_id in current_eye_tracking_users)
             {
                 //Encode the streams
-                BinaryWriterX writer = output_writers[user_id];
+                BinaryWriterX writer = eye_output_writers[user_id];
 
                 //WRITE deltaT
                 writer.Write(deltaT); //float
-                int node_index = 0;
-                //foreach (var item in avatar_stream_drivers[user_id])
-                foreach (var item in avatar_pose_nodes[user_id])
-                {
-                    BodyNode node = item.Item1;
-                    //UniLog.Log(node);
-                    //TransformStreamDriver driver = item.Item2;
-                    TransformStreamDriver driver = avatar_stream_drivers[user_id][node_index].Item2;
-                    IAvatarObject avatarObject = item.Item2;
-                    Slot slot = null;
-                    if (node == BodyNode.Root)
-                    {
-                        slot = driver.Slot;
-                    } else
-                    {
-                        slot = avatarObject.Slot;
-                    }
 
-                    //WRITE the transform
+                EyeTrackingStreamManager eyeStreams = eye_streams[user_id];
+                //WRITE left eye streams
+                WriteEyeStreams(eyeStreams.LeftEyeStreams, writer);
+                //WRITE right eye streams
+                WriteEyeStreams(eyeStreams.RightEyeStreams, writer);
 
-                    //scale stream;
-                    if (driver.ScaleStream.Target != null)
-                    {
-                        float3 scale = slot.LocalScale;
-                        scale = slot.Parent.LocalScaleToSpace(scale,driver.Slot.Parent);
-                        if (node == BodyNode.Root)
-                            scale = driver.TargetScale;
-                        writer.Write((float)(scale.x));
-                        writer.Write((float)(scale.y));
-                        writer.Write((float)(scale.z));
-                    }
-                    //position stream;
-                    if (driver.PositionStream.Target != null)
-                    {
-                        float3 position = slot.LocalPosition;
-                        position = slot.Parent.LocalPointToSpace(position,driver.Slot.Parent);
-                        if (node == BodyNode.Root)
-                        if (node == BodyNode.Root)
-                            position = driver.TargetPosition;
-                        writer.Write(position.x);
-                        writer.Write(position.y);
-                        writer.Write(position.z);
-                    }
-                    //rotation stream;
-                    if (driver.RotationStream.Target != null)
-                    {
-                        floatQ rotation = slot.LocalRotation;
-                        rotation = slot.Parent.LocalRotationToSpace(rotation,driver.Slot.Parent);
-                        if (node == BodyNode.Root)
-                            rotation = driver.TargetRotation;
-                        writer.Write(rotation.x);
-                        writer.Write(rotation.y);
-                        writer.Write(rotation.z);
-                        writer.Write(rotation.w);
-                    }
-                    node_index++;
-                }
-                //WRITE finger pose
-                if (finger_stream_drivers[user_id] != null)
-                {
-                    //Left Hand
-                    for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
-                    {
-                        BodyNode node = (BodyNode)(18 + index);
-                        float3 position;
-                        floatQ rotation;
-                        bool was_succesful = finger_stream_drivers[user_id].TryGetFingerData(node, out position, out rotation);
-                        //WRITE whether finger data was obtained
-                        writer.Write(was_succesful);
-                        writer.Write(rotation.x);
-                        writer.Write(rotation.y);
-                        writer.Write(rotation.z);
-                        writer.Write(rotation.w);
-                    }
-                    //Right Hand
-                    for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
-                    {
-                        BodyNode node = (BodyNode)(47 + index);
-                        float3 position;
-                        floatQ rotation;
-                        bool was_succesful = finger_stream_drivers[user_id].TryGetFingerData(node, out position, out rotation);
-                        //WRITE whether finger data was obtained
-                        writer.Write(was_succesful);
-                        writer.Write(rotation.x);
-                        writer.Write(rotation.y);
-                        writer.Write(rotation.z);
-                        writer.Write(rotation.w);
-                    }
+            }
 
-                }
+            foreach (RefID user_id in current_mouth_tracking_users)
+            {
+                //Encode the streams
+                BinaryWriterX writer = mouth_output_writers[user_id];
+
+                //WRITE deltaT
+                writer.Write(deltaT); //float
+
+                MouthTrackingStreamManager mouthStreams = mouth_streams[user_id];
+                //WRITE mouth streams
+                WriteMouthStreams(mouthStreams, writer);
             }
 
         }
@@ -140,88 +115,57 @@ namespace metagen
                 UserMetadata metadata = userItem.Value;
                 if (!(metadata.isRecording || metagen_comp.record_everyone) || !metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
                 RefID user_id = user.ReferenceID;
-                output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_streams.dat", FileMode.Create, FileAccess.ReadWrite);
+                bool has_eye_tracking = user.Devices.Where<SyncVar>((Func<SyncVar, bool>)(i => i.IsDictionary)).Any<SyncVar>((Func<SyncVar, bool>)(i => i["Type"].GetValue<string>(true) == "Eye Tracking"));
+                bool has_mouth_tracking = user.Devices.Where<SyncVar>((Func<SyncVar, bool>)(i => i.IsDictionary)).Any<SyncVar>((Func<SyncVar, bool>)(i => i["Type"].GetValue<string>(true) == "Lip Tracking"));
 
-                BitWriterStream bitstream = new BitWriterStream(output_fss[user_id]);
-                output_writers[user_id] = new BitBinaryWriterX(bitstream);
-                avatar_stream_drivers[user_id] = new List<Tuple<BodyNode, TransformStreamDriver>>();
-                List<AvatarObjectSlot> components = user.Root.Slot.GetComponentsInChildren<AvatarObjectSlot>();
-                finger_stream_drivers[user_id] = user.Root.Slot.GetComponent<FingerPoseStreamManager>();
-                avatar_pose_nodes[user_id] = new List<Tuple<BodyNode, IAvatarObject>>();
-                //WRITE the absolute time
-                output_writers[user_id].Write((float)DateTimeOffset.Now.ToUnixTimeMilliseconds()); //absolute time
-                int numValidNodes = 0;
-                foreach (AvatarObjectSlot comp in components)
-                {
-                    if (comp.IsTracking.Value)
-                    {
-                        if (comp.Node.Value == BodyNode.LeftController || comp.Node.Value == BodyNode.RightController || comp.Node.Value == BodyNode.NONE) continue;
-                        avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(comp.Node, comp.Equipped?.Target));
-                        TransformStreamDriver driver = comp.Slot.Parent.GetComponent<TransformStreamDriver>();
-                        if (driver != null)
-                        {
-                            avatar_stream_drivers[user_id].Add(new Tuple<BodyNode, TransformStreamDriver>(comp.Node.Value, driver));
-                        }
-                        else //if the driver is not in the parent, then it is in the slot (which is what happens for the root)
-                        {
-                            driver = comp.Slot.GetComponent<TransformStreamDriver>();
-                            avatar_stream_drivers[user_id].Add(new Tuple<BodyNode, TransformStreamDriver>(comp.Node.Value, driver));
-                        }
-                        numValidNodes += 1;
-                    }
+                if (has_eye_tracking) {
+                    eye_output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_eye_streams.dat", FileMode.Create, FileAccess.ReadWrite);
+
+                    BitWriterStream bitstream = new BitWriterStream(eye_output_fss[user_id]);
+                    eye_output_writers[user_id] = new BitBinaryWriterX(bitstream);
+                    eye_streams[user_id] = user.Root.Slot.GetComponent<EyeTrackingStreamManager>();
+                    //WRITE the absolute time
+                    eye_output_writers[user_id].Write((float)DateTimeOffset.Now.ToUnixTimeMilliseconds()); //absolute time
+                    current_eye_tracking_users.Add(user_id);
                 }
-                float3 avatar_root_scale = user.Root.Slot.GetComponentInChildren<AvatarRoot>().Scale.Value;
-                float3 relative_avatar_scale = user.Root.Slot.GetComponentInChildren<AvatarRoot>().Slot.LocalScale / avatar_root_scale;
-                //WRITE version identifier
-                output_writers[user_id].Write(1000); //int
-                //WRITE relative avatar scale
-                output_writers[user_id].Write(relative_avatar_scale.x); //float
-                output_writers[user_id].Write(relative_avatar_scale.y); //float
-                output_writers[user_id].Write(relative_avatar_scale.z); //float
-                //WRITE the number of body nodes
-                output_writers[user_id].Write(numValidNodes); //int
-                foreach (var item in avatar_stream_drivers[user_id])
-                {
-                    TransformStreamDriver driver = item.Item2;
-                    //WRITE the the body node types
-                    output_writers[user_id].Write((int)item.Item1);
-                    //WRITE whether scaleStream is set
-                    output_writers[user_id].Write(driver.ScaleStream.Target != null);
-                    //WRITE whether positionStream is set
-                    output_writers[user_id].Write(driver.PositionStream.Target != null);
-                    //WRITE whether rotationStream is set
-                    output_writers[user_id].Write(driver.RotationStream.Target != null);
+
+                if (has_eye_tracking) {
+                    mouth_output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_mouth_streams.dat", FileMode.Create, FileAccess.ReadWrite);
+
+                    BitWriterStream bitstream = new BitWriterStream(mouth_output_fss[user_id]);
+                    mouth_output_writers[user_id] = new BitBinaryWriterX(bitstream);
+                    mouth_streams[user_id] = user.Root.Slot.GetComponent<MouthTrackingStreamManager>();
+                    //WRITE the absolute time
+                    mouth_output_writers[user_id].Write((float)DateTimeOffset.Now.ToUnixTimeMilliseconds()); //absolute time
+                    current_mouth_tracking_users.Add(user_id);
                 }
-                //WRITE whether hands are being tracked
-                output_writers[user_id].Write(finger_stream_drivers[user_id] != null);
-                //WRITE whether metacarpals are tracked (just used as metadata)
-                if (finger_stream_drivers[user_id] != null)
-                {
-                    output_writers[user_id].Write(finger_stream_drivers[user_id].TracksMetacarpals);
-                }
-                else
-                {
-                    output_writers[user_id].Write(false);
-                }
-                current_users.Add(user_id);
             }
             isRecording = true;
         }
         public void StopRecording()
         {
-            foreach (var item in output_writers)
+            foreach (var item in eye_output_writers)
             {
                 item.Value.Flush();
             }
-            foreach (var item in output_fss)
+            foreach (var item in mouth_output_writers)
+            {
+                item.Value.Flush();
+            }
+            foreach (var item in eye_output_fss)
             {
                 item.Value.Close();
             }
-            output_writers = new Dictionary<RefID, BitBinaryWriterX>();
-            output_fss = new Dictionary<RefID, FileStream>();
-            avatar_stream_drivers = new Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>>();
-            avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>>();
-            current_users = new List<RefID>();
+            foreach (var item in mouth_output_fss)
+            {
+                item.Value.Close();
+            }
+            eye_output_writers = new Dictionary<RefID, BitBinaryWriterX>();
+            mouth_output_writers = new Dictionary<RefID, BitBinaryWriterX>();
+            eye_output_fss = new Dictionary<RefID, FileStream>();
+            mouth_output_fss = new Dictionary<RefID, FileStream>();
+            current_eye_tracking_users = new List<RefID>();
+            current_mouth_tracking_users = new List<RefID>();
             isRecording = false;
         }
         public void WaitForFinish()

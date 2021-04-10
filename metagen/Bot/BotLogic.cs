@@ -35,6 +35,8 @@ namespace metagen
         protected override void OnAttach()
         {
             base.OnAttach();
+            mg = FrooxEngine.LogiX.MetaMetaGen.current_metagen;
+
             panelUI = this.Slot.AttachComponent<MetaGenBotPanelUI>();
 
             //UI Control Logic (the events from the UI control the MetaGen functionality which implements the recording/playback logic
@@ -74,6 +76,52 @@ namespace metagen
                 panelUI.LinkUISlot();
             };
 
+            if (!mg.admin_mode)
+            {
+                panelUI.recordUserOverride.Changed += (IChangeable a) =>
+                {
+                    SyncBag<ValueUserOverride<bool>.Override> overrides = (SyncBag<ValueUserOverride<bool>.Override>)panelUI.recordUserOverride.GetSyncMember(7);
+                    foreach (var item in overrides)
+                    {
+                        ValueUserOverride<bool>.Override ov = item.Value;
+                        mg.metaDataManager.UpdateUserRecording(ov.User.User.Target, ov.Value.Value);
+                    }
+
+                };
+            } else
+            {
+                panelUI._recordUserCheckbox.Target.Changed += (IChangeable a) =>
+                {
+                    foreach (User user in mg.World.AllUsers)
+                    {
+                        mg.metaDataManager.UpdateUserRecording(user, panelUI._recordUserCheckbox.Target.State.Value);
+                    }
+
+                };
+            }
+            if (!mg.admin_mode)
+            {
+                panelUI.publicDomainOverride.Changed += (IChangeable a) =>
+                {
+                    SyncBag<ValueUserOverride<bool>.Override> overrides = (SyncBag<ValueUserOverride<bool>.Override>)panelUI.publicDomainOverride.GetSyncMember(7);
+                    foreach (var item in overrides)
+                    {
+                        ValueUserOverride<bool>.Override ov = item.Value;
+                        mg.metaDataManager.UpdateUserPublic(ov.User.User.Target, ov.Value.Value);
+                    }
+                };
+            } else
+            {
+                panelUI._publicDomainCheckbox.Target.Changed += (IChangeable a) =>
+                {
+                    foreach (User user in mg.World.AllUsers)
+                    {
+                        mg.metaDataManager.UpdateUserRecording(user, panelUI._publicDomainCheckbox.Target.State.Value);
+                    }
+
+                };
+            }
+
 
             just_created_panel = true;
         }
@@ -111,26 +159,7 @@ namespace metagen
                     UserMetadata data = item.Value;
                     panelUI?.recordUserOverride.SetOverride(user, data.isRecording);
                 }
-                panelUI.recordUserOverride.Changed += (IChangeable a) =>
-                {
-                    SyncBag<ValueUserOverride<bool>.Override> overrides = (SyncBag<ValueUserOverride<bool>.Override>) panelUI.recordUserOverride.GetSyncMember(7);
-                    foreach (var item in overrides)
-                    {
-                        ValueUserOverride<bool>.Override ov = item.Value;
-                        mg.metaDataManager.UpdateUserRecording(ov.User.User.Target, ov.Value.Value);
-                    }
 
-                };
-
-                panelUI.publicDomainOverride.Changed += (IChangeable a) =>
-                {
-                    SyncBag<ValueUserOverride<bool>.Override> overrides = (SyncBag<ValueUserOverride<bool>.Override>) panelUI.publicDomainOverride.GetSyncMember(7);
-                    foreach (var item in overrides)
-                    {
-                        ValueUserOverride<bool>.Override ov = item.Value;
-                        mg.metaDataManager.UpdateUserPublic(ov.User.User.Target, ov.Value.Value);
-                    }
-                };
                 just_created_panel = false;
             }
 

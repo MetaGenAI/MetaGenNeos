@@ -205,9 +205,12 @@ namespace FrooxEngine
             uiBuilder1.Style.MinHeight = 100f;
             Checkbox checkbox_record_user = uiBuilder1.Checkbox("Record me (local)",false);
             this._recordUserCheckbox.Target = checkbox_record_user;
-            recordUserOverride = uiBuilder1.Current.AttachComponent<ValueUserOverride<bool>>();
-            recordUserOverride.CreateOverrideOnWrite.Value = true;
-            recordUserOverride.Target.Target = checkbox_record_user.State;
+            if (!mg.admin_mode)
+            {
+                recordUserOverride = uiBuilder1.Current.AttachComponent<ValueUserOverride<bool>>();
+                recordUserOverride.CreateOverrideOnWrite.Value = true;
+                recordUserOverride.Target.Target = checkbox_record_user.State;
+            }
 
             //Data submission checkbox
             uiBuilder1.Style.MinHeight = 350f;
@@ -217,8 +220,11 @@ namespace FrooxEngine
             uiBuilder1.Style.MinHeight = 100f;
             Checkbox checkbox_public_domain = uiBuilder1.Checkbox("Public domain",false);
             this._publicDomainCheckbox.Target = checkbox_public_domain;
-            publicDomainOverride = uiBuilder1.Current.AttachComponent<ValueUserOverride<bool>>();
-            publicDomainOverride.Target.Target = checkbox_public_domain.State;
+            if (!mg.admin_mode)
+            {
+                publicDomainOverride = uiBuilder1.Current.AttachComponent<ValueUserOverride<bool>>();
+                publicDomainOverride.Target.Target = checkbox_public_domain.State;
+            }
 
             //recording time
             uiBuilder1.Style.PreferredHeight = 75f;

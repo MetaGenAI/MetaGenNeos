@@ -27,7 +27,7 @@ namespace FrooxEngine.LogiX
     {
         private string current_session_id;
         private Dictionary<string, MetaGen> metagens = new Dictionary<string, MetaGen>();
-        MetaGen current_metagen = null;
+        //MetaGen current_metagen = null;
         UnityNeos.AudioRecorderNeos hearingRecorder;
         DataBase dataBase;
         User recording_hearing_user;
@@ -36,7 +36,13 @@ namespace FrooxEngine.LogiX
         bool is_in_VR_mode = false;
         bool auto_set_status = false;
         bool record_everyone = false;
+        bool admin_mode = true;
         Slot earsSlot;
+        public static MetaGen current_metagen
+        {
+            get;
+            private set;
+        }
         protected override void OnAttach()
         {
             base.OnAttach();
@@ -416,7 +422,7 @@ namespace FrooxEngine.LogiX
                     //metagen.StartRecording();
                 }
                 metagens[current_session_id] = metagen;
-                current_metagen = metagen;
+                MetaMetaGen.current_metagen = metagen;
                 hearingRecorder.metagen_comp = metagen;
 
 
@@ -424,6 +430,7 @@ namespace FrooxEngine.LogiX
                 Slot botLogicSlot = world.LocalUser.Root.Slot.AddLocalSlot("botlogic local slot");
                 BotLogic logicComp = botLogicSlot.AttachComponent<BotLogic>();
                 logicComp.mg = current_metagen;
+                current_metagen.admin_mode = admin_mode;
                 current_metagen.botComponent = logicComp;
                 current_metagen.dataBase = dataBase;
                 ResetHearingUser();
@@ -434,6 +441,7 @@ namespace FrooxEngine.LogiX
                 earsSlot = world.AddSlot("AudioListener");
                 world.LocalUser.LocalUserRoot.OverrideEars.Target = earsSlot;
                 hearingRecorder.earSlot = earsSlot;
+                current_metagen.record_everyone = record_everyone;
                 current_metagen.is_loaded = true;
             });
         }

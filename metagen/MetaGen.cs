@@ -31,6 +31,7 @@ namespace metagen
         public bool recording = false;
         public bool record_local_user = false;
         public bool record_everyone = false;
+        public bool admin_mode = false;
         public OutputState recording_state = OutputState.Stopped;
         private DateTime utcNow;
         private DateTime recordingBeginTime;
@@ -57,6 +58,9 @@ namespace metagen
         public bool use_grpc_player = false;
         public bool generate_animation_play = true;
         private GrpcPlayer grpcStreamPlayer;
+
+        public bool recording_faces = false;
+        private FaceStreamRecorder faceRecorder;
 
         public RecordingTool animationRecorder;
         public bool recording_animation = false;
@@ -146,6 +150,7 @@ namespace metagen
         public void Initialize()
         {
             recording_streams = true;
+            recording_faces = true;
             recording_animation = true;
             recording_voice = true;
             recording_hearing = true;
@@ -155,6 +160,7 @@ namespace metagen
             dataManager = this.Slot.AttachComponent<DataManager>();
             dataManager.metagen_comp = this;
             streamRecorder = new PoseStreamRecorder(this);
+            faceRecorder = new FaceStreamRecorder(this);
             voiceRecorder = new VoiceRecorder(this);
             bvhRecorder = new BvhRecorder(this);
             visionRecorder = new VisionRecorder(camera_resolution, this);
@@ -246,6 +252,12 @@ namespace metagen
                     streamRecorder.RecordStreams(deltaT);
                 }
 
+                if (recording && all_ready && faceRecorder==null? false : faceRecorder.isRecording)
+                {
+                    //UniLog.Log("recording streams");
+                    faceRecorder.RecordStreams(deltaT);
+                }
+
                 if (recording && all_ready && visionRecorder==null? false : visionRecorder.isRecording)
                 {
                     //UniLog.Log("recording vision");
@@ -333,6 +345,14 @@ namespace metagen
                 streamRecorder.RecordStreams(0f);
             }
 
+            //FACE STREAMS
+            if (recording_faces && !faceRecorder.isRecording)
+            {
+                faceRecorder.StartRecording();
+                //Record the first frame
+                faceRecorder.RecordStreams(0f);
+            }
+
             //ANIMATION
             if (recording_animation && !animationRecorder.isRecording)
             {
@@ -389,6 +409,7 @@ namespace metagen
             recording = false;
             recording_state = OutputState.Stopping;
             bool wait_streams = false;
+            bool wait_face_streams = false;
             bool wait_voices = false;
             bool wait_hearing = false;
             bool wait_vision = false;
@@ -399,6 +420,13 @@ namespace metagen
             {
                 streamRecorder.StopRecording();
                 wait_streams = true;
+            }
+
+            //FACE STREAMS
+            if (faceRecorder.isRecording)
+            {
+                faceRecorder.StopRecording();
+                wait_face_streams = true;
             }
 
             //VOICES
@@ -450,6 +478,13 @@ namespace metagen
                     {
                         streamRecorder.WaitForFinish();
                         wait_streams = false;
+                    }
+
+                    //FACE STREAMS
+                    if (wait_face_streams)
+                    {
+                        faceRecorder.WaitForFinish();
+                        wait_face_streams = false;
                     }
 
                     //VOICES
