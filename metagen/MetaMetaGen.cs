@@ -113,12 +113,12 @@ namespace FrooxEngine.LogiX
                 int iter = 0;
                 while (!Engine.Cloud.Friends.IsFriend(friend.FriendUserId) && iter < max_iter) { }
                 {
-                    SendMessage(friend.FriendUserId, "Hi. Welcome!");
-                    SendMessage(friend.FriendUserId, "Friends of the bot will by default record data with a CC0 \"Public Domain\" license.");
-                    SendMessage(friend.FriendUserId, "To change this default to be that your data is kept private,");
-                    SendMessage(friend.FriendUserId, "please send a message to the bot with the text \"default no public\".");
-                    SendMessage(friend.FriendUserId, "This default can always be overriden for a particular recording from the bot UI.");
-                    SendMessage(friend.FriendUserId, "You can also change the default back to public by sending a message with \"default public\"");
+                    //SendMessage(friend.FriendUserId, "Hi. Welcome!");
+                    //SendMessage(friend.FriendUserId, "Friends of the bot will by default record data with a CC0 \"Public Domain\" license.");
+                    //SendMessage(friend.FriendUserId, "To change this default to be that your data is kept private,");
+                    //SendMessage(friend.FriendUserId, "please send a message to the bot with the text \"default no public\".");
+                    //SendMessage(friend.FriendUserId, "This default can always be overriden for a particular recording from the bot UI.");
+                    //SendMessage(friend.FriendUserId, "You can also change the default back to public by sending a message with \"default public\"");
                 }
             });
             Task.Run(() =>
@@ -374,14 +374,14 @@ namespace FrooxEngine.LogiX
             UniLog.Log("Reset hearing user for world " + world.CorrespondingWorldId);
             Dictionary<RefID, User>.ValueCollection users = world.AllUsers;
             recording_hearing_user = world.LocalUser;
-            if (!is_in_VR_mode)
+            if (!is_in_VR_mode || !default_record_local_user)
             {
                 foreach (User user in users)
                 {
                     if (user.UserID != null)
                     {
                         MetaGenUser user_data = dataBase.GetUserData(user.UserID);
-                        if (user_data.default_public && user_data.default_recording)
+                        if (user != world.LocalUser && user_data.default_public && user_data.default_recording)
                         {
                             recording_hearing_user = user;
                             break;
