@@ -30,6 +30,7 @@ namespace metagen
         public OutputState playing_state = OutputState.Stopped;
         public bool recording = false;
         public bool record_local_user = false;
+        public bool record_everyone = false;
         public OutputState recording_state = OutputState.Stopped;
         private DateTime utcNow;
         private DateTime recordingBeginTime;

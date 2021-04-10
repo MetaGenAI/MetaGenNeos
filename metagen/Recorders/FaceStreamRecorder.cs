@@ -11,7 +11,7 @@ using Stream = FrooxEngine.Stream;
 
 namespace metagen
 {
-    class PoseStreamRecorder : IRecorder
+    class FaceStreamRecorder : IRecorder
     {
         public Dictionary<RefID, BitBinaryWriterX> output_writers = new Dictionary<RefID, BitBinaryWriterX>();
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();

@@ -35,6 +35,7 @@ namespace FrooxEngine.LogiX
         bool default_record_local_user = false;
         bool is_in_VR_mode = false;
         bool auto_set_status = false;
+        bool record_everyone = false;
         Slot earsSlot;
         protected override void OnAttach()
         {
