@@ -422,6 +422,7 @@ namespace FrooxEngine.LogiX
                     //metagen.StartRecording();
                 }
                 metagens[current_session_id] = metagen;
+                metagen.admin_mode = admin_mode;
                 MetaMetaGen.current_metagen = metagen;
                 hearingRecorder.metagen_comp = metagen;
 
@@ -430,7 +431,6 @@ namespace FrooxEngine.LogiX
                 Slot botLogicSlot = world.LocalUser.Root.Slot.AddLocalSlot("botlogic local slot");
                 BotLogic logicComp = botLogicSlot.AttachComponent<BotLogic>();
                 logicComp.mg = current_metagen;
-                current_metagen.admin_mode = admin_mode;
                 current_metagen.botComponent = logicComp;
                 current_metagen.dataBase = dataBase;
                 ResetHearingUser();

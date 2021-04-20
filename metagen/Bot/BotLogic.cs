@@ -63,8 +63,8 @@ namespace metagen
                     int recording_index = Int32.Parse(panelUI._recordIndexField.Target.Text.Content.Value);
                     mg.play_hearing = panelUI._hearingCheckbox.Target.State.Value;
                     mg.play_voice = panelUI._voicesCheckbox.Target.State.Value;
-                    mg.generate_animation_play = panelUI._animationsCheckbox.Target.State.Value;
-                    mg.recording_bvh = panelUI._generateBvhCheckbox.Target.State.Value;
+                    mg.generate_animation_play = panelUI._animationsCheckbox2.Target.State.Value;
+                    mg.recording_bvh = panelUI._generateBvhCheckbox2.Target.State.Value;
                     mg.use_grpc_player = panelUI._externalSourceCheckbox.Target.State.Value;
                     Slot avatar = panelUI._avatarRefField.Target.Reference.Target;
                     mg.StartPlaying(recording_index,avatar);

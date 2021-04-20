@@ -129,7 +129,7 @@ namespace metagen
                     current_eye_tracking_users.Add(user_id);
                 }
 
-                if (has_eye_tracking) {
+                if (has_mouth_tracking) {
                     mouth_output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_mouth_streams.dat", FileMode.Create, FileAccess.ReadWrite);
 
                     BitWriterStream bitstream = new BitWriterStream(mouth_output_fss[user_id]);

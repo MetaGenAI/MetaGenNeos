@@ -21,6 +21,8 @@ namespace FrooxEngine
         public readonly SyncRef<TextField> _recordIndexField;
         public readonly SyncRef<Checkbox> _animationsCheckbox;
         public readonly SyncRef<Checkbox> _generateBvhCheckbox;
+        public readonly SyncRef<Checkbox> _animationsCheckbox2;
+        public readonly SyncRef<Checkbox> _generateBvhCheckbox2;
         public readonly SyncRef<Checkbox> _videoCheckbox;
         public readonly SyncRef<Checkbox> _voicesCheckbox;
         public readonly SyncRef<Checkbox> _publicDomainCheckbox;
@@ -51,8 +53,9 @@ namespace FrooxEngine
         protected override void OnAttach()
         {
             base.OnAttach();
-            mg = this.Slot.GetComponent<BotLogic>().mg;
-            float2 float2 = new float2(2300f, 7600f);
+            //mg = this.Slot.GetComponent<BotLogic>().mg;
+            mg = FrooxEngine.LogiX.MetaMetaGen.current_metagen;
+            float2 float2 = new float2(2300f, 8000f);
             this.CanvasSize = float2 * 1.0f;
             this.PhysicalHeight = this.Slot.Parent.LocalScaleToGlobal(0.3f);
             this.Panel.ShowHeader.Value = false;
@@ -97,13 +100,16 @@ namespace FrooxEngine
 
         public void LinkUISlot()
         {
+            UniLog.Log("Linking UI slot");
             //Slot slot = UISlot.Duplicate();
-            Slot slot = UISlot ?? _uiTemplateRefField.Target.Slot;
+            Slot slot = UISlot ?? _uiTemplateRefField.Target.Reference.Target;
+            UniLog.Log(slot);
             DynamicVariableSpace space = slot.FindSpace("UIVariables");
             if (space == null)
             {
                 return;
             }
+            UniLog.Log("Found dynamic variable space");
 
             //Recording checkbox
             Checkbox recording_checkbox;
@@ -160,6 +166,16 @@ namespace FrooxEngine
             space.TryReadValue<Checkbox>("external_source_checkbox", out external_source_checkbox);
             this._externalSourceCheckbox.Target = external_source_checkbox;
 
+            //Animation checkbox2
+            Checkbox animation_checkbox2;
+            space.TryReadValue<Checkbox>("animation_checkbox2", out animation_checkbox2);
+            this._animationsCheckbox2.Target = animation_checkbox2;
+
+            //Generate Bvh checkbox
+            Checkbox generate_bvh_checkbox2;
+            space.TryReadValue<Checkbox>("generate_bvh_checkbox2", out generate_bvh_checkbox2);
+            this._generateBvhCheckbox2.Target = generate_bvh_checkbox2;
+
             //Avatar ref
             ReferenceField<Slot> avatar_ref_field;
             space.TryReadValue<ReferenceField<Slot>>("avatar_ref_field", out avatar_ref_field);
@@ -169,6 +185,8 @@ namespace FrooxEngine
             Button play_button;
             space.TryReadValue<Button>("play_button", out play_button);
             this._playButton.Target = play_button;
+
+            UniLog.Log("Finished linking UI slot");
         }
 
         private void OpenConnectedPanel()
@@ -291,6 +309,14 @@ namespace FrooxEngine
             Checkbox checkbox3 = uiBuilder1.Checkbox("External source", false);
             this._externalSourceCheckbox.Target = checkbox3;
 
+            //animation checkbox2
+            Checkbox animCheckbox2 = uiBuilder1.Checkbox("Generate animation",false);
+            this._animationsCheckbox2.Target = animCheckbox2;
+
+            //Generate bvh checkbox
+            Checkbox bvhCheckbox2 = uiBuilder1.Checkbox("Generate bvh", false);
+            this._generateBvhCheckbox2.Target = bvhCheckbox2;
+
             //Avatar ref
             uiBuilder1.Style.PreferredHeight = 75f;
             uiBuilder1.Style.MinHeight = 75f;
@@ -328,7 +354,7 @@ namespace FrooxEngine
             //swapUI button
             Button button3 = uiBuilder1.Button("");
             this._swapUIButton.Target = button3;
-            ButtonValueSet<bool> comp3 = button2.Slot.AttachComponent<ButtonValueSet<bool>>();
+            ButtonValueSet<bool> comp3 = button3.Slot.AttachComponent<ButtonValueSet<bool>>();
             comp3.SetValue.Value = true;
             comp3.TargetValue.Target = swapUI_button_pressed.Target;
 
@@ -338,18 +364,19 @@ namespace FrooxEngine
             base.OnCommonUpdate();
 
             //Check control variables from panel UI
-            if (record_button_pressed != null && record_button_pressed.Target.Value)
+            if (record_button_pressed.Target != null && record_button_pressed.Target.Value)
             {
                 record_button_pressed.Target.Value = false;
                 ToggleRecording?.Invoke();
             }
-            if (play_button_pressed != null && play_button_pressed.Target.Value)
+            if (play_button_pressed.Target != null && play_button_pressed.Target.Value)
             {
                 play_button_pressed.Target.Value = false;
                 TogglePlaying?.Invoke();
             }
-            if (swapUI_button_pressed != null && swapUI_button_pressed.Target.Value)
+            if (swapUI_button_pressed.Target != null && swapUI_button_pressed.Target.Value)
             {
+                UniLog.Log("swap UI button pressed!");
                 swapUI_button_pressed.Target.Value = false;
                 SwapUI?.Invoke();
             }
