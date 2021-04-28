@@ -53,6 +53,7 @@ namespace NeosAnimationToolset
         private Task bakeAsyncTask;
 
         public bool track_tagged_slots = true;
+        public bool track_extra_fields = true;
 
         //public int animationTrackIndex = 0;
 
@@ -211,7 +212,7 @@ namespace NeosAnimationToolset
                     Slot extra_slots_holder = null;
                     if (track_tagged_slots)
                     {
-                        extra_slots_holder = World.RootSlot.FindChild((Slot s) => s.Name == "metagen holder");
+                        extra_slots_holder = World.RootSlot.FindChild((Slot s) => s.Name == "metagen extra meshes");
                         List<SkinnedMeshRenderer> extraSkinnedMeshRenderers = extra_slots_holder?.GetComponentsInChildren<SkinnedMeshRenderer>();
                         if (extraSkinnedMeshRenderers != null)
                         {
@@ -243,6 +244,40 @@ namespace NeosAnimationToolset
                             if (meshRenderers == null) meshRenderers = new List<MeshRenderer>();
                             meshRenderers.AddRange(extraMeshRenderers);
                         }
+                    }
+                    if (track_extra_fields)
+                    {
+                        Slot extra_fields_holder = World.RootSlot.FindChild((Slot s) => s.Name == "metagen extra fields");
+                        //DynamicVariableSpace extraFieldsSpace = extra_slots_holder?.FindSpace("metagen extra fields");
+                        List<Slot> extraFieldsHolders = extra_fields_holder?.GetAllChildren();
+                        if (extraFieldsHolders != null)
+                        {
+                            foreach(Slot s in extraFieldsHolders)
+                            {
+                                List<ReferenceField<IField>> referenceSources = s.GetComponentsInChildren<ReferenceField<IField>>();
+
+                            foreach(ReferenceField<IField> referenceSource in referenceSources)
+                                {
+                                    IField field = referenceSource.Reference.Target;
+                                    Type type = field.ValueType;
+                                    UniLog.Log("typeee");
+                                    UniLog.Log(type);
+                                    FieldTracker fieldTracker = recordedFields.Add();
+                                    if (type == typeof(float)) { RecordedValueProcessor<float>.AttachComponents(s, (IField<float>)field, fieldTracker); }
+                                    if (type == typeof(float2)) { RecordedValueProcessor<float2>.AttachComponents(s, (IField<float2>)field, fieldTracker); }
+                                    if (type == typeof(float3)) { RecordedValueProcessor<float3>.AttachComponents(s, (IField<float3>)field, fieldTracker); }
+                                    if (type == typeof(float4)) { RecordedValueProcessor<float4>.AttachComponents(s, (IField<float4>)field, fieldTracker); }
+                                    if (type == typeof(int)) { RecordedValueProcessor<int>.AttachComponents(s, (IField<int>)field, fieldTracker); }
+                                    if (type == typeof(int2)) { RecordedValueProcessor<int2>.AttachComponents(s, (IField<int2>)field, fieldTracker); }
+                                    if (type == typeof(int3)) { RecordedValueProcessor<int3>.AttachComponents(s, (IField<int3>)field, fieldTracker); }
+                                    if (type == typeof(int4)) { RecordedValueProcessor<int4>.AttachComponents(s, (IField<int4>)field, fieldTracker); }
+                                    if (type == typeof(bool)) { RecordedValueProcessor<bool>.AttachComponents(s, (IField<bool>)field, fieldTracker); }
+                                    if (type == typeof(string)) { RecordedValueProcessor<string>.AttachComponents(s, (IField<string>)field, fieldTracker); }
+                                    if (type == typeof(color)) { RecordedValueProcessor<color>.AttachComponents(s, (IField<color>)field, fieldTracker); }
+                                }
+                            }
+                        }
+
                     }
                     if (meshRenderers != null)
                     {
@@ -675,7 +710,11 @@ namespace NeosAnimationToolset
                     if (audio_output == null) audio_output = trackedSlot.newSlot.Target.AttachComponent<AudioOutput>();
                     audio_output.Volume.Value = 1f;
                     audio_output.Enabled = true;
-                    Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(audio_file2, LocalDB.ImportLocation.Original, (string)null);
+                    Uri uri = null;
+                    World.RunSynchronously(async () =>
+                    {
+                        uri = await this.World.Engine.LocalDB.ImportLocalAssetAsync(audio_file2, LocalDB.ImportLocation.Original, (string)null);
+                    });
                     StaticAudioClip audioClip = audio_output.Slot.AttachAudioClip(uri);
                     AudioClipPlayer player = audio_output.Slot.AttachComponent<AudioClipPlayer>();
                     player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
@@ -701,7 +740,11 @@ namespace NeosAnimationToolset
                 if (audio_output2 == null) audio_output2 = hearing_slot.AttachComponent<AudioOutput>();
                 audio_output2.Volume.Value = 1f;
                 audio_output2.Enabled = true;
-                Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(audio_file, LocalDB.ImportLocation.Original, (string)null);
+                Uri uri = null;
+                World.RunSynchronously(async () =>
+                {
+                    uri = await this.World.Engine.LocalDB.ImportLocalAssetAsync(audio_file, LocalDB.ImportLocation.Original, (string)null);
+                });
                 StaticAudioClip audioClip = audio_output2.Slot.AttachAudioClip(uri);
                 AudioClipPlayer player = audio_output2.Slot.AttachComponent<AudioClipPlayer>();
                 player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
@@ -762,7 +805,7 @@ namespace NeosAnimationToolset
             string tempFilePath = Engine.LocalDB.GetTempFilePath("animx");
             animation.SaveToFile(tempFilePath, AnimX.Encoding.LZMA);
             //animation.SaveToFile(tempFilePath, AnimX.Encoding.Plain);
-            Uri uri = Engine.LocalDB.ImportLocalAsset(tempFilePath, LocalDB.ImportLocation.Move);
+            Uri uri = await Engine.LocalDB.ImportLocalAssetAsync(tempFilePath, LocalDB.ImportLocation.Move);
 
             //await default(ToWorld);
             Task task = Task.Run(() => World.RunSynchronously(() =>

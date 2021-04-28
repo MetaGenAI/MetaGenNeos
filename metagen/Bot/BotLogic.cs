@@ -38,6 +38,11 @@ namespace metagen
             mg = FrooxEngine.LogiX.MetaMetaGen.current_metagen;
 
             panelUI = this.Slot.AttachComponent<MetaGenBotPanelUI>();
+            Slot extra_meshes_slot = World.RootSlot.FindChild((Slot s) => s.Name == "metagen extra meshes");
+            if (extra_meshes_slot == null) extra_meshes_slot = World.RootSlot.AddSlot("metagen extra meshes");
+            Slot extra_fields_slot = World.RootSlot.FindChild((Slot s) => s.Name == "metagen extra fields");
+            if (extra_fields_slot == null) extra_fields_slot = World.RootSlot.AddSlot("metagen extra fields");
+            extra_fields_slot.ChildAdded += Extra_fields_slot_ChildAdded;
 
             //UI Control Logic (the events from the UI control the MetaGen functionality which implements the recording/playback logic
             panelUI.ToggleRecording += () =>
@@ -121,10 +126,14 @@ namespace metagen
 
                 };
             }
-
-
             just_created_panel = true;
         }
+
+        private void Extra_fields_slot_ChildAdded(Slot slot, Slot child)
+        {
+            child.AttachComponent<ReferenceField<IField>>();
+        }
+
         public void AddOverride(User user)
         {
             //This is called by MetaGen when there is a change to the number of users

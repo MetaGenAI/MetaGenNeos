@@ -467,7 +467,11 @@ namespace metagen
                             //audio_outputs[user_id] = audio_output;
                             //AudioX audioData = new AudioX(reading_directory + "/" + user_id.ToString() + "_audio.wav");
                             //AssetRef<AudioClip> audioClip = new AssetRef<AudioClip>();
-                            Uri uri = this.World.Engine.LocalDB.ImportLocalAsset(audio_file, LocalDB.ImportLocation.Original, (string)null);
+                            Uri uri = null;
+                            World.RunSynchronously(async () =>
+                            {
+                                uri = await this.World.Engine.LocalDB.ImportLocalAssetAsync(audio_file, LocalDB.ImportLocation.Original, (string)null);
+                            });
                             //ToWorld thing = new ToWorld();
                             //var awaiter = thing.GetAwaiter();
                             //awaiter.GetResult();

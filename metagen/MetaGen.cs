@@ -300,7 +300,9 @@ namespace metagen
                 playing_frame_index += 1;
             }
             Slot slot = recording_hearing_user.Root.HeadSlot;
-            hearingRecorder.UpdateTransform(slot.GlobalPosition, slot.GlobalRotation);
+            //hearingRecorder.UpdateTransform(slot.GlobalPosition, slot.GlobalRotation);
+            hearingRecorder.earSlot.GlobalPosition = slot.GlobalPosition;
+            hearingRecorder.earSlot.GlobalRotation = slot.GlobalRotation;
 
         }
         protected override void OnAudioUpdate()

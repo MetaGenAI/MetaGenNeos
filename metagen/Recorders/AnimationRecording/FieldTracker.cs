@@ -53,7 +53,7 @@ namespace NeosAnimationToolset
             if (type == typeof(color)) colorTrack.InsertKeyFrame((color)target.BoxedValue, t);
         }
         public void OnReplace(Animator anim) {
-            anim.Fields.Add();
+            anim.Fields.Add().Target = field.Target;
         }
         public void OnStop() {}
         public void Clean() {
