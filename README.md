@@ -13,7 +13,7 @@ You can visit http://metagen.ai/ to find more about the vision and motivation be
 
 ## How to set up and load the plugin
 
-1. Download `metagen-0.9.zip` and `run_neos_metagen.bat` from the [Releases tab](https://github.com/MetaGenAI/MetaGenNeos/releases/). 
+1. Download `metagenneos_v0.8.5.zip` and `run_neos_metagen.bat` from the [Releases tab](https://github.com/MetaGenAI/MetaGenNeos/releases/). 
 2. Unzip the contents of `metagen-0.9.zip` into the Neos installation folder, and copy `run_neos_metagen.bat` into the Neos installation folder also.
 3. Download ffmpeg from here https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z, and the contenst of `bin` to windows 32 folder (or some folder in your path)
 4. Execute `run_neos_metagen.bat` (double click on it). This will start Neos with the plugin loaded, and it will open your local home
