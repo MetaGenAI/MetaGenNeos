@@ -84,12 +84,18 @@ namespace metagen
 
         private List<User> current_users = new List<User>();
 
+        public Slot config_slot = null;
+        private Slot users_config_slot = null;
+        public DynamicVariableSpace users_config_space = null;
+        public Slot extra_meshes_slot = null;
+        public Slot extra_fields_slot = null;
+
         //Metadata refers to the per-recording data about the user
         public Dictionary<User, UserMetadata> userMetaData
         {
             get
             {
-                //metaDataManager.GetUserMetaData(); //Have to refresh here to be sure. The OnUserJoin and OnUserLeft functions don't seem to be working
+                metaDataManager.GetUserMetaData();
                 return metaDataManager.userMetaData;
             }
         }
@@ -98,35 +104,36 @@ namespace metagen
         {
             get
             {
+                metaDataManager.GetUsers();
                 return metaDataManager.users;
             }
         }
 
-        public override void OnUserJoined(User user)
-        {
-            if (is_loaded && metaDataManager != null)
-            {
-                current_users.Add(user);
-                metaDataManager.GetUsers();
-                metaDataManager.AddUserMetaData(user);
-                botComponent.AddOverride(user);
-                OnUserJoinedCallback.Invoke(user);
-                UniLog.Log("USER JOINED " + user.UserID);
-            }
-        }
+        //public override void OnUserJoined(User user)
+        //{
+        //    if (is_loaded && metaDataManager != null)
+        //    {
+        //        current_users.Add(user);
+        //        metaDataManager.GetUsers();
+        //        metaDataManager.AddUserMetaData(user);
+        //        botComponent.AddOverride(user);
+        //        OnUserJoinedCallback.Invoke(user);
+        //        UniLog.Log("USER JOINED " + user.UserID);
+        //    }
+        //}
 
-        public override void OnUserLeft(User user)
-        {
-            if (is_loaded && metaDataManager != null)
-            {
-                current_users.Remove(user);
-                metaDataManager.GetUsers();
-                metaDataManager.RemoveUserMetaData(user);
-                //botComponent.RemoveOverride(user);
-                OnUserLeftCallback.Invoke(user);
-                UniLog.Log("USER LEFT " + user.UserID);
-            }
-        }
+        //public override void OnUserLeft(User user)
+        //{
+        //    if (is_loaded && metaDataManager != null)
+        //    {
+        //        current_users.Remove(user);
+        //        metaDataManager.GetUsers();
+        //        metaDataManager.RemoveUserMetaData(user);
+        //        //botComponent.RemoveOverride(user);
+        //        OnUserLeftCallback.Invoke(user);
+        //        UniLog.Log("USER LEFT " + user.UserID);
+        //    }
+        //}
 
         public float recording_time
         {
@@ -169,10 +176,30 @@ namespace metagen
             animationRecorder = Slot.AttachComponent<RecordingTool>();
             animationRecorder.metagen_comp = this;
             metaDataManager = new MetaDataManager(this);
+            config_slot = World.RootSlot.FindChild((Slot s) => s.Name == "metagen config");
+            if (config_slot == null) config_slot = World.RootSlot.AddSlot("metagen config");
+            extra_meshes_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra meshes");
+            if (extra_meshes_slot == null) extra_meshes_slot = config_slot.AddSlot("metagen extra meshes");
+            extra_fields_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra fields");
+            if (extra_fields_slot == null) extra_fields_slot = config_slot.AddSlot("metagen extra fields");
+            extra_fields_slot.ChildAdded += Extra_fields_slot_ChildAdded;
+            users_config_slot = config_slot.FindChild((Slot s) => s.Name == "metagen users config");
+            if (users_config_slot == null)
+            {
+                users_config_slot = config_slot.AddSlot("metagen users config");
+                users_config_space = users_config_slot.AttachComponent<DynamicVariableSpace>();
+            }
+            users_config_space = users_config_slot.GetComponent<DynamicVariableSpace>();
+            if (users_config_space == null)
+            {
+                users_config_space = users_config_slot.AttachComponent<DynamicVariableSpace>();
+                users_config_space.SpaceName.Value = "metagen users config space";
+            }
             foreach (User user in World.AllUsers)
             {
                 current_users.Add(user);
             }
+            UpdateLocalUserConfigSlot();
             metaDataManager.GetUserMetaData();
         }
         //protected override void OnDispose()
@@ -303,7 +330,25 @@ namespace metagen
             //hearingRecorder.UpdateTransform(slot.GlobalPosition, slot.GlobalRotation);
             hearingRecorder.earSlot.GlobalPosition = slot.GlobalPosition;
             hearingRecorder.earSlot.GlobalRotation = slot.GlobalRotation;
+        }
 
+        private void UpdateLocalUserConfigSlot()
+        {
+            foreach(User user in World.AllUsers)
+            {
+                string user_id = user.UserID;
+                bool value = false;
+                if (!users_config_space.TryReadValue<bool>(user_id, out value))
+                {
+                    DynamicValueVariable<bool> new_val = users_config_space.Slot.AttachComponent<DynamicValueVariable<bool>>();
+                    new_val.VariableName.Value = user_id.Substring(2);
+                    if (user == World.LocalUser && record_local_user)
+                        new_val.Value.Value = true;
+                    else
+                        new_val.Value.Value = false;
+                    users_config_space.RegisterDynamicValue<bool>(user_id, new_val);
+                }
+            }
         }
         protected override void OnAudioUpdate()
         {
@@ -588,8 +633,12 @@ namespace metagen
             {
                 StartPlaying();
             }
-
         }
+        private void Extra_fields_slot_ChildAdded(Slot slot, Slot child)
+        {
+            child.AttachComponent<ReferenceField<IField>>();
+        }
+
 
         protected override void OnDestroy()
         {

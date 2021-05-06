@@ -55,7 +55,8 @@ namespace FrooxEngine
             base.OnAttach();
             //mg = this.Slot.GetComponent<BotLogic>().mg;
             mg = FrooxEngine.LogiX.MetaMetaGen.current_metagen;
-            float2 float2 = new float2(2300f, 8000f);
+            //float2 float2 = new float2(2300f, 8000f);
+            float2 float2 = new float2(2300f, 6000f);
             this.CanvasSize = float2 * 1.0f;
             this.PhysicalHeight = this.Slot.Parent.LocalScaleToGlobal(0.3f);
             this.Panel.ShowHeader.Value = false;
@@ -111,15 +112,15 @@ namespace FrooxEngine
             }
             UniLog.Log("Found dynamic variable space");
 
-            //Recording checkbox
-            Checkbox recording_checkbox;
-            space.TryReadValue<Checkbox>("recording_checkbox", out recording_checkbox);
-            this._recordUserCheckbox.Target = recording_checkbox;
+            ////Recording checkbox
+            //Checkbox recording_checkbox;
+            //space.TryReadValue<Checkbox>("recording_checkbox", out recording_checkbox);
+            //this._recordUserCheckbox.Target = recording_checkbox;
 
-            //Data submission checkbox
-            Checkbox public_checkbox;
-            space.TryReadValue<Checkbox>("public_checkbox", out public_checkbox);
-            this._publicDomainCheckbox.Target = public_checkbox;
+            ////Data submission checkbox
+            //Checkbox public_checkbox;
+            //space.TryReadValue<Checkbox>("public_checkbox", out public_checkbox);
+            //this._publicDomainCheckbox.Target = public_checkbox;
 
             //Recording time
             Text recording_time_text;
@@ -218,31 +219,31 @@ namespace FrooxEngine
             Text text1 = uiBuilder1.Text("<b>This recording system is currenlty in Beta. Expect bugs</b>. MetaGen is a project to generate a public dataset of VR experiences, for use in scientific research, and development of AI technologies.");
             uiBuilder1.Style.MinHeight = 32f;
 
-            //Recording checkbox
-            uiBuilder1.Style.PreferredHeight = 100f;
-            uiBuilder1.Style.MinHeight = 100f;
-            Checkbox checkbox_record_user = uiBuilder1.Checkbox("Record me (local)",false);
-            this._recordUserCheckbox.Target = checkbox_record_user;
-            if (!mg.admin_mode)
-            {
-                recordUserOverride = uiBuilder1.Current.AttachComponent<ValueUserOverride<bool>>();
-                recordUserOverride.CreateOverrideOnWrite.Value = true;
-                recordUserOverride.Target.Target = checkbox_record_user.State;
-            }
+            ////Recording checkbox
+            //uiBuilder1.Style.PreferredHeight = 100f;
+            //uiBuilder1.Style.MinHeight = 100f;
+            //Checkbox checkbox_record_user = uiBuilder1.Checkbox("Record me (local)",false);
+            //this._recordUserCheckbox.Target = checkbox_record_user;
+            //if (!mg.admin_mode)
+            //{
+            //    recordUserOverride = uiBuilder1.Current.AttachComponent<ValueUserOverride<bool>>();
+            //    recordUserOverride.CreateOverrideOnWrite.Value = true;
+            //    recordUserOverride.Target.Target = checkbox_record_user.State;
+            //}
 
-            //Data submission checkbox
-            uiBuilder1.Style.MinHeight = 350f;
-            Text text2 = uiBuilder1.Text("<b>By checking this box you agree to license the recorded data as CC0 (Public domain), as part of the MetaGen Public Dataset (intended for research in AI and other sciences).</b>");
-            text2.HorizontalAlign.Value = CodeX.TextHorizontalAlignment.Left;
-            uiBuilder1.Style.PreferredHeight = 100f;
-            uiBuilder1.Style.MinHeight = 100f;
-            Checkbox checkbox_public_domain = uiBuilder1.Checkbox("Public domain",false);
-            this._publicDomainCheckbox.Target = checkbox_public_domain;
-            if (!mg.admin_mode)
-            {
-                publicDomainOverride = uiBuilder1.Current.AttachComponent<ValueUserOverride<bool>>();
-                publicDomainOverride.Target.Target = checkbox_public_domain.State;
-            }
+            ////Data submission checkbox
+            //uiBuilder1.Style.MinHeight = 350f;
+            //Text text2 = uiBuilder1.Text("<b>By checking this box you agree to license the recorded data as CC0 (Public domain), as part of the MetaGen Public Dataset (intended for research in AI and other sciences).</b>");
+            //text2.HorizontalAlign.Value = CodeX.TextHorizontalAlignment.Left;
+            //uiBuilder1.Style.PreferredHeight = 100f;
+            //uiBuilder1.Style.MinHeight = 100f;
+            //Checkbox checkbox_public_domain = uiBuilder1.Checkbox("Public domain",false);
+            //this._publicDomainCheckbox.Target = checkbox_public_domain;
+            //if (!mg.admin_mode)
+            //{
+            //    publicDomainOverride = uiBuilder1.Current.AttachComponent<ValueUserOverride<bool>>();
+            //    publicDomainOverride.Target.Target = checkbox_public_domain.State;
+            //}
 
             //recording time
             uiBuilder1.Style.PreferredHeight = 75f;
@@ -265,7 +266,8 @@ namespace FrooxEngine
 
 
             //video checkbox
-            Checkbox videoCheckbox = uiBuilder1.Checkbox("Record vision",true);
+            //Checkbox videoCheckbox = uiBuilder1.Checkbox("Record vision",true);
+            Checkbox videoCheckbox = uiBuilder1.Checkbox("Record vision",false);
             this._videoCheckbox.Target = videoCheckbox;
 
             //record button

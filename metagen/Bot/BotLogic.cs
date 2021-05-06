@@ -38,11 +38,6 @@ namespace metagen
             mg = FrooxEngine.LogiX.MetaMetaGen.current_metagen;
 
             panelUI = this.Slot.AttachComponent<MetaGenBotPanelUI>();
-            Slot extra_meshes_slot = World.RootSlot.FindChild((Slot s) => s.Name == "metagen extra meshes");
-            if (extra_meshes_slot == null) extra_meshes_slot = World.RootSlot.AddSlot("metagen extra meshes");
-            Slot extra_fields_slot = World.RootSlot.FindChild((Slot s) => s.Name == "metagen extra fields");
-            if (extra_fields_slot == null) extra_fields_slot = World.RootSlot.AddSlot("metagen extra fields");
-            extra_fields_slot.ChildAdded += Extra_fields_slot_ChildAdded;
 
             //UI Control Logic (the events from the UI control the MetaGen functionality which implements the recording/playback logic
             panelUI.ToggleRecording += () =>
@@ -81,96 +76,91 @@ namespace metagen
                 panelUI.LinkUISlot();
             };
 
-            if (!mg.admin_mode)
-            {
-                panelUI.recordUserOverride.Changed += (IChangeable a) =>
-                {
-                    SyncBag<ValueUserOverride<bool>.Override> overrides = (SyncBag<ValueUserOverride<bool>.Override>)panelUI.recordUserOverride.GetSyncMember(7);
-                    foreach (var item in overrides)
-                    {
-                        ValueUserOverride<bool>.Override ov = item.Value;
-                        mg.metaDataManager.UpdateUserRecording(ov.User.User.Target, ov.Value.Value);
-                    }
+            //if (!mg.admin_mode)
+            //{
+            //    panelUI.recordUserOverride.Changed += (IChangeable a) =>
+            //    {
+            //        SyncBag<ValueUserOverride<bool>.Override> overrides = (SyncBag<ValueUserOverride<bool>.Override>)panelUI.recordUserOverride.GetSyncMember(7);
+            //        foreach (var item in overrides)
+            //        {
+            //            ValueUserOverride<bool>.Override ov = item.Value;
+            //            mg.metaDataManager.UpdateUserRecording(ov.User.User.Target, ov.Value.Value);
+            //        }
 
-                };
-            } else
-            {
-                panelUI._recordUserCheckbox.Target.Changed += (IChangeable a) =>
-                {
-                    foreach (User user in mg.World.AllUsers)
-                    {
-                        mg.metaDataManager.UpdateUserRecording(user, panelUI._recordUserCheckbox.Target.State.Value);
-                    }
+            //    };
+            //} else
+            //{
+            //    panelUI._recordUserCheckbox.Target.Changed += (IChangeable a) =>
+            //    {
+            //        foreach (User user in mg.World.AllUsers)
+            //        {
+            //            mg.metaDataManager.UpdateUserRecording(user, panelUI._recordUserCheckbox.Target.State.Value);
+            //        }
 
-                };
-            }
-            if (!mg.admin_mode)
-            {
-                panelUI.publicDomainOverride.Changed += (IChangeable a) =>
-                {
-                    SyncBag<ValueUserOverride<bool>.Override> overrides = (SyncBag<ValueUserOverride<bool>.Override>)panelUI.publicDomainOverride.GetSyncMember(7);
-                    foreach (var item in overrides)
-                    {
-                        ValueUserOverride<bool>.Override ov = item.Value;
-                        mg.metaDataManager.UpdateUserPublic(ov.User.User.Target, ov.Value.Value);
-                    }
-                };
-            } else
-            {
-                panelUI._publicDomainCheckbox.Target.Changed += (IChangeable a) =>
-                {
-                    foreach (User user in mg.World.AllUsers)
-                    {
-                        mg.metaDataManager.UpdateUserRecording(user, panelUI._publicDomainCheckbox.Target.State.Value);
-                    }
+            //    };
+            //}
+            //if (!mg.admin_mode)
+            //{
+            //    panelUI.publicDomainOverride.Changed += (IChangeable a) =>
+            //    {
+            //        SyncBag<ValueUserOverride<bool>.Override> overrides = (SyncBag<ValueUserOverride<bool>.Override>)panelUI.publicDomainOverride.GetSyncMember(7);
+            //        foreach (var item in overrides)
+            //        {
+            //            ValueUserOverride<bool>.Override ov = item.Value;
+            //            mg.metaDataManager.UpdateUserPublic(ov.User.User.Target, ov.Value.Value);
+            //        }
+            //    };
+            //} else
+            //{
+            //    panelUI._publicDomainCheckbox.Target.Changed += (IChangeable a) =>
+            //    {
+            //        foreach (User user in mg.World.AllUsers)
+            //        {
+            //            mg.metaDataManager.UpdateUserRecording(user, panelUI._publicDomainCheckbox.Target.State.Value);
+            //        }
 
-                };
-            }
+            //    };
+            //}
             just_created_panel = true;
         }
 
-        private void Extra_fields_slot_ChildAdded(Slot slot, Slot child)
-        {
-            child.AttachComponent<ReferenceField<IField>>();
-        }
-
-        public void AddOverride(User user)
-        {
-            //This is called by MetaGen when there is a change to the number of users
-            panelUI?.publicDomainOverride.SetOverride(user, mg.users[user].default_public);
-            panelUI?.recordUserOverride.SetOverride(user, mg.users[user].is_friend);
-        }
-        public void RemoveOverride(User user)
-        {
-            //This is called by MetaGen when there is a change to the number of users
-            panelUI?.publicDomainOverride.RemoveOverride(user);
-            panelUI?.recordUserOverride.RemoveOverride(user);
-        }
+        //public void AddOverride(User user)
+        //{
+        //    //This is called by MetaGen when there is a change to the number of users
+        //    panelUI?.publicDomainOverride.SetOverride(user, mg.users[user].default_public);
+        //    panelUI?.recordUserOverride.SetOverride(user, mg.users[user].is_friend);
+        //}
+        //public void RemoveOverride(User user)
+        //{
+        //    //This is called by MetaGen when there is a change to the number of users
+        //    panelUI?.publicDomainOverride.RemoveOverride(user);
+        //    panelUI?.recordUserOverride.RemoveOverride(user);
+        //}
         protected override void OnCommonUpdate()
         {
             base.OnCommonUpdate();
 
             //Thing to run when the panel has finished attaching (I think theres a callback thing I could use instead but well)
-            if (mg.is_loaded && just_created_panel && panelUI?.publicDomainOverride != null && panelUI?.recordUserOverride != null)
-            {
-                UniLog.Log("AAAAAAAAAAAAAAAAAA");
-                UniLog.Log(mg.userMetaData.Count);
-                //mg.metaDataManager.GetUserMetaData();
-                foreach (var item in mg.userMetaData)
-                {
-                    User user = item.Key;
-                    UserMetadata data = item.Value;
-                    panelUI?.publicDomainOverride.SetOverride(user, data.isPublic);
-                }
-                foreach (var item in mg.userMetaData)
-                {
-                    User user = item.Key;
-                    UserMetadata data = item.Value;
-                    panelUI?.recordUserOverride.SetOverride(user, data.isRecording);
-                }
+            //if (mg.is_loaded && just_created_panel && panelUI?.publicDomainOverride != null && panelUI?.recordUserOverride != null)
+            //{
+            //    UniLog.Log("AAAAAAAAAAAAAAAAAA");
+            //    UniLog.Log(mg.userMetaData.Count);
+            //    //mg.metaDataManager.GetUserMetaData();
+            //    foreach (var item in mg.userMetaData)
+            //    {
+            //        User user = item.Key;
+            //        UserMetadata data = item.Value;
+            //        panelUI?.publicDomainOverride.SetOverride(user, data.isPublic);
+            //    }
+            //    foreach (var item in mg.userMetaData)
+            //    {
+            //        User user = item.Key;
+            //        UserMetadata data = item.Value;
+            //        panelUI?.recordUserOverride.SetOverride(user, data.isRecording);
+            //    }
 
-                just_created_panel = false;
-            }
+            //    just_created_panel = false;
+            //}
 
             //Update panel UI
             //string localized1 = this.GetLocalized("CameraCOntrol.OBS.Live", (string)null, (Dictionary<string, object>)null);

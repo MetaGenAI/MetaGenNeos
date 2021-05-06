@@ -113,7 +113,7 @@ namespace metagen
             {
                 User user = userItem.Key;
                 UserMetadata metadata = userItem.Value;
-                if (!(metadata.isRecording || metagen_comp.record_everyone) || !metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
+                if (!(metadata.isRecording || metagen_comp.record_everyone)) continue;
                 RefID user_id = user.ReferenceID;
                 bool has_eye_tracking = user.Devices.Where<SyncVar>((Func<SyncVar, bool>)(i => i.IsDictionary)).Any<SyncVar>((Func<SyncVar, bool>)(i => i["Type"].GetValue<string>(true) == "Eye Tracking"));
                 bool has_mouth_tracking = user.Devices.Where<SyncVar>((Func<SyncVar, bool>)(i => i.IsDictionary)).Any<SyncVar>((Func<SyncVar, bool>)(i => i["Type"].GetValue<string>(true) == "Lip Tracking"));

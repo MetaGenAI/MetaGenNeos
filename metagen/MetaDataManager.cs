@@ -67,15 +67,19 @@ namespace metagen
                 User user = item.Key;
                 bool isRecording = users[user].default_recording;
                 bool isPublic = users[user].default_public;
-                if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser)
-                {
-                    isRecording = false;
-                    isPublic = true;
-                } else if (user == metagen_comp.World.LocalUser)
-                {
-                    isRecording = true;
-                    isPublic = true;
-                }
+                //if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser)
+                //{
+                //    isRecording = false;
+                //    isPublic = true;
+                //}
+                //else if (user == metagen_comp.World.LocalUser)
+                //{
+                //    isRecording = true;
+                //    isPublic = true;
+                //}
+                isRecording = GetUserRecording(user);
+                UniLog.Log("Is user "+user.UserID+" recording");
+                UniLog.Log(isRecording);
                 UserMetadata thisUserMetadata = new UserMetadata
                 {
                     userRefId = user.ReferenceID.ToString(),
@@ -90,6 +94,19 @@ namespace metagen
                 userMetaData[user] = thisUserMetadata;
             }
         }
+        public bool GetUserRecording(User user)
+        {
+            string user_id = user.UserID;
+            bool value = false;
+            if (metagen_comp.users_config_space.TryReadValue<bool>(user_id.Substring(2), out value))
+            {
+                return value;
+            } else
+            {
+                return false;
+            }
+        }
+
         public void UpdateUserPublic(User user, bool isPublic)
         {
             if (!userMetaData.ContainsKey(user))

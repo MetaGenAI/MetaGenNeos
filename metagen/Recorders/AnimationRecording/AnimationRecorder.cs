@@ -108,11 +108,11 @@ namespace NeosAnimationToolset
                 User user = item.Key;
                 UserMetadata metadata = item.Value;
                 UniLog.Log("user "+user.UserName);
-                if (!metadata.isRecording || (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser)) continue;
+                if (!metadata.isRecording) continue;
                 RefID user_id = user.ReferenceID;
                 Slot rootSlot = user.Root?.Slot;
                 SimpleAvatarProtection protectionComponent = rootSlot?.GetComponentInChildren<SimpleAvatarProtection>();
-                if (protectionComponent != null) continue;
+                if (protectionComponent != null && !metagen_comp.admin_mode) continue;
                 trackedSlots[user_id] = new List<Tuple<BodyNode, TrackedSlot>>();
 
                 UniLog.Log("creating animation for");
@@ -429,9 +429,9 @@ namespace NeosAnimationToolset
                 try
                 {
                     await this.bakeAsync();
-                    World.RunSynchronously(() =>
+                    World.RunSynchronously(async () =>
                     {
-                        this.AttachToObject();
+                        await this.AttachToObject();
                     });
                 }
                 catch (Exception e)
@@ -677,7 +677,7 @@ namespace NeosAnimationToolset
             hearingDriver.ValueSource.Target = booleanToggle.State;
         }
 
-        public void AttachToObject()
+        private async Task AttachToObject()
         {
             //UniLog.Log("Wait till bake");
             //await task;
@@ -711,10 +711,10 @@ namespace NeosAnimationToolset
                     audio_output.Volume.Value = 1f;
                     audio_output.Enabled = true;
                     Uri uri = null;
-                    World.RunSynchronously(async () =>
-                    {
-                        uri = await this.World.Engine.LocalDB.ImportLocalAssetAsync(audio_file2, LocalDB.ImportLocation.Original, (string)null);
-                    });
+                    //World.RunSynchronously(async () =>
+                    //{
+                    uri = await this.World.Engine.LocalDB.ImportLocalAssetAsync(audio_file2, LocalDB.ImportLocation.Original, (string)null);
+                    //});
                     StaticAudioClip audioClip = audio_output.Slot.AttachAudioClip(uri);
                     AudioClipPlayer player = audio_output.Slot.AttachComponent<AudioClipPlayer>();
                     player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
@@ -741,10 +741,10 @@ namespace NeosAnimationToolset
                 audio_output2.Volume.Value = 1f;
                 audio_output2.Enabled = true;
                 Uri uri = null;
-                World.RunSynchronously(async () =>
-                {
-                    uri = await this.World.Engine.LocalDB.ImportLocalAssetAsync(audio_file, LocalDB.ImportLocation.Original, (string)null);
-                });
+                //World.RunSynchronously(async () =>
+                //{
+                uri = await this.World.Engine.LocalDB.ImportLocalAssetAsync(audio_file, LocalDB.ImportLocation.Original, (string)null);
+                //});
                 StaticAudioClip audioClip = audio_output2.Slot.AttachAudioClip(uri);
                 AudioClipPlayer player = audio_output2.Slot.AttachComponent<AudioClipPlayer>();
                 player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;

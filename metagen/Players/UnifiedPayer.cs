@@ -267,7 +267,7 @@ namespace metagen
                 Dictionary<RefID, AudioOutput> audio_outputs = new Dictionary<RefID, AudioOutput>();
                 foreach (UserMetadata user in userMetadatas)
                 {
-                    if (!user.isRecording || !user.isPublic) continue; //at the moment we only allow playing back of public recording, for privacy reasons. In the future, we'll allow private access to the data
+                    if (!user.isRecording || (!user.isPublic && !metagen_comp.admin_mode)) continue; //at the moment we only allow playing back of public recording, for privacy reasons. In the future, we'll allow private access to the data
                     RefID user_id = RefID.Parse(user.userRefId);
                     UniLog.Log(user_id.ToString());
                     user_ids.Add(user_id);
@@ -468,10 +468,10 @@ namespace metagen
                             //AudioX audioData = new AudioX(reading_directory + "/" + user_id.ToString() + "_audio.wav");
                             //AssetRef<AudioClip> audioClip = new AssetRef<AudioClip>();
                             Uri uri = null;
-                            World.RunSynchronously(async () =>
-                            {
-                                uri = await this.World.Engine.LocalDB.ImportLocalAssetAsync(audio_file, LocalDB.ImportLocation.Original, (string)null);
-                            });
+                            //World.RunSynchronously(async () =>
+                            //{
+                            uri = await this.World.Engine.LocalDB.ImportLocalAssetAsync(audio_file, LocalDB.ImportLocation.Original, (string)null);
+                            //});
                             //ToWorld thing = new ToWorld();
                             //var awaiter = thing.GetAwaiter();
                             //awaiter.GetResult();

@@ -138,7 +138,7 @@ namespace metagen
             {
                 User user = userItem.Key;
                 UserMetadata metadata = userItem.Value;
-                if (!(metadata.isRecording || metagen_comp.record_everyone) || !metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
+                if (!(metadata.isRecording || metagen_comp.record_everyone)) continue;
                 RefID user_id = user.ReferenceID;
                 output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_streams.dat", FileMode.Create, FileAccess.ReadWrite);
 
