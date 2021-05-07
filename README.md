@@ -16,9 +16,10 @@ You can visit http://metagen.ai/ to find more about the vision and motivation be
 1. Download `metagenneos_v0.8.5.zip` and `run_neos_metagen.bat` from the [Releases tab](https://github.com/MetaGenAI/MetaGenNeos/releases/). 
 2. Unzip the contents of `metagen-0.9.zip` into the Neos installation folder, and copy `run_neos_metagen.bat` into the Neos installation folder also.
 3. Download ffmpeg from here https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z, and the contenst of `bin` to the System32 folder (`C:\Windows\System32`).
-4. Execute `run_neos_metagen.bat` (double click on it). This will start Neos with the plugin loaded, and it will open your local home
-5. Once neos has loaded, take a logix tip, and open the node menu. You will find a new folder called `AAAA`. In it you will find `MetaGenLoader`. Equip it with the Logix tip and spawn it in the world. I recommend saving the world now, as doing so (and assuming the save has worked), will mean you can skip this step in the future, as the logix node being present in the world is enough for the system to load.
-6. Open a new world/session, and the MetagenBot UI will spawn. You can now use the different functionality now, as explained in the next section
+4. Create a folder called `data` inside the NeosVR folder.
+5. Execute `run_neos_metagen.bat` (double click on it). This will start Neos with the plugin loaded, and it will open your local home
+6. Once neos has loaded, take a logix tip, and open the node menu. You will find a new folder called `AAAA`. In it you will find `MetaGenLoader`. Equip it with the Logix tip and spawn it in the world. I recommend saving the world now, as doing so (and assuming the save has worked), will mean you can skip this step in the future, as the logix node being present in the world is enough for the system to load.
+7. Open a new world/session, and the MetagenBot UI will spawn. You can now use the different functionality now, as explained in the next section
 
 ## What can I do with it
 
