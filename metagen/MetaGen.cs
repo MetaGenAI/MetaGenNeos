@@ -88,6 +88,7 @@ namespace metagen
         private Slot users_config_slot = null;
         public DynamicVariableSpace users_config_space = null;
         public Slot extra_meshes_slot = null;
+        public Slot extra_slots_slot = null;
         public Slot extra_fields_slot = null;
 
         //Metadata refers to the per-recording data about the user
@@ -180,6 +181,9 @@ namespace metagen
             if (config_slot == null) config_slot = World.RootSlot.AddSlot("metagen config");
             extra_meshes_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra meshes");
             if (extra_meshes_slot == null) extra_meshes_slot = config_slot.AddSlot("metagen extra meshes");
+            extra_slots_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra slots");
+            if (extra_slots_slot == null) extra_slots_slot = config_slot.AddSlot("metagen extra slots");
+            extra_slots_slot.ChildAdded += Extra_slots_slot_ChildAdded;
             extra_fields_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra fields");
             if (extra_fields_slot == null) extra_fields_slot = config_slot.AddSlot("metagen extra fields");
             extra_fields_slot.ChildAdded += Extra_fields_slot_ChildAdded;
@@ -341,12 +345,12 @@ namespace metagen
                 if (!users_config_space.TryReadValue<bool>(user_id, out value))
                 {
                     DynamicValueVariable<bool> new_val = users_config_space.Slot.AttachComponent<DynamicValueVariable<bool>>();
-                    new_val.VariableName.Value = user_id.Substring(2);
+                    new_val.VariableName.Value = user_id.Substring(2).Replace("-", " ");
                     if (user == World.LocalUser && record_local_user)
                         new_val.Value.Value = true;
                     else
                         new_val.Value.Value = false;
-                    users_config_space.RegisterDynamicValue<bool>(user_id, new_val);
+                    users_config_space.RegisterDynamicValue<bool>(user_id.Substring(2).Replace("-", " "), new_val);
                 }
             }
         }
@@ -637,6 +641,10 @@ namespace metagen
         private void Extra_fields_slot_ChildAdded(Slot slot, Slot child)
         {
             child.AttachComponent<ReferenceField<IField>>();
+        }
+        private void Extra_slots_slot_ChildAdded(Slot slot, Slot child)
+        {
+            child.AttachComponent<ReferenceField<Slot>>();
         }
 
 

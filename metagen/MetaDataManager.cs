@@ -98,7 +98,7 @@ namespace metagen
         {
             string user_id = user.UserID;
             bool value = false;
-            if (metagen_comp.users_config_space.TryReadValue<bool>(user_id.Substring(2), out value))
+            if (metagen_comp.users_config_space.TryReadValue<bool>(user_id.Substring(2).Replace("-"," "), out value))
             {
                 return value;
             } else

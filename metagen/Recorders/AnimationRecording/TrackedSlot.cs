@@ -12,6 +12,7 @@ namespace NeosAnimationToolset
         }
         public readonly SyncRef<Slot> slot;
         public readonly SyncRef<Slot> newSlot;
+        public Slot holding_slot;
         public readonly Sync<bool> position;
         public readonly Sync<bool> rotation;
         public readonly Sync<bool> scale;
@@ -49,6 +50,18 @@ namespace NeosAnimationToolset
                 if (positionTrack != null) { anim.Fields.Add(); }
                 if (rotationTrack != null) { anim.Fields.Add(); }
                 if (scaleTrack != null) { anim.Fields.Add(); }
+                return;
+            }
+
+            if (rte == ResultTypeEnum.CONTROL_SLOT_TRANSFORM)
+            {
+                IField<float3> pos;
+                IField<floatQ> rot;
+                IField<float3> scale;
+                RecordedSlotProcessor.AttachComponents(holding_slot, slot, out pos, out rot, out scale);
+                if (positionTrack != null) { anim.Fields.Add().Target = pos; }
+                if (rotationTrack != null) { anim.Fields.Add().Target = rot; }
+                if (scaleTrack != null) { anim.Fields.Add().Target = scale; }
                 return;
             }
 

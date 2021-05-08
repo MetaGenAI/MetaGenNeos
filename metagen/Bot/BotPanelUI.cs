@@ -257,7 +257,7 @@ namespace FrooxEngine
             uiBuilder1.Style.MinHeight = 100f;
 
             //animation checkbox
-            Checkbox animCheckbox = uiBuilder1.Checkbox("Generate animation",false);
+            Checkbox animCheckbox = uiBuilder1.Checkbox("Generate animation",true);
             this._animationsCheckbox.Target = animCheckbox;
 
             //Generate bvh checkpoint

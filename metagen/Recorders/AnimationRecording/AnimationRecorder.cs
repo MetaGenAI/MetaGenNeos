@@ -19,7 +19,7 @@ namespace NeosAnimationToolset
 {
     public enum ResultTypeEnum
     {
-        REPLACE_REFERENCES, CREATE_VISUAL, CREATE_NON_PERSISTENT_VISUAL, CREATE_EMPTY_SLOT, CREATE_PARENT_SLOTS, DO_NOTHING, COPY_COMPONENTS
+        REPLACE_REFERENCES, CREATE_VISUAL, CREATE_NON_PERSISTENT_VISUAL, CREATE_EMPTY_SLOT, CREATE_PARENT_SLOTS, DO_NOTHING, COPY_COMPONENTS, CONTROL_SLOT_TRANSFORM
     }
     public partial class RecordingTool : Component, IRecorder
     {
@@ -52,7 +52,8 @@ namespace NeosAnimationToolset
         private Slot hearing_slot;
         private Task bakeAsyncTask;
 
-        public bool track_tagged_slots = true;
+        public bool track_extra_meshes = true;
+        public bool track_extra_slots = true;
         public bool track_extra_fields = true;
 
         //public int animationTrackIndex = 0;
@@ -209,17 +210,6 @@ namespace NeosAnimationToolset
                 if (record_smr)
                 {
                     List<SkinnedMeshRenderer> skinnedMeshRenderers = rootSlot?.GetComponentsInChildren<SkinnedMeshRenderer>();
-                    Slot extra_slots_holder = null;
-                    if (track_tagged_slots)
-                    {
-                        extra_slots_holder = World.RootSlot.FindChild((Slot s) => s.Name == "metagen extra meshes");
-                        List<SkinnedMeshRenderer> extraSkinnedMeshRenderers = extra_slots_holder?.GetComponentsInChildren<SkinnedMeshRenderer>();
-                        if (extraSkinnedMeshRenderers != null)
-                        {
-                            if (skinnedMeshRenderers == null) skinnedMeshRenderers = new List<SkinnedMeshRenderer>();
-                            skinnedMeshRenderers.AddRange(extraSkinnedMeshRenderers);
-                        }
-                    }
                     if (skinnedMeshRenderers != null)
                     {
                         foreach (SkinnedMeshRenderer meshRenderer in skinnedMeshRenderers)
@@ -234,54 +224,10 @@ namespace NeosAnimationToolset
                         }
                         UniLog.Log("Added skinned meshes for animation recorder");
                     }
-
-                    List<MeshRenderer> meshRenderers = rootSlot?.GetComponentInChildren<AvatarRoot>()?.Slot.GetComponentsInChildren<MeshRenderer>();
-                    if (track_tagged_slots)
+                    List<MeshRenderer> meshRenderersUser = rootSlot?.GetComponentInChildren<AvatarRoot>()?.Slot.GetComponentsInChildren<MeshRenderer>();
+                    if (meshRenderersUser != null)
                     {
-                        List<MeshRenderer> extraMeshRenderers = extra_slots_holder?.GetComponentsInChildren<MeshRenderer>();
-                        if (extraMeshRenderers != null)
-                        {
-                            if (meshRenderers == null) meshRenderers = new List<MeshRenderer>();
-                            meshRenderers.AddRange(extraMeshRenderers);
-                        }
-                    }
-                    if (track_extra_fields)
-                    {
-                        Slot extra_fields_holder = World.RootSlot.FindChild((Slot s) => s.Name == "metagen extra fields");
-                        //DynamicVariableSpace extraFieldsSpace = extra_slots_holder?.FindSpace("metagen extra fields");
-                        List<Slot> extraFieldsHolders = extra_fields_holder?.GetAllChildren();
-                        if (extraFieldsHolders != null)
-                        {
-                            foreach(Slot s in extraFieldsHolders)
-                            {
-                                List<ReferenceField<IField>> referenceSources = s.GetComponentsInChildren<ReferenceField<IField>>();
-
-                            foreach(ReferenceField<IField> referenceSource in referenceSources)
-                                {
-                                    IField field = referenceSource.Reference.Target;
-                                    Type type = field.ValueType;
-                                    UniLog.Log("typeee");
-                                    UniLog.Log(type);
-                                    FieldTracker fieldTracker = recordedFields.Add();
-                                    if (type == typeof(float)) { RecordedValueProcessor<float>.AttachComponents(s, (IField<float>)field, fieldTracker); }
-                                    if (type == typeof(float2)) { RecordedValueProcessor<float2>.AttachComponents(s, (IField<float2>)field, fieldTracker); }
-                                    if (type == typeof(float3)) { RecordedValueProcessor<float3>.AttachComponents(s, (IField<float3>)field, fieldTracker); }
-                                    if (type == typeof(float4)) { RecordedValueProcessor<float4>.AttachComponents(s, (IField<float4>)field, fieldTracker); }
-                                    if (type == typeof(int)) { RecordedValueProcessor<int>.AttachComponents(s, (IField<int>)field, fieldTracker); }
-                                    if (type == typeof(int2)) { RecordedValueProcessor<int2>.AttachComponents(s, (IField<int2>)field, fieldTracker); }
-                                    if (type == typeof(int3)) { RecordedValueProcessor<int3>.AttachComponents(s, (IField<int3>)field, fieldTracker); }
-                                    if (type == typeof(int4)) { RecordedValueProcessor<int4>.AttachComponents(s, (IField<int4>)field, fieldTracker); }
-                                    if (type == typeof(bool)) { RecordedValueProcessor<bool>.AttachComponents(s, (IField<bool>)field, fieldTracker); }
-                                    if (type == typeof(string)) { RecordedValueProcessor<string>.AttachComponents(s, (IField<string>)field, fieldTracker); }
-                                    if (type == typeof(color)) { RecordedValueProcessor<color>.AttachComponents(s, (IField<color>)field, fieldTracker); }
-                                }
-                            }
-                        }
-
-                    }
-                    if (meshRenderers != null)
-                    {
-                        foreach(MeshRenderer meshRenderer in meshRenderers)
+                        foreach(MeshRenderer meshRenderer in meshRenderersUser)
                         {
                             if (meshRenderer.Enabled && meshRenderer.Slot.IsActive && !(meshRenderer is SkinnedMeshRenderer))
                             {
@@ -293,8 +239,105 @@ namespace NeosAnimationToolset
                             }
                         }
                     }
-                    UniLog.Log("Added non-skinned meshes for animation recorder");
+                }
+            }
+            Slot extra_meshes_holder = metagen_comp.extra_meshes_slot;
+            if (record_smr)
+            {
+                List<SkinnedMeshRenderer> skinnedMeshRenderers = new List<SkinnedMeshRenderer>();
+                if (track_extra_meshes)
+                {
+                    List<SkinnedMeshRenderer> extraSkinnedMeshRenderers = extra_meshes_holder?.GetComponentsInChildren<SkinnedMeshRenderer>();
+                    if (extraSkinnedMeshRenderers != null)
+                    {
+                        skinnedMeshRenderers.AddRange(extraSkinnedMeshRenderers);
+                    }
+                }
+                if (skinnedMeshRenderers != null)
+                {
+                    foreach (SkinnedMeshRenderer meshRenderer in skinnedMeshRenderers)
+                    {
+                        if (meshRenderer.Enabled && meshRenderer.Slot.IsActive)
+                        {
+                            TrackedSkinnedMeshRenderer trackedRenderer = recordedSMR.Add();
+                            trackedRenderer.renderer.Target = meshRenderer;
+                            trackedRenderer.recordBlendshapes.Value = true;
+                            //trackedRenderer.recordScales.Value = true;
+                        }
+                    }
+                    UniLog.Log("Added skinned meshes for animation recorder");
+                }
+            }
+            List<MeshRenderer> meshRenderers = meshRenderers = new List<MeshRenderer>();
+            if (track_extra_meshes)
+            {
+                List<MeshRenderer> extraMeshRenderers = extra_meshes_holder?.GetComponentsInChildren<MeshRenderer>();
+                if (extraMeshRenderers != null)
+                {
+                    meshRenderers.AddRange(extraMeshRenderers);
+                }
+                if (meshRenderers != null)
+                {
+                    foreach(MeshRenderer meshRenderer in meshRenderers)
+                    {
+                        if (meshRenderer.Enabled && meshRenderer.Slot.IsActive && !(meshRenderer is SkinnedMeshRenderer))
+                        {
+                            if (meshRenderer.Slot.GetComponent<InteractionLaser>() != null) continue;
+                            if (meshRenderer.Slot.GetComponentInParents<InteractionLaser>() != null) continue;
+                            TrackedMeshRenderer trackedRenderer = recordedMR.Add();
+                            trackedRenderer.renderer.Target = meshRenderer;
+                            trackedRenderer.recordScales.Value = true;
+                        }
+                    }
+                }
+            }
+            UniLog.Log("Added non-skinned meshes for animation recorder");
+            if (track_extra_fields)
+            {
+                Slot extra_fields_holder = metagen_comp.extra_fields_slot;
+                //DynamicVariableSpace extraFieldsSpace = extra_slots_holder?.FindSpace("metagen extra fields");
+                List<Slot> extraFieldsHolders = extra_fields_holder?.GetAllChildren();
+                if (extraFieldsHolders != null)
+                {
+                    foreach(Slot s in extraFieldsHolders)
+                    {
+                        List<ReferenceField<IField>> referenceSources = s.GetComponentsInChildren<ReferenceField<IField>>();
 
+                    foreach(ReferenceField<IField> referenceSource in referenceSources)
+                        {
+                            IField field = referenceSource.Reference.Target;
+                            Type type = field.ValueType;
+                            //UniLog.Log("typeee");
+                            //UniLog.Log(type);
+                            FieldTracker fieldTracker = recordedFields.Add();
+                            fieldTracker.source_field.Target = field;
+                            fieldTracker.holding_slot = rootSlot.Target;
+                        }
+                    }
+                }
+            }
+            if (track_extra_slots)
+            {
+                Slot extra_slots_holder = metagen_comp.extra_slots_slot;
+                //DynamicVariableSpace extraFieldsSpace = extra_slots_holder?.FindSpace("metagen extra fields");
+                List<Slot> extraSlotsHolders = extra_slots_holder?.GetAllChildren();
+                if (extraSlotsHolders != null)
+                {
+                    foreach(Slot s in extraSlotsHolders)
+                    {
+                        List<ReferenceField<Slot>> referenceSources = s.GetComponentsInChildren<ReferenceField<Slot>>();
+
+                    foreach(ReferenceField<Slot> referenceSource in referenceSources)
+                        {
+                            TrackedSlot trackedSlot = recordedSlots.Add();
+                            trackedSlot.slot.Target = referenceSource.Reference.Target;
+                            trackedSlot.scale.Value = true;
+                            trackedSlot.position.Value = true;
+                            trackedSlot.rotation.Value = true;
+                            trackedSlot.ResultType.Value = ResultTypeEnum.CONTROL_SLOT_TRANSFORM;
+                            trackedSlot.holding_slot = rootSlot.Target;
+                        }
+                    }
                 }
             }
 
