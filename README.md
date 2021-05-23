@@ -13,8 +13,8 @@ You can visit http://metagen.ai/ to find more about the vision and motivation be
 
 ## How to set up and load the plugin
 
-1. Download `metagenneos_v0.8.5.zip` and `run_neos_metagen.bat` and `grpc_csharp_ext.dll` from the [Releases tab](https://github.com/MetaGenAI/MetaGenNeos/releases/). 
-2. Unzip the contents of `metagen-0.9.zip` into the Neos installation folder, and copy `run_neos_metagen.bat` and `grpc_csharp_ext.dll` into the Neos installation folder also.
+1. Download `metagenneos_v0.8.9.zip` and `run_neos_metagen.bat` and `grpc_csharp_ext.dll` from the [Releases tab](https://github.com/MetaGenAI/MetaGenNeos/releases/). 
+2. Unzip the contents of `metagenneos_v0.8.9.zip` into the Neos installation folder, and copy `run_neos_metagen.bat` and `grpc_csharp_ext.dll` into the Neos installation folder also.
 3. Download ffmpeg from here https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z, and the contenst of `bin` to the System32 folder (`C:\Windows\System32`).
 4. Create a folder called `data` inside the NeosVR folder.
 5. Execute `run_neos_metagen.bat` (double click on it). This will start Neos with the plugin loaded, and it will open your local home
@@ -47,7 +47,24 @@ You can press Start play to play the last recording made in the current world. Y
 You can export the recordings as either a native Neos animated mesh (as showcased in the above videos), and/or as a Bvh file. You can do these by selecting the checkboxes. These checkboxes will determine whether these exports are generated while doing a recording, but also while doing a playback! The later is useful in case you want to generate an animation of a previously recorded motion/voice acting, but with a different avatar, or you want to generate a bvh file for a different skeleton! Note:
 * Generating an animation while recording has the advantage that the animation will record all blendshapes and bone transforms of every mesh under the user avatar. (for example it will record if you are holding and using a gun, or if you have facial or other animations!)
 
+### Puppeteer Neos avatar from Unity
+
+These are the instructions to puppeteer a Neos avatar from Unity. Here it is driving it from a BVH file, for example: https://twitter.com/guillefix/status/1394045763345334273.
+**Note:** this only currently works fot the rig provided. Different rigs need different translation between the rig and Neos proxy conventions. An automated system to adapt to any will be comming in the future (see discussion with lox in the MetaGen discord)
+
+1. Download this Unity project: https://github.com/guillefix/shadermotion-bvh-utils
+2. Open the scene in `Assets/shadermotion-dev/Example/Example2_motion_stream.scene`
+3. Press play. 
+4. In Neos, having loaded the plugin as described above, check the "External source" checkmark on the Debug play section, and the press Start Play. The bvh gn1.bvh should be driving the rig in Unity (dancebase) which should be driving the default avatar in Neos
+
+You can change the avatar by dropping the avatar slot in the avatar slot field in the MetaGen UI. Some avatar won't work because of some scaling issue. Making the scale in the AvatarRoot component in the avatar to match the scale of the avatar slot sometimes fixes this (need to investigate furhter).
+
+In the Unity scene, in the dancebase gameObject, in the BVHAnimationLoader script, there're two fields, `SkeletonScale` ans `SkeletonShiftY` which need to be tweaked a bit sometimes when using avatars which are smaller/larger (will try to investigate a way to automate this too in the future).
+
+
 ### Generate animations from video
+
+This is a special case of the above instructions, but for using ThreeDPoseTracker
 
 This is using a version of [ThreeDPoseTracker for Unity](https://github.com/digital-standard/ThreeDPoseUnityBarracuda) which I've modified to send pose data to Neos. This allows you to generate an animation from a video. You can check [here](https://youtu.be/x-VGy3X0bME?t=162) for guidelines of which videos will give best results, but this is still a technology in development. Check this video for a demo:
 
@@ -57,6 +74,8 @@ To use it:
 
 1. Download this Unity project and unzip it: https://drive.google.com/file/d/1G2OTyhVysEKXAmIU0-K2IkWU99DgeARa/view?usp=sharing
 2. Open the Unity project. Open the scene SampleScene in Scenes. Select Video Player and on its Video Player component drop a video on the Video Clip property. Then play the scene, and after it's begun playing, go to Neos, check the "External source" checkmark on the Debug play section, and the press Start Play. The 3D movement inferred by ThreeDPoseTracker should be reproduced on the avatar which you are playing with.
+
+
 
 -------------
 
