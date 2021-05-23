@@ -28,10 +28,12 @@ The basic functionality is the same as explained in the release of Metagenbot Be
 * [Video in English here](https://www.youtube.com/watch?v=PgQmuIQYoBE&ab_channel=GuillermoValle) ([another video by sirkitree](https://www.youtube.com/watch?v=79xguu735XE&ab_channel=sirkitree))
 * [Video in Japanese here](https://twitter.com/sleeping_vrc/status/1355868840081510400) (thanks sleepingkaikai!)
 
+Note: these videos are not completely up to date now, but should give an overall idea of what can be achieved with the plugin.
+
 ### Recording
 
 You can record yourself and other users by pressing start record. This will record the movement, voice, and hearing (hearing only for one user). Optionally it can also record the vision. Note:
-* Only the users who have the (local) checkmark "Record me" checked will be recorded.
+* Only the users who have a checked value field in the slot `metagen config/users` will be recorded. 
 * The recordings are saved in a folder called `data` in the Neos installation folder, and are organized by world, and by recording session (each given a unique hash). Within each recording session the recordings are found in numbered folders.
 * The recordings are done in a robust way that implies that if you crash during a long/important recording, the resulting files will either not be affected, or be easily fixable. Also all recordings are written direclty to disk and thus one can record arbitrarily long recordings without memory issues, although right now recordings are automatically chunked in maximum lengths of 10 minutes.
 
@@ -46,6 +48,14 @@ You can press Start play to play the last recording made in the current world. Y
 
 You can export the recordings as either a native Neos animated mesh (as showcased in the above videos), and/or as a Bvh file. You can do these by selecting the checkboxes. These checkboxes will determine whether these exports are generated while doing a recording, but also while doing a playback! The later is useful in case you want to generate an animation of a previously recorded motion/voice acting, but with a different avatar, or you want to generate a bvh file for a different skeleton! Note:
 * Generating an animation while recording has the advantage that the animation will record all blendshapes and bone transforms of every mesh under the user avatar. (for example it will record if you are holding and using a gun, or if you have facial or other animations!)
+
+### Recording fields and objects
+
+This is a very cool feature Joris requested. We can record arbitrary value fields and objects.
+
+See example for field recording here https://streamable.com/5eq7nx. 
+
+TODO: write docs for object recording. 
 
 ### Puppeteer Neos avatar from Unity
 
