@@ -22,9 +22,9 @@ namespace metagen
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
         public Dictionary<RefID, BitBinaryReaderX> output_readers = new Dictionary<RefID, BitBinaryReaderX>();
         //public Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>>();
-        public Dictionary<RefID, List<Tuple<BodyNode,AvatarObjectSlot>>> fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode,AvatarObjectSlot>>>();
-        public Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>>();
-        public Dictionary<RefID, Dictionary<BodyNode,Tuple<bool,bool,bool>>> avatar_stream_channels = new Dictionary<RefID, Dictionary<BodyNode,Tuple<bool,bool,bool>>>();
+        public Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>> fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>>();
+        public Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>>();
+        public Dictionary<RefID, Dictionary<BodyNode, Tuple<bool, bool, bool>>> avatar_stream_channels = new Dictionary<RefID, Dictionary<BodyNode, Tuple<bool, bool, bool>>>();
         //public Dictionary<RefID, FingerPlayerSource> finger_sources = new Dictionary<RefID, FingerPlayerSource>();
         //public Dictionary<RefID, Dictionary<BodyNode, RelayRef<IValue<floatQ>>>> finger_rotations = new Dictionary<RefID, Dictionary<BodyNode, RelayRef<IValue<floatQ>>>>();
         public Dictionary<RefID, Dictionary<BodyNode, Slot>> finger_slots = new Dictionary<RefID, Dictionary<BodyNode, Slot>>();
@@ -64,158 +64,158 @@ namespace metagen
             if (!avatars_finished_loading) return;
             //currentWorld.RunSynchronously(() =>
             //{
-                try
+            try
+            {
+                foreach (RefID user_id in user_ids)
                 {
-                    foreach (RefID user_id in user_ids)
+                    //Decode the streams
+                    BinaryReaderX reader = output_readers[user_id];
+
+                    //READ deltaT
+                    float deltaT = reader.ReadSingle();
+                    int node_index = 0;
+                    //foreach (var item in fake_proxies[user_id])
+                    foreach (var item in avatar_pose_nodes[user_id])
                     {
-                        //Decode the streams
-                        BinaryReaderX reader = output_readers[user_id];
-
-                        //READ deltaT
-                        float deltaT = reader.ReadSingle();
-                        int node_index = 0;
-                        //foreach (var item in fake_proxies[user_id])
-                        foreach (var item in avatar_pose_nodes[user_id])
+                        BodyNode node = item.Item1;
+                        var available_streams = avatar_stream_channels[user_id][node];
+                        //AvatarObjectSlot comp = item.Item2;
+                        AvatarObjectSlot avatarObject = fake_proxies[user_id][node_index].Item2;
+                        IAvatarObject comp = item.Item2;
+                        Slot slot = comp.Slot;
+                        if (node == BodyNode.Root)
                         {
-                            BodyNode node = item.Item1;
-                            var available_streams = avatar_stream_channels[user_id][node];
-                            //AvatarObjectSlot comp = item.Item2;
-                            AvatarObjectSlot avatarObject = fake_proxies[user_id][node_index].Item2;
-                            IAvatarObject comp = item.Item2;
-                            Slot slot = comp.Slot;
-                            if (node == BodyNode.Root)
-                            {
-                                slot = avatarObject.Slot;
-                            }
+                            slot = avatarObject.Slot;
+                        }
 
-                            //UniLog.Log(slot);
-                            //READ transform
-                            float x, y, z, w;
-                            //Scale stream
-                            if (available_streams.Item1)
-                            {
-                                x = reader.ReadSingle();
-                                y = reader.ReadSingle();
-                                z = reader.ReadSingle();
-                                float3 scale = new float3(x, y, z);
-                                scale = avatarObject.Slot.Parent.LocalScaleToSpace(scale, slot.Parent);
-                                slot.LocalScale = scale;
+                        //UniLog.Log(slot);
+                        //READ transform
+                        float x, y, z, w;
+                        //Scale stream
+                        if (available_streams.Item1)
+                        {
+                            x = reader.ReadSingle();
+                            y = reader.ReadSingle();
+                            z = reader.ReadSingle();
+                            float3 scale = new float3(x, y, z);
+                            scale = avatarObject.Slot.Parent.LocalScaleToSpace(scale, slot.Parent);
+                            slot.LocalScale = scale;
                             //UniLog.Log(slot.LocalScale.ToString());
                         }
-                            //Position stream
-                            if (available_streams.Item2)
-                            {
-                                x = reader.ReadSingle();
-                                y = reader.ReadSingle();
-                                z = reader.ReadSingle();
-                                float3 position = new float3(x, y, z);
-                                position = avatarObject.Slot.Parent.LocalPointToSpace(position, slot.Parent);
-                                slot.LocalPosition = position;
+                        //Position stream
+                        if (available_streams.Item2)
+                        {
+                            x = reader.ReadSingle();
+                            y = reader.ReadSingle();
+                            z = reader.ReadSingle();
+                            float3 position = new float3(x, y, z);
+                            position = avatarObject.Slot.Parent.LocalPointToSpace(position, slot.Parent);
+                            slot.LocalPosition = position;
                             //UniLog.Log(slot.LocalPosition.ToString());
                         }
-                            //Rotation stream
-                            if (available_streams.Item3)
-                            {
-                                x = reader.ReadSingle();
-                                y = reader.ReadSingle();
-                                z = reader.ReadSingle();
-                                w = reader.ReadSingle();
-                                floatQ rotation = new floatQ(x, y, z, w);
-                                rotation = avatarObject.Slot.Parent.LocalRotationToSpace(rotation, slot.Parent);
-                                slot.LocalRotation = rotation;
-                                //UniLog.Log(slot.LocalRotation.ToString());
-                            }
+                        //Rotation stream
+                        if (available_streams.Item3)
+                        {
+                            x = reader.ReadSingle();
+                            y = reader.ReadSingle();
+                            z = reader.ReadSingle();
+                            w = reader.ReadSingle();
+                            floatQ rotation = new floatQ(x, y, z, w);
+                            rotation = avatarObject.Slot.Parent.LocalRotationToSpace(rotation, slot.Parent);
+                            slot.LocalRotation = rotation;
+                            //UniLog.Log(slot.LocalRotation.ToString());
+                        }
                         node_index++;
-                        }
+                    }
 
-                        //READ finger pose
-                        var finger_slot = finger_slots[user_id];
-                        if (hands_are_tracked[user_id])
-                        {
+                    //READ finger pose
+                    var finger_slot = finger_slots[user_id];
+                    if (hands_are_tracked[user_id])
+                    {
                         //UniLog.Log("UPDATING HANDS");
-                            //FingerPlayerSource finger_source = finger_sources[user_id];
-                            float x, y, z, w;
-                            //Left Hand
-                            HandPoser hand_poser = hand_posers[user_id][Chirality.Left];
-                            floatQ lookRot = floatQ.LookRotation(hand_poser.HandForward, hand_poser.HandUp);
-                            for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
+                        //FingerPlayerSource finger_source = finger_sources[user_id];
+                        float x, y, z, w;
+                        //Left Hand
+                        HandPoser hand_poser = hand_posers[user_id][Chirality.Left];
+                        floatQ lookRot = floatQ.LookRotation(hand_poser.HandForward, hand_poser.HandUp);
+                        for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
+                        {
+                            BodyNode node = (BodyNode)(18 + index);
+                            //READ whether finger data was obtained
+                            bool was_succesful = reader.ReadBoolean();
+                            x = reader.ReadSingle();
+                            y = reader.ReadSingle();
+                            z = reader.ReadSingle();
+                            w = reader.ReadSingle();
+                            //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
+                            //UniLog.Log(x);
+                            //UniLog.Log(y);
+                            //UniLog.Log(z);
+                            //UniLog.Log(w);
+                            if (finger_slot.ContainsKey(node))
                             {
-                                BodyNode node = (BodyNode)(18 + index);
-                                //READ whether finger data was obtained
-                                bool was_succesful = reader.ReadBoolean();
-                                x = reader.ReadSingle();
-                                y = reader.ReadSingle();
-                                z = reader.ReadSingle();
-                                w = reader.ReadSingle();
-                                //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
-                                //UniLog.Log(x);
-                                //UniLog.Log(y);
-                                //UniLog.Log(z);
-                                //UniLog.Log(w);
-                                if (finger_slot.ContainsKey(node))
-                                {
-                                    floatQ rot = new floatQ(x, y, z, w);
-                                    rot = lookRot * rot;
-                                    Slot root = hand_poser.HandRoot.Target ?? hand_poser.Slot;
-                                    rot = finger_slot[node].Parent.SpaceRotationToLocal(rot, root);
-                                    rot = rot * finger_compensations[user_id][node];
-                                    finger_slot[node].LocalRotation = rot;
-                                }
-                            }
-                            //Right Hand
-                            hand_poser = hand_posers[user_id][Chirality.Right];
-                            lookRot = floatQ.LookRotation(hand_poser.HandForward, hand_poser.HandUp);
-                            for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
-                            {
-                                BodyNode node = (BodyNode)(47 + index);
-                                //READ whether finger data was obtained
-                                bool was_succesful = reader.ReadBoolean();
-                                x = reader.ReadSingle();
-                                y = reader.ReadSingle();
-                                z = reader.ReadSingle();
-                                w = reader.ReadSingle();
-                                //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
-                                if (finger_slot.ContainsKey(node))
-                                {
-                                    floatQ rot = new floatQ(x, y, z, w);
-                                    rot = lookRot * rot;
-                                    Slot root = hand_poser.HandRoot.Target ?? hand_poser.Slot;
-                                    rot = finger_slot[node].Parent.SpaceRotationToLocal(rot, root);
-                                    rot = rot * finger_compensations[user_id][node];
-                                    finger_slot[node].LocalRotation = rot;
-                                }
+                                floatQ rot = new floatQ(x, y, z, w);
+                                rot = lookRot * rot;
+                                Slot root = hand_poser.HandRoot.Target ?? hand_poser.Slot;
+                                rot = finger_slot[node].Parent.SpaceRotationToLocal(rot, root);
+                                rot = rot * finger_compensations[user_id][node];
+                                finger_slot[node].LocalRotation = rot;
                             }
                         }
-                    }
-                    if (generateAnimation)
-                    {
-                        try
+                        //Right Hand
+                        hand_poser = hand_posers[user_id][Chirality.Right];
+                        lookRot = floatQ.LookRotation(hand_poser.HandForward, hand_poser.HandUp);
+                        for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
                         {
-                            animationRecorder.RecordFrame();
-                        } catch (Exception e)
-                        {
-                            UniLog.Log("Error at animation recording: "+e.Message);
-                            UniLog.Log(e.StackTrace);
+                            BodyNode node = (BodyNode)(47 + index);
+                            //READ whether finger data was obtained
+                            bool was_succesful = reader.ReadBoolean();
+                            x = reader.ReadSingle();
+                            y = reader.ReadSingle();
+                            z = reader.ReadSingle();
+                            w = reader.ReadSingle();
+                            //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
+                            if (finger_slot.ContainsKey(node))
+                            {
+                                floatQ rot = new floatQ(x, y, z, w);
+                                rot = lookRot * rot;
+                                Slot root = hand_poser.HandRoot.Target ?? hand_poser.Slot;
+                                rot = finger_slot[node].Parent.SpaceRotationToLocal(rot, root);
+                                rot = rot * finger_compensations[user_id][node];
+                                finger_slot[node].LocalRotation = rot;
+                            }
                         }
                     }
-
-                    if (generateBvh)
-                    {
-                        try
-                        {
-                            bvhRecorder.RecordFrame();
-                        } catch (Exception e)
-                        {
-                            UniLog.Log("Error at Bvh recording: "+e.Message);
-                            UniLog.Log(e.StackTrace);
-                        }
-                    }
-                } catch (Exception e)
-                {
-                    UniLog.Log("OwO: "+e.Message);
-                    //this.StopPlaying();
-                    metagen_comp.StopPlaying();
                 }
+                if (generateAnimation)
+                {
+                    try
+                    {
+                        animationRecorder.RecordFrame();
+                    } catch (Exception e)
+                    {
+                        UniLog.Log("Error at animation recording: " + e.Message);
+                        UniLog.Log(e.StackTrace);
+                    }
+                }
+
+                if (generateBvh)
+                {
+                    try
+                    {
+                        bvhRecorder.RecordFrame();
+                    } catch (Exception e)
+                    {
+                        UniLog.Log("Error at Bvh recording: " + e.Message);
+                        UniLog.Log(e.StackTrace);
+                    }
+                }
+            } catch (Exception e)
+            {
+                UniLog.Log("OwO: " + e.Message);
+                //this.StopPlaying();
+                metagen_comp.StopPlaying();
+            }
             //});
 
 
@@ -254,12 +254,12 @@ namespace metagen
                 if (reading_directory == null) return;
 
                 List<UserMetadata> userMetadatas;
-                using (var reader = new StreamReader(Path.Combine(reading_directory,"user_metadata.csv")))
+                using (var reader = new StreamReader(Path.Combine(reading_directory, "user_metadata.csv")))
                 using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
                     userMetadatas = csv.GetRecords<UserMetadata>().ToList();
                 }
-                if (userMetadatas.Where((u,i)=>(u.isPublic && u.isRecording)).Count() == 0)
+                if (userMetadatas.Where((u, i) => (u.isPublic && u.isRecording)).Count() == 0)
                 {
                     UniLog.Log("UwU playing an emtpy (or private) recording");
                     metagen_comp.StopPlaying();
@@ -271,7 +271,7 @@ namespace metagen
                     RefID user_id = RefID.Parse(user.userRefId);
                     UniLog.Log(user_id.ToString());
                     user_ids.Add(user_id);
-                    output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory,user_id.ToString() + "*_streams.dat")[0], FileMode.Open, FileAccess.Read);
+                    output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory, user_id.ToString() + "*_streams.dat")[0], FileMode.Open, FileAccess.Read);
                     BitReaderStream bitstream = new BitReaderStream(output_fss[user_id]);
                     output_readers[user_id] = new BitBinaryReaderX(bitstream);
                     fake_proxies[user_id] = new List<Tuple<BodyNode, AvatarObjectSlot>>();
@@ -319,6 +319,10 @@ namespace metagen
                         //READ if rotation stream exists
                         bool rot_exists = output_readers[user_id].ReadBoolean();
                         BodyNode bodyNodeType = (BodyNode)nodeInt;
+                        if (version_number == 1000)
+                        {
+                            bodyNodeType = (BodyNode)Enum.Parse(typeof(BodyNode), Enum.GetName(typeof(OldBodyNodes), (OldBodyNodes)nodeInt));
+                        }
                         VRIKAvatar avatarIK = avatar.GetComponentInChildren<VRIKAvatar>();
                         avatarIK.IK.Target.Solver.SimulationSpace.Target = avatar;
                         avatarIK.IK.Target.Solver.OffsetSpace.Target = avatar;
@@ -346,11 +350,11 @@ namespace metagen
                                     comp.Equip(comp2);
                                     if (bodyNodeType != BodyNode.Root)
                                     {
-                                        SyncRef<Slot> sourceField = (SyncRef<Slot>) comp.GetType().GetField("_source", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(comp);
+                                        SyncRef<Slot> sourceField = (SyncRef<Slot>)comp.GetType().GetField("_source", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(comp);
                                         sourceField.Target = null;
-                                        FieldDrive<float3> posField = (FieldDrive<float3>) comp.GetType().GetField("_position", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(comp);
+                                        FieldDrive<float3> posField = (FieldDrive<float3>)comp.GetType().GetField("_position", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(comp);
                                         posField.Target = null;
-                                        FieldDrive<floatQ> rotField = (FieldDrive<floatQ>) comp.GetType().GetField("_rotation", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(comp);
+                                        FieldDrive<floatQ> rotField = (FieldDrive<floatQ>)comp.GetType().GetField("_rotation", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(comp);
                                         rotField.Target = null;
                                     }
                                     fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, comp2));
@@ -427,7 +431,7 @@ namespace metagen
                                 //finger_rotations[user_id][nodee] = new RelayRef<IValue<floatQ>>();
                                 //finger_rotations[user_id][nodee].TrySet(fingerSegment.Root.Target);
                                 //UniLog.Log(fingerSegment.RotationDrive.Target.Parent.ToString());
-                                fingerSegment.RotationDrive.Target = (IField<floatQ>) null;
+                                fingerSegment.RotationDrive.Target = (IField<floatQ>)null;
                                 //fingerSegment.RotationDrive.ReleaseLink();
                                 //fingerSegment.RotationDrive.Target.Value.
                                 //fingerSegment.RotationDrive.Target = null;
@@ -438,13 +442,13 @@ namespace metagen
                     //AUDIO PLAY
                     UniLog.Log("Setting up audio!");
                     avatar.GetComponentInChildren<AudioOutput>().Source.Target = null;
-                    AvatarAudioOutputManager avatarAudioOutputManager    = avatar.GetComponentInChildren<AvatarAudioOutputManager>();
-                    AudioOutput audio_output = avatarAudioOutputManager ?.AudioOutput.Target;
-                    avatarAudioOutputManager    ?.Slot.RemoveComponent(avatarAudioOutputManager );
+                    AvatarAudioOutputManager avatarAudioOutputManager = avatar.GetComponentInChildren<AvatarAudioOutputManager>();
+                    AudioOutput audio_output = avatarAudioOutputManager?.AudioOutput.Target;
+                    avatarAudioOutputManager?.Slot.RemoveComponent(avatarAudioOutputManager);
                     for (int i = 0; i < 2; i++)
                     {
                         string audio_file;
-                        if (i==0)
+                        if (i == 0)
                         {
                             if (!play_hearing) continue;
                             string[] files = Directory.GetFiles(reading_directory, user_id.ToString() + "*_hearing.ogg");
@@ -482,9 +486,9 @@ namespace metagen
                                 visemeAnalyzer.Source.Target = player;
                             }
                             UniLog.Log("attaching clip to player");
-                            player.Clip.Target = (IAssetProvider<AudioClip>) audioClip;
+                            player.Clip.Target = (IAssetProvider<AudioClip>)audioClip;
                             UniLog.Log("attaching player to audio output");
-                            audio_output.Source.Target = (IAudioSource) player;
+                            audio_output.Source.Target = (IAudioSource)player;
                             audio_output.Slot.AttachComponent<AudioMetadata>(true, (Action<AudioMetadata>)null).SetFromCurrentWorld();
                             player.Play();
                         }

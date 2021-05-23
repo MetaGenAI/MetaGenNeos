@@ -173,7 +173,7 @@ namespace metagen
                 float3 avatar_root_scale = user.Root.Slot.GetComponentInChildren<AvatarRoot>().Scale.Value;
                 float3 relative_avatar_scale = user.Root.Slot.GetComponentInChildren<AvatarRoot>().Slot.LocalScale / avatar_root_scale;
                 //WRITE version identifier
-                output_writers[user_id].Write(1000); //int
+                output_writers[user_id].Write(1001); //int
                 //WRITE relative avatar scale
                 output_writers[user_id].Write(relative_avatar_scale.x); //float
                 output_writers[user_id].Write(relative_avatar_scale.y); //float
