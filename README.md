@@ -13,8 +13,8 @@ You can visit http://metagen.ai/ to find more about the vision and motivation be
 
 ## How to set up and load the plugin
 
-1. Download `metagenneos_v0.8.9.zip` and `run_neos_metagen.bat` and `grpc_csharp_ext.dll` from the [Releases tab](https://github.com/MetaGenAI/MetaGenNeos/releases/). 
-2. Unzip the contents of `metagenneos_v0.8.9.zip` into the Neos installation folder, and copy `run_neos_metagen.bat` and `grpc_csharp_ext.dll` into the Neos installation folder also.
+1. Download `metagenneos_v0.9.0.zip` and `run_neos_metagen.bat` and `grpc_csharp_ext.dll` from the [Releases tab](https://github.com/MetaGenAI/MetaGenNeos/releases/). 
+2. Unzip the contents of `metagenneos_v0.9.0.zip` into the Neos installation folder, and copy `run_neos_metagen.bat` and `grpc_csharp_ext.dll` into the Neos installation folder also.
 3. Download ffmpeg from here https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z, and the contenst of `bin` to the System32 folder (`C:\Windows\System32`).
 4. Create a folder called `data` inside the NeosVR folder.
 5. Execute `run_neos_metagen.bat` (double click on it). This will start Neos with the plugin loaded, and it will open your local home
