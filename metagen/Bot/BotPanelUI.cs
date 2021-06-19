@@ -193,7 +193,8 @@ namespace FrooxEngine
         private void OpenConnectedPanel()
         {
             UIBuilder uiBuilder1 = panel.SwapPanel(NeosSwapCanvasPanel.Slide.None, 0.5f);
-            uiBuilder1.VerticalLayout(4f, 0.0f, new Alignment?());
+            //uiBuilder1.VerticalLayout(4f, 0.0f, new Alignment?());
+            uiBuilder1.VerticalLayout(4f, 0, new Alignment?());
             uiBuilder1.FitContent(SizeFit.Disabled, SizeFit.PreferredSize);
             uiBuilder1.Style.PreferredHeight = 65f;
             uiBuilder1.Style.MinHeight = 32f;

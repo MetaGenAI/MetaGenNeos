@@ -30,6 +30,8 @@ namespace metagen
         public OutputState playing_state = OutputState.Stopped;
         public bool recording = false;
         public bool record_local_user = false;
+        public bool record_only_local_user = true;
+        public bool silent_mode = false;
         public bool record_everyone = false;
         public bool admin_mode = false;
         public OutputState recording_state = OutputState.Stopped;
@@ -38,7 +40,7 @@ namespace metagen
         private DateTime playingBeginTime;
         public DataManager dataManager;
 
-        public bool recording_hearing = false;
+        public bool recording_hearing = true;
         public bool play_hearing = false;
         public User recording_hearing_user;
 
@@ -161,7 +163,7 @@ namespace metagen
             recording_faces = true;
             recording_animation = true;
             recording_voice = true;
-            recording_hearing = true;
+            //recording_hearing = true;
             recording_vision = false;
             utcNow = DateTime.UtcNow;
             recordingBeginTime = DateTime.UtcNow;
@@ -177,27 +179,30 @@ namespace metagen
             animationRecorder = Slot.AttachComponent<RecordingTool>();
             animationRecorder.metagen_comp = this;
             metaDataManager = new MetaDataManager(this);
-            config_slot = World.RootSlot.FindChild((Slot s) => s.Name == "metagen config");
-            if (config_slot == null) config_slot = World.RootSlot.AddSlot("metagen config");
-            extra_meshes_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra meshes");
-            if (extra_meshes_slot == null) extra_meshes_slot = config_slot.AddSlot("metagen extra meshes");
-            extra_slots_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra slots");
-            if (extra_slots_slot == null) extra_slots_slot = config_slot.AddSlot("metagen extra slots");
-            extra_slots_slot.ChildAdded += Extra_slots_slot_ChildAdded;
-            extra_fields_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra fields");
-            if (extra_fields_slot == null) extra_fields_slot = config_slot.AddSlot("metagen extra fields");
-            extra_fields_slot.ChildAdded += Extra_fields_slot_ChildAdded;
-            users_config_slot = config_slot.FindChild((Slot s) => s.Name == "metagen users config");
-            if (users_config_slot == null)
+            if (!silent_mode)
             {
-                users_config_slot = config_slot.AddSlot("metagen users config");
-                users_config_space = users_config_slot.AttachComponent<DynamicVariableSpace>();
-            }
-            users_config_space = users_config_slot.GetComponent<DynamicVariableSpace>();
-            if (users_config_space == null)
-            {
-                users_config_space = users_config_slot.AttachComponent<DynamicVariableSpace>();
-                users_config_space.SpaceName.Value = "metagen users config space";
+                config_slot = World.RootSlot.FindChild((Slot s) => s.Name == "metagen config");
+                if (config_slot == null) config_slot = World.RootSlot.AddSlot("metagen config");
+                extra_meshes_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra meshes");
+                if (extra_meshes_slot == null) extra_meshes_slot = config_slot.AddSlot("metagen extra meshes");
+                extra_slots_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra slots");
+                if (extra_slots_slot == null) extra_slots_slot = config_slot.AddSlot("metagen extra slots");
+                extra_slots_slot.ChildAdded += Extra_slots_slot_ChildAdded;
+                extra_fields_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra fields");
+                if (extra_fields_slot == null) extra_fields_slot = config_slot.AddSlot("metagen extra fields");
+                extra_fields_slot.ChildAdded += Extra_fields_slot_ChildAdded;
+                users_config_slot = config_slot.FindChild((Slot s) => s.Name == "metagen users config");
+                if (users_config_slot == null)
+                {
+                    users_config_slot = config_slot.AddSlot("metagen users config");
+                    users_config_space = users_config_slot.AttachComponent<DynamicVariableSpace>();
+                }
+                users_config_space = users_config_slot.GetComponent<DynamicVariableSpace>();
+                if (users_config_space == null)
+                {
+                    users_config_space = users_config_slot.AttachComponent<DynamicVariableSpace>();
+                    users_config_space.SpaceName.Value = "metagen users config space";
+                }
             }
             foreach (User user in World.AllUsers)
             {
@@ -234,11 +239,13 @@ namespace metagen
 
             //UniLog.Log("HI from " + currentWorld.CorrespondingWorldId);
 
-            //Start/Stop recording
-            //if (this.Input.GetKeyDown(Key.R))
-            //{
-            //    ToggleRecording();
-            //}
+//Start / Stop recording
+#if NOHL
+            if (this.InputInterface.GetKeyDown(Key.R))
+            {
+                ToggleRecording();
+            }
+#endif
 
             //Start a new chunk, if we have been recording for 30 minutes, or start a new section, if a new user has left or joined
             if (recording && ((recording_time > MAX_CHUNK_LEN_MIN * 60 * 1000) || dataManager.ShouldStartNewSection()))
@@ -254,11 +261,13 @@ namespace metagen
             //TODO: add Locomotion to playback
             //TODO: controller stream playback?
 
-            //Start/Stop playing
-            //if (this.Input.GetKeyDown(Key.P))
-            //{
-            //    TogglePlaying();
-            //}
+//Start / Stop playing
+#if NOHL
+            if (this.InputInterface.GetKeyDown(Key.P))
+            {
+                TogglePlaying();
+            }
+#endif
 
             //TODO: make cameras for vision recording local to not affect the performance of others
             //TODO: record eye and mouth tracking data, haptics, and biometric data via some standard dynamic variables and things?
@@ -330,10 +339,11 @@ namespace metagen
                 }
                 playing_frame_index += 1;
             }
+#if NOHL
             Slot slot = recording_hearing_user.Root.HeadSlot;
-            //hearingRecorder.UpdateTransform(slot.GlobalPosition, slot.GlobalRotation);
             hearingRecorder.earSlot.GlobalPosition = slot.GlobalPosition;
             hearingRecorder.earSlot.GlobalRotation = slot.GlobalRotation;
+#endif
         }
 
         private void UpdateLocalUserConfigSlot()
@@ -358,7 +368,7 @@ namespace metagen
         {
             try
             {
-                base.OnAudioUpdate();
+                //base.OnAudioUpdate();
                 if (recording && voiceRecorder == null ? false : voiceRecorder.isRecording)
                 {
                     //UniLog.Log("recording voice");
@@ -488,7 +498,7 @@ namespace metagen
             }
 
             //HEARING
-            if (hearingRecorder.isRecording)
+            if (hearingRecorder != null && hearingRecorder.isRecording)
             {
                 hearingRecorder.StopRecording();
                 wait_hearing = true;
@@ -541,8 +551,10 @@ namespace metagen
                     //VOICES
                     if (wait_voices)
                     {
+                        UniLog.Log("Waiting voices");
                         voiceRecorder.WaitForFinish();
                         wait_voices = false;
+                        UniLog.Log("Waited voices");
                     }
 
                     //HEARING

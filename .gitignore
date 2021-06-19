@@ -1,4 +1,9 @@
 VersionBypasser.cs
 .vs/*
 metagen/obj/*
+metagen/bin/*
+metagenheadless/obj/*
+metagenheadless/bin/*
 VideoConverter/obj/*
+VideoConverter/bin/*
+Packages/*

@@ -29,26 +29,25 @@ namespace NeosAnimationToolset
         public void OnStart(RecordingTool rt) {
             AnimX animx = rt.animation;
             Type type = source_field.Target.ValueType;
-            if (type == typeof(float)){ floatTrack = animx.AddTrack<CurveFloatAnimationTrack>(); return; }
-            if (type == typeof(float2)){ float2Track = animx.AddTrack<CurveFloat2AnimationTrack>(); return; }
-            if (type == typeof(float2x2)){ float2x2Track = animx.AddTrack<CurveFloat2x2AnimationTrack>(); return; }
-            if (type == typeof(float3)){ float3Track = animx.AddTrack<CurveFloat3AnimationTrack>(); return; }
-            if (type == typeof(float3x3)){ float3x3Track = animx.AddTrack<CurveFloat3x3AnimationTrack>(); return; }
-            if (type == typeof(float4)){ float4Track = animx.AddTrack<CurveFloat4AnimationTrack>(); return; }
-            if (type == typeof(float4x4)){ float4x4Track = animx.AddTrack<CurveFloat4x4AnimationTrack>(); return; }
-            if (type == typeof(int)){ intTrack = animx.AddTrack<CurveIntAnimationTrack>(); return; }
-            if (type == typeof(int2)){ int2Track = animx.AddTrack<CurveInt2AnimationTrack>(); return; }
-            if (type == typeof(int3)){ int3Track = animx.AddTrack<CurveInt3AnimationTrack>(); return; }
-            if (type == typeof(int4)){ int4Track = animx.AddTrack<CurveInt4AnimationTrack>(); return; }
-            if (type == typeof(bool)){ boolTrack = animx.AddTrack<CurveBoolAnimationTrack>(); return; }
-            if (type == typeof(string)){ stringTrack = animx.AddTrack<CurveStringAnimationTrack>(); return; }
-            if (type == typeof(color)){ colorTrack = animx.AddTrack<CurveColorAnimationTrack>(); return; }
-            if (type == typeof(floatQ)){ floatQTrack = animx.AddTrack<CurveFloatQAnimationTrack>(); return; }
-            source_field.Target = null;
+            if (type == typeof(float)){ floatTrack = animx.AddTrack<CurveFloatAnimationTrack>(); }
+            if (type == typeof(float2)){ float2Track = animx.AddTrack<CurveFloat2AnimationTrack>();  }
+            if (type == typeof(float2x2)){ float2x2Track = animx.AddTrack<CurveFloat2x2AnimationTrack>();  }
+            if (type == typeof(float3)){ float3Track = animx.AddTrack<CurveFloat3AnimationTrack>();  }
+            if (type == typeof(float3x3)){ float3x3Track = animx.AddTrack<CurveFloat3x3AnimationTrack>();  }
+            if (type == typeof(float4)){ float4Track = animx.AddTrack<CurveFloat4AnimationTrack>();  }
+            if (type == typeof(float4x4)){ float4x4Track = animx.AddTrack<CurveFloat4x4AnimationTrack>();  }
+            if (type == typeof(int)){ intTrack = animx.AddTrack<CurveIntAnimationTrack>();  }
+            if (type == typeof(int2)){ int2Track = animx.AddTrack<CurveInt2AnimationTrack>();  }
+            if (type == typeof(int3)){ int3Track = animx.AddTrack<CurveInt3AnimationTrack>();  }
+            if (type == typeof(int4)){ int4Track = animx.AddTrack<CurveInt4AnimationTrack>();  }
+            if (type == typeof(bool)){ boolTrack = animx.AddTrack<CurveBoolAnimationTrack>();  }
+            if (type == typeof(string)){ stringTrack = animx.AddTrack<CurveStringAnimationTrack>(); }
+            if (type == typeof(color)){ colorTrack = animx.AddTrack<CurveColorAnimationTrack>();  }
+            if (type == typeof(floatQ)){ floatQTrack = animx.AddTrack<CurveFloatQAnimationTrack>(); }
 
             Slot s = holding_slot;
             FieldTracker fieldTracker = this;
-            IField field = source_field;
+            IField field = source_field.Target;
             if (type == typeof(float)) { fieldTracker.driven_field.Target = RecordedValueProcessor<float>.AttachComponents(s, (IField<float>)field); }
             if (type == typeof(float2)) { fieldTracker.driven_field.Target = RecordedValueProcessor<float2>.AttachComponents(s, (IField<float2>)field); }
             if (type == typeof(float2x2)) { fieldTracker.driven_field.Target = RecordedValueProcessor<float2x2>.AttachComponents(s, (IField<float2x2>)field); }
@@ -64,6 +63,7 @@ namespace NeosAnimationToolset
             if (type == typeof(string)) { fieldTracker.driven_field.Target = RecordedValueProcessor<string>.AttachComponents(s, (IField<string>)field); }
             if (type == typeof(color)) { fieldTracker.driven_field.Target = RecordedValueProcessor<color>.AttachComponents(s, (IField<color>)field); }
             if (type == typeof(floatQ)) { fieldTracker.driven_field.Target = RecordedValueProcessor<floatQ>.AttachComponents(s, (IField<floatQ>)field); }
+            //source_field.Target = null;
 
         }
         public void OnUpdate(float t)

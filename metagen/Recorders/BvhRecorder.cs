@@ -7,6 +7,7 @@ using FrooxEngine;
 using BaseX;
 using FrooxEngine.FinalIK;
 using System.IO;
+using RefID = BaseX.RefID;
 
 namespace metagen
 {

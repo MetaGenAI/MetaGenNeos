@@ -12,9 +12,9 @@ using SharpAvi.Codecs;
 // Contains types used for writing like AviWriter
 using SharpAvi.Output;
 // Contains types related to encoding like Mpeg4VideoEncoderVcm
-using SharpAvi.Codecs;
+//using SharpAvi.Codecs;
 using System.Runtime.InteropServices;
-using System.Drawing;
+//using System.Drawing;
 
 namespace metagen
 {

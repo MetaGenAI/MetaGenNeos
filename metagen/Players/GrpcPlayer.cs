@@ -14,6 +14,7 @@ using System.Reflection;
 using FrooxEngine.FinalIK;
 using Grpc.Core;
 using NeosAnimationToolset;
+using RefID = BaseX.RefID;
 
 namespace metagen
 {

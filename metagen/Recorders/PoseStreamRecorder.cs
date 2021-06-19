@@ -8,6 +8,7 @@ using BaseX;
 using System.IO;
 using FrooxEngine.CommonAvatar;
 using Stream = FrooxEngine.Stream;
+using RefID = BaseX.RefID;
 
 namespace metagen
 {

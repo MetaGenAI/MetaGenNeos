@@ -61,7 +61,8 @@ namespace metagen
                 _userData[userID].is_friend = isFriend;
                 return _userData[userID];
             }
-            _userData[userID] = new MetaGenUser { default_public = isFriend, default_recording = isFriend, is_banned = false, is_friend = isFriend, total_recorded = 0f, total_recorded_public = 0f, userId = userID };
+            //_userData[userID] = new MetaGenUser { default_public = isFriend, default_recording = isFriend, is_banned = false, is_friend = isFriend, total_recorded = 0f, total_recorded_public = 0f, userId = userID };
+            _userData[userID] = new MetaGenUser { default_public = true, default_recording = isFriend, is_banned = false, is_friend = isFriend, total_recorded = 0f, total_recorded_public = 0f, userId = userID };
             _should_update = true;
             return _userData[userID];
         }

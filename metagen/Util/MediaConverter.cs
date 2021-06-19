@@ -99,7 +99,12 @@ namespace metagen.Util
                         Process ffmpegProcess = new System.Diagnostics.Process();
                         //processes.Add(ffmpegProcess);
                         ProcessStartInfo processInfo = new ProcessStartInfo();
+#if NOHL
                         processInfo.FileName = "ffmpeg.exe";
+#else
+                        //processInfo.FileName = "ffmpeg.exe";
+                        processInfo.FileName = "ffmpeg";
+#endif
                         processInfo.Arguments = ffmpgCmdText;
                         ffmpegProcess.StartInfo = processInfo;
                         ffmpegProcess.EnableRaisingEvents = true;
@@ -131,7 +136,8 @@ namespace metagen.Util
             {
                 UniLog.Log("DELETING " + fileName);
                 File.Delete(fileName);
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 UniLog.Log("OwO: " + e.Message);
                 Console.WriteLine(e.StackTrace);

@@ -27,7 +27,11 @@ namespace metagen
             {
                 //this.slot = currentWorld.AddLocalSlot("Holder");
                 //TODO: in some worlds the global coordinate of recording vs playback is not correct! (e.g. Victorian appartment by Enverex)
+#if NOHL
                 this.holder_slot = currentWorld.LocalUser.Root.Slot.Parent.AddSlot("Holder");
+#else
+                this.holder_slot = currentWorld.RootSlot.AddSlot("Holder");
+#endif
             });
             UniLog.Log("Added");
             //Slot slot1 = Userspace.UserspaceWorld.AddSlot("Holder");
@@ -128,11 +132,11 @@ namespace metagen
             //currentWorld.RunSynchronously(() =>
             //{
             float3 originalScale = slot.LocalScale;
-            slot.SetParent(currentWorld.LocalUser.Root.Slot.Parent);
+            slot.SetParent(holder_slot.Parent);
             List<IAvatarObject> components = slot.GetComponentsInChildren<IAvatarObject>();
             //AvatarRoot root = slot.GetComponentInChildren<AvatarRoot>();
             //Slot fake_root = currentWorld.RootSlot.AddSlot("Fake Root");
-            Slot fake_root = currentWorld.LocalUser.Root.Slot.Parent.AddSlot("Fake Root");
+            Slot fake_root = holder_slot.Parent.AddSlot("Fake Root");
             Slot hidden_slot = fake_root.AddLocalSlot("hand poser local slot");
             //TODO: find a way to do this without a custom component, because this won't work in normal sessions as it is!
             FingerPlayerSource player_source = hidden_slot.AttachComponent<FingerPlayerSource>();
@@ -163,6 +167,14 @@ namespace metagen
                     //((AvatarPoseNode)comp).IsTracking.Value = true;
                 }
             }
+            Slot view_slot = fake_root.AddSlot("View");
+            Slot view_slot_visual = fake_root.AddSlot("ViewVisual");
+            AvatarObjectSlot comp3 = view_slot.AttachComponent<AvatarObjectSlot>();
+            AvatarPoseNode comp4 = view_slot_visual.AttachComponent<AvatarPoseNode>();
+            comp4.Node.Value = BodyNode.View;
+            comp3.Node.Value = BodyNode.View;
+            comp3.Equipped.ForceLink(comp4);
+            comp3.IsTracking.Value = false;
             //foreach(HandPoser handPoser in handPosers)
             //{
             //handPoser.PoseSource.Target = player_source;

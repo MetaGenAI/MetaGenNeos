@@ -9,6 +9,7 @@ using BaseX;
 using CodeX;
 using UnityEngine;
 using System.IO;
+using RefID = BaseX.RefID;
 
 namespace metagen
 {

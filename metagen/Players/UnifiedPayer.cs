@@ -13,6 +13,7 @@ using System.Globalization;
 using System.Reflection;
 using FrooxEngine.FinalIK;
 using NeosAnimationToolset;
+using RefID = BaseX.RefID;
 
 namespace metagen
 {

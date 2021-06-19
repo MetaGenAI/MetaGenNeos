@@ -14,6 +14,7 @@ using System.Threading;
 using NeosAnimationToolset;
 using metagen;
 using System.IO;
+using RefID = BaseX.RefID;
 
 namespace NeosAnimationToolset
 {
@@ -522,9 +523,13 @@ namespace NeosAnimationToolset
             PhysicalButton button = visual.AttachComponent<PhysicalButton>();
             FrooxEngine.LogiX.Interaction.ButtonEvents touchableEvents = logix_slot.AttachComponent<FrooxEngine.LogiX.Interaction.ButtonEvents>();
             FrooxEngine.LogiX.ReferenceNode<IButton> refNode = logix_slot.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IButton>>();
+            FrooxEngine.LogiX.ReferenceNode<IPlayable> refNode2 = logix_slot.AttachComponent<FrooxEngine.LogiX.ReferenceNode<IPlayable>>();
+            refNode2.RefTarget.Target = animator;
+            FrooxEngine.LogiX.Playback.PlaybackPlay playbackPlay = logix_slot.AttachComponent<FrooxEngine.LogiX.Playback.PlaybackPlay>();
             refNode.RefTarget.Target = button;
             touchableEvents.Button.Target = refNode;
-            touchableEvents.Pressed.Target = animator.Play;
+            playbackPlay.Target.Target = refNode2;
+            touchableEvents.Pressed.Target = playbackPlay.Play;
 
             UniLog.Log("Creating expand/collapse button");
             CreateExpandCollapseButton(holder);
@@ -744,12 +749,20 @@ namespace NeosAnimationToolset
             foreach(var item in audioSources)
             {
                 RefID user_id = item.Key;
+                UniLog.Log("adding audio sources for "+user_id.ToString());
                 TrackedSlot trackedSlot = item.Value;
                 AudioOutput audio_output = trackedSlot.newSlot.Target.GetComponent<AudioOutput>();
-                string[] files2 = Directory.GetFiles(reading_directory, user_id.ToString() + "*_voice.ogg");
-                String audio_file2 = files2.Length > 0 ? files2[0] : null;
+                UniLog.Log(reading_directory);
+                UniLog.Log(user_id.ToString() + "*_voice.ogg");
+                UniLog.Log(Directory.GetFiles(reading_directory, "*"));
+                //string[] files2 = Directory.GetFiles(reading_directory, user_id.ToString() + "*_voice.ogg");
+                //String audio_file2 = files2.Length > 0 ? files2[0] : null;
+                string audio_file2 = reading_directory + "\\" + user_id.ToString() + "_voice.ogg";
+                UniLog.Log("audio_file2");
+                UniLog.Log(audio_file2);
                 if (File.Exists(audio_file2))
                 {
+                    UniLog.Log("Found voice file");
                     if (audio_output == null) audio_output = trackedSlot.newSlot.Target.AttachComponent<AudioOutput>();
                     audio_output.Volume.Value = 1f;
                     audio_output.Enabled = true;
