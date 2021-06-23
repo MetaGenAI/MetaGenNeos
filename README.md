@@ -28,8 +28,9 @@ You can visit http://metagen.ai/ to find more about the vision and motivation be
 3. Download ffmpeg from here https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z, and the contenst of `bin` to the System32 folder (`C:\Windows\System32`). (unless you have already done this).
 4. Create a folder called `data` inside the NeosVR HeadlessClient folder.
 5. Edit the Config.json in the `Config` folder. In the "startWorlds" array add `"autoSleep": false,` and `"loadWorldUrl": "neosrec:///U-guillefix/R-3979d6e1-c316-48b3-bebf-25739c2b3939",`.
-6. Execute `run_neos_metagen_headless.bat` (double click on it). This will start Neos with the plugin loaded, and it will open a world with the MetaGenLoader node.
-7. You can now start a new world (e.g. `startWorldTemplate SpaceWorld`) and it will load metagen on it.
+6. (this is a step that I often find is needed to run plugins on headless clients in general, not sure why, but just in case). Copy the `FrooxEngine.dll` found in `Neos_Data/Managed` in the (main) NeosVR folder, into `Neos_Data/Managed` inside the HeadlessClient folder. The later folder may not exist and you should create it if it doesn't.
+7. Execute `run_neos_metagen_headless.bat` (double click on it). This will start Neos with the plugin loaded, and it will open a world with the MetaGenLoader node.
+8. You can now start a new world (e.g. `startWorldTemplate SpaceWorld`) and it will load metagen on it.
 
 ## What can I do with it
 
