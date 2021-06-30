@@ -291,14 +291,14 @@ namespace FrooxEngine
 
             ////Hiding for now as its WIP
             ////interact button
-            //uiBuilder1.Style.PreferredHeight = 120f;
-            //uiBuilder1.Style.MinHeight = 120f;
-            //SyncRef<Button> interactButton = this._interactButton;
-            //Button button1b = uiBuilder1.Button("Toggle Interaction");
-            //interactButton.Target = button1b;
-            //ButtonValueSet<bool> comp1b = button1b.Slot.AttachComponent<ButtonValueSet<bool>>();
-            //comp1b.SetValue.Value = true;
-            //comp1b.TargetValue.Target = interact_button_pressed.Target;
+            uiBuilder1.Style.PreferredHeight = 120f;
+            uiBuilder1.Style.MinHeight = 120f;
+            SyncRef<Button> interactButton = this._interactButton;
+            Button button1b = uiBuilder1.Button("Toggle Interaction");
+            interactButton.Target = button1b;
+            ButtonValueSet<bool> comp1b = button1b.Slot.AttachComponent<ButtonValueSet<bool>>();
+            comp1b.SetValue.Value = true;
+            comp1b.TargetValue.Target = interact_button_pressed.Target;
 
             //Text for debug play section
             uiBuilder1.Style.PreferredHeight = 200f;

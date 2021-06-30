@@ -46,6 +46,8 @@ namespace metagen
         public MetaRecorder metaRecorder;
         public UnityNeos.AudioRecorderNeos hearingRecorder; //separate because it's actually set up in MetaMetaGen
 
+        //TODO: make these configurations more neatly organized (maybe in an external json or something)
+
         public bool recording_hearing = true;
         public bool play_hearing = false;
         public User recording_hearing_user;

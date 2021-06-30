@@ -12,10 +12,12 @@ namespace metagen.Interactions
         public bool isRecording = false;
         private MetaGen metagen_comp;
         public VoiceInteraction voiceInteraction;
+        public TextInteraction textInteraction;
         public MetaInteraction(MetaGen component)
         {
             metagen_comp = component;
             voiceInteraction = new VoiceInteraction(metagen_comp);
+            textInteraction = new TextInteraction(metagen_comp);
         }
 
         public void StartInteracting()
@@ -24,6 +26,10 @@ namespace metagen.Interactions
             {
                 voiceInteraction.StartInteracting();
             }
+            if (!textInteraction.isInteracting)
+            {
+                textInteraction.StartInteracting();
+            }
             isInteracting = true;
         }
         public void StopInteracting()
@@ -31,6 +37,10 @@ namespace metagen.Interactions
             if (voiceInteraction.isInteracting)
             {
                 voiceInteraction.StopInteracting();
+            }
+            if (textInteraction.isInteracting)
+            {
+                textInteraction.StopInteracting();
             }
             isInteracting = false;
         }

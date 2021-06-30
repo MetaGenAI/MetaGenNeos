@@ -8,7 +8,7 @@ using BaseX;
 
 namespace metagen.Interactions
 {
-    class TextInteraction : IInteraction
+    public class TextInteraction : IInteraction
     {
         public bool isInteracting = false;
         public bool isRecording = false;
@@ -19,7 +19,7 @@ namespace metagen.Interactions
             metagen_comp = component;
             client = metagen_comp.Slot.AttachComponent<WebsocketClient>();
             client.HandlingUser.Target = metagen_comp.LocalUser;
-            client.URL.Value = new Uri("localhost:8765");
+            client.URL.Value = new Uri("ws://localhost:8765");
         }
 
         private void OnTextMessageReceived(WebsocketClient client, string msg)
@@ -28,10 +28,12 @@ namespace metagen.Interactions
         }
         public void StartInteracting()
         {
+            client.URL.Value = new Uri("ws://localhost:8765");
             client.TextMessageReceived += OnTextMessageReceived;
         }
         public void StopInteracting()
         {
+            client.URL.Value = null;
             client.TextMessageReceived -= OnTextMessageReceived;
         }
     }
