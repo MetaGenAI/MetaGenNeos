@@ -12,7 +12,7 @@ using RefID = BaseX.RefID;
 
 namespace metagen
 {
-    class PoseStreamRecorder : IRecorder
+    public class PoseStreamRecorder : IRecorder
     {
         public Dictionary<RefID, BitBinaryWriterX> output_writers = new Dictionary<RefID, BitBinaryWriterX>();
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();

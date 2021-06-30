@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace metagen
 {
-    public interface IRecorder
+    public interface IInteraction
     {
-        void StartRecording();
-        void StopRecording();
-        void WaitForFinish();
+        void StartInteracting();
+        void StopInteracting();
+
+        //void WaitForFinish();
     }
 }

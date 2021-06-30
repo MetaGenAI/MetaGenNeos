@@ -20,6 +20,7 @@ using metagen;
 using System.Runtime.InteropServices;
 using FrooxEngine.CommonAvatar;
 using NeosAnimationToolset;
+using metagen.Interactions;
 
 
 namespace metagen
@@ -29,6 +30,7 @@ namespace metagen
         public bool playing = false;
         public OutputState playing_state = OutputState.Stopped;
         public bool recording = false;
+        public bool interacting = false;
         public bool record_local_user = false;
         public bool record_only_local_user = true;
         public bool silent_mode = false;
@@ -40,37 +42,32 @@ namespace metagen
         private DateTime playingBeginTime;
         public DataManager dataManager;
 
+        private MetaInteraction metaInteraction;
+        public MetaRecorder metaRecorder;
+        public UnityNeos.AudioRecorderNeos hearingRecorder; //separate because it's actually set up in MetaMetaGen
+
         public bool recording_hearing = true;
         public bool play_hearing = false;
         public User recording_hearing_user;
 
         public bool recording_voice = false;
         public bool play_voice = true;
-        private VoiceRecorder voiceRecorder;
 
         public bool recording_vision = false;
         public bool play_vision = false;
-        public int2 camera_resolution = new int2(64,64);
-        private VisionRecorder visionRecorder;
 
         public bool recording_streams = false;
         public bool play_streams = true;
-        private PoseStreamRecorder streamRecorder;
         private UnifiedPayer streamPlayer;
         public bool use_grpc_player = false;
         public bool generate_animation_play = true;
         private GrpcPlayer grpcStreamPlayer;
 
         public bool recording_faces = false;
-        private FaceStreamRecorder faceRecorder;
 
-        public RecordingTool animationRecorder;
         public bool recording_animation = false;
 
-        public BvhRecorder bvhRecorder;
         public bool recording_bvh = true;
-
-        public UnityNeos.AudioRecorderNeos hearingRecorder;
 
         public BotLogic botComponent;
 
@@ -169,15 +166,10 @@ namespace metagen
             recordingBeginTime = DateTime.UtcNow;
             dataManager = this.Slot.AttachComponent<DataManager>();
             dataManager.metagen_comp = this;
-            streamRecorder = new PoseStreamRecorder(this);
-            faceRecorder = new FaceStreamRecorder(this);
-            voiceRecorder = new VoiceRecorder(this);
-            bvhRecorder = new BvhRecorder(this);
-            visionRecorder = new VisionRecorder(camera_resolution, this);
+            metaInteraction = new MetaInteraction(this);
+            metaRecorder = new MetaRecorder(this);
             streamPlayer = new UnifiedPayer(dataManager, this);
             grpcStreamPlayer = new GrpcPlayer(dataManager, this);
-            animationRecorder = Slot.AttachComponent<RecordingTool>();
-            animationRecorder.metagen_comp = this;
             metaDataManager = new MetaDataManager(this);
             if (!silent_mode)
             {
@@ -185,6 +177,7 @@ namespace metagen
                 if (config_slot == null) config_slot = World.RootSlot.AddSlot("metagen config");
                 extra_meshes_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra meshes");
                 if (extra_meshes_slot == null) extra_meshes_slot = config_slot.AddSlot("metagen extra meshes");
+                extra_meshes_slot.ChildAdded += Extra_meshes_slot_ChildAdded;
                 extra_slots_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra slots");
                 if (extra_slots_slot == null) extra_slots_slot = config_slot.AddSlot("metagen extra slots");
                 extra_slots_slot.ChildAdded += Extra_slots_slot_ChildAdded;
@@ -254,11 +247,6 @@ namespace metagen
                 StartRecording();
             }
 
-            //TODO: improve the playback
-            //TODO: make playback not fail when file ends (Maybe can save length of stream files in its header, like for wav!)
-            //TODO: make playback work on normal sessions (can't use the FingerPlayerSource. Can I create a new stream and feed that to a normal FingerPoseStreamManager?)
-            //TODO: make voice playback
-            //TODO: add Locomotion to playback
             //TODO: controller stream playback?
 
 //Start / Stop playing
@@ -269,8 +257,7 @@ namespace metagen
             }
 #endif
 
-            //TODO: make cameras for vision recording local to not affect the performance of others
-            //TODO: record eye and mouth tracking data, haptics, and biometric data via some standard dynamic variables and things?
+            //TODO: record haptics, and biometric data via some standard dynamic variables and things?
             //TODO: Save controller streams
 
             //RECORD ONE FRAME
@@ -280,49 +267,15 @@ namespace metagen
             int new_frame = (int)Math.Floor(recording_time / 33.33333f);
             if (new_frame > recording_frame_index)
             {
-                bool streams_ok = (streamRecorder == null ? false : streamRecorder.isRecording) || !recording_streams;
-                bool vision_ok = (visionRecorder == null ? false : visionRecorder.isRecording) || !recording_vision;
-                bool hearing_ok = (hearingRecorder == null ? false : hearingRecorder.isRecording) || !recording_hearing;
-                bool voice_ok = (voiceRecorder == null ? false : (voiceRecorder.isRecording && voiceRecorder.audio_sources_ready)) || !recording_voice;
-                bool all_ready = voice_ok && streams_ok && vision_ok && hearing_ok;
-                //bool all_ready = hearing_ok;
-                if (recording && all_ready && streamRecorder==null? false : streamRecorder.isRecording)
+                if (recording)
                 {
-                    //UniLog.Log("recording streams");
-                    streamRecorder.RecordStreams(deltaT);
+                    metaRecorder.RecordFrame(deltaT);
                 }
-
-                if (recording && all_ready && faceRecorder==null? false : faceRecorder.isRecording)
-                {
-                    //UniLog.Log("recording streams");
-                    faceRecorder.RecordStreams(deltaT);
-                }
-
-                if (recording && all_ready && visionRecorder==null? false : visionRecorder.isRecording)
-                {
-                    //UniLog.Log("recording vision");
-                    //if (frame_index == 30)
-                    //    hearingRecorder.videoStartedRecording = true;
-                    visionRecorder.RecordVision();
-                }
-
-                if (recording && all_ready && animationRecorder==null? false : animationRecorder.isRecording)
-                {
-                    animationRecorder.RecordFrame();
-                }
-
-                if (recording && all_ready && bvhRecorder==null? false : bvhRecorder.isRecording)
-                {
-                    bvhRecorder.RecordFrame();
-                }
-
-                //if (recording && all_ready && recording_hearing_user != null && hearingRecorder==null? false : hearingRecorder.isRecording)
-                //{
-                //}
                 recording_frame_index += 1;
-
                 utcNow = DateTime.UtcNow;
             }
+
+            //playback
             new_frame = (int)Math.Floor(playing_time / 33.33333f);
             if (new_frame > playing_frame_index)
             {
@@ -369,16 +322,49 @@ namespace metagen
             try
             {
                 //base.OnAudioUpdate();
-                if (recording && voiceRecorder == null ? false : voiceRecorder.isRecording)
+                if (recording && metaRecorder?.voiceRecorder == null ? false : metaRecorder.voiceRecorder.isRecording)
                 {
                     //UniLog.Log("recording voice");
-                    voiceRecorder.RecordAudio();
+                    metaRecorder.voiceRecorder.RecordAudio();
+                }
+                if (interacting && metaInteraction?.voiceInteraction == null ? false : metaInteraction.voiceInteraction.isInteracting)
+                {
+                    metaInteraction.voiceInteraction.InteractAudio();
                 }
             } catch (Exception e)
             {
                 //UniLog.Log("Hecc, exception in metagen.OnAudioUpdate:" + e.Message);
             }
 
+        }
+        public void StartInteracting()
+        {
+            UniLog.Log("Start interacting");
+            interacting = true;
+            //TODO: need to add these if we are gonna have interaction with a certain fps?
+            //recording_state = OutputState.Starting;
+            //recording_frame_index = 0;
+            //Set the recordings time to now
+            //utcNow = DateTime.UtcNow;
+            //recordingBeginTime = DateTime.UtcNow;
+            if (!metaInteraction.isInteracting)
+            {
+                metaInteraction.StartInteracting();
+            }
+        }
+        public void StopInteracting()
+        {
+            UniLog.Log("Stop interacting");
+            interacting = false;
+            //recording_state = OutputState.Starting;
+            //recording_frame_index = 0;
+            //Set the recordings time to now
+            //utcNow = DateTime.UtcNow;
+            //recordingBeginTime = DateTime.UtcNow;
+            if (metaInteraction.isInteracting)
+            {
+                metaInteraction.StopInteracting();
+            }
         }
 
         public void StartRecording()
@@ -394,61 +380,11 @@ namespace metagen
             //Set the recordings time to now
             utcNow = DateTime.UtcNow;
             recordingBeginTime = DateTime.UtcNow;
-            //UniLog.Log(streamRecorder.isRecording.ToString());
-            //UniLog.Log(recording_streams.ToString());
-            //metaDataManager.GetUserMetaData();
+            if (!metaRecorder.isRecording)
+            {
+                metaRecorder.StartRecording();
+            }
             
-            //STREAMS
-            if (recording_streams && !streamRecorder.isRecording)
-            {
-                streamRecorder.StartRecording();
-                //Record the first frame
-                streamRecorder.RecordStreams(0f);
-            }
-
-            //FACE STREAMS
-            if (recording_faces && !faceRecorder.isRecording)
-            {
-                faceRecorder.StartRecording();
-                //Record the first frame
-                faceRecorder.RecordStreams(0f);
-            }
-
-            //ANIMATION
-            if (recording_animation && !animationRecorder.isRecording)
-            {
-                animationRecorder = Slot.AttachComponent<RecordingTool>();
-                animationRecorder.metagen_comp = this;
-                animationRecorder.StartRecording();
-                //Record the first frame
-                animationRecorder.RecordFrame();
-            }
-
-            //BVH
-            if (recording_bvh && !bvhRecorder.isRecording)
-            {
-                bvhRecorder.StartRecording();
-            }
-
-            //AUDIO
-            if (recording_voice && !voiceRecorder.isRecording)
-            {
-                voiceRecorder.StartRecording();
-            }
-
-            //HEARING
-            if (recording_hearing && !hearingRecorder.isRecording)
-            {
-                hearingRecorder.StartRecording();
-            }
-
-            //VIDEO
-            if (recording_vision && !visionRecorder.isRecording)
-            {
-                visionRecorder.StartRecording();
-                //Record the first frame
-                visionRecorder.RecordVision();
-            }
             recording_state = OutputState.Started;
         }
         public void StopRecording()
@@ -469,138 +405,11 @@ namespace metagen
 
             recording = false;
             recording_state = OutputState.Stopping;
-            bool wait_streams = false;
-            bool wait_face_streams = false;
-            bool wait_voices = false;
-            bool wait_hearing = false;
-            bool wait_vision = false;
-            bool wait_anim = false;
 
-            //STREAMS
-            if (streamRecorder.isRecording)
+            if (metaRecorder.isRecording)
             {
-                streamRecorder.StopRecording();
-                wait_streams = true;
+                metaRecorder.StopRecording();
             }
-
-            //FACE STREAMS
-            if (faceRecorder.isRecording)
-            {
-                faceRecorder.StopRecording();
-                wait_face_streams = true;
-            }
-
-            //VOICES
-            if (voiceRecorder.isRecording)
-            {
-                voiceRecorder.StopRecording();
-                wait_voices = true;
-            }
-
-            //HEARING
-            if (hearingRecorder != null && hearingRecorder.isRecording)
-            {
-                hearingRecorder.StopRecording();
-                wait_hearing = true;
-            }
-
-            //VISION
-            if (visionRecorder.isRecording)
-            {
-                visionRecorder.StopRecording();
-                wait_vision = true;
-            }
-
-            //BVH
-            if (bvhRecorder.isRecording)
-            {
-                bvhRecorder.StopRecording();
-            }
-
-            try
-            {
-                if (animationRecorder.isRecording)
-                {
-                    animationRecorder.PreStopRecording();
-                    wait_anim = true;
-                }
-            } catch (Exception e)
-            {
-                UniLog.Log(">w< animation stopping failed");
-            }
-
-
-            Task task = Task.Run(() =>
-            {
-                try
-                {
-                    //STREAMS
-                    if (wait_streams)
-                    {
-                        streamRecorder.WaitForFinish();
-                        wait_streams = false;
-                    }
-
-                    //FACE STREAMS
-                    if (wait_face_streams)
-                    {
-                        faceRecorder.WaitForFinish();
-                        wait_face_streams = false;
-                    }
-
-                    //VOICES
-                    if (wait_voices)
-                    {
-                        UniLog.Log("Waiting voices");
-                        voiceRecorder.WaitForFinish();
-                        wait_voices = false;
-                        UniLog.Log("Waited voices");
-                    }
-
-                    //HEARING
-                    if (wait_hearing)
-                    {
-                        hearingRecorder.WaitForFinish();
-                        wait_hearing = false;
-                    }
-
-                    //VISION
-                    if (wait_vision)
-                    {
-                        visionRecorder.WaitForFinish();
-                        wait_vision = false;
-                    }
-
-                    metagen.Util.MediaConverter.WaitForFinish();
-
-                    //ANIMATION
-                    if (wait_anim)
-                    {
-                        animationRecorder.StopRecording();
-                        animationRecorder.WaitForFinish();
-                        World.RunSynchronously(() =>
-                        {
-                            Slot.RemoveComponent(animationRecorder);
-                        });
-                        wait_anim = false;
-                    }
-                } catch (Exception e)
-                {
-                    UniLog.Log("OwO error in waiting task when stopped recording: " + e.Message);
-                    UniLog.Log(e.StackTrace);
-                } finally
-                {
-                    UniLog.Log("FINISHED STOPPING RECORDING");
-                    this.recording_state = OutputState.Stopped;
-                    dataManager.StopSection();
-                }
-            });
-            //task.ContinueWith((Task t) =>
-            //{
-            //    UniLog.Log("FINISHED STOPPING RECORDING");
-            //    this.recording_state = OutputState.Stopped;
-            //    dataManager.StopSection();
-            //});
         }
 
         public void ToggleRecording()
@@ -650,13 +459,20 @@ namespace metagen
                 StartPlaying();
             }
         }
+        private void Extra_meshes_slot_ChildAdded(Slot slot, Slot child)
+        {
+            if (child.GetComponent<ReferenceField<Slot>>() == null)
+                child.AttachComponent<ReferenceField<Slot>>();
+        }
         private void Extra_fields_slot_ChildAdded(Slot slot, Slot child)
         {
-            child.AttachComponent<ReferenceField<IField>>();
+            if (child.GetComponent<ReferenceField<IField>>() == null)
+                child.AttachComponent<ReferenceField<IField>>();
         }
         private void Extra_slots_slot_ChildAdded(Slot slot, Slot child)
         {
-            child.AttachComponent<ReferenceField<Slot>>();
+            if (child.GetComponent<ReferenceField<Slot>>() == null)
+                child.AttachComponent<ReferenceField<Slot>>();
         }
 
 

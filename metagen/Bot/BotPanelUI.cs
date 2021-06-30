@@ -17,6 +17,7 @@ namespace FrooxEngine
         public readonly Sync<bool> _active;
         public readonly SyncRef<Button> _playButton;
         public readonly SyncRef<Button> _recordButton;
+        public readonly SyncRef<Button> _interactButton;
         public readonly SyncRef<Button> _swapUIButton;
         public readonly SyncRef<TextField> _recordIndexField;
         public readonly SyncRef<Checkbox> _animationsCheckbox;
@@ -32,6 +33,7 @@ namespace FrooxEngine
         public readonly SyncRef<ReferenceField<Slot>> _avatarRefField;
         public readonly SyncRef<ReferenceField<Slot>> _uiTemplateRefField;
         public readonly SyncTime _recordingStarted;
+        public readonly SyncRef<Sync<bool>> interact_button_pressed;
         public readonly SyncRef<Sync<bool>> record_button_pressed;
         public readonly SyncRef<Sync<bool>> play_button_pressed;
         public readonly SyncRef<Sync<bool>> swapUI_button_pressed;
@@ -42,6 +44,7 @@ namespace FrooxEngine
         public bool IsPlaying = false;
         private NeosSwapCanvasPanel panel;
         public event Action ToggleRecording;
+        public event Action ToggleInteracting;
         public event Action TogglePlaying;
         public event Action SwapUI;
         MetaGen mg;
@@ -72,6 +75,7 @@ namespace FrooxEngine
             panel.PhysicalHeight = panel.Slot.Parent.LocalScaleToGlobal(0.3f);
             panel.Panel.ShowHeader.Value = false;
             panel.Panel.ShowHandle.Value = false;
+            interact_button_pressed.Target = holder.AttachComponent<ValueField<bool>>().Value;
             record_button_pressed.Target = holder.AttachComponent<ValueField<bool>>().Value;
             play_button_pressed.Target = holder.AttachComponent<ValueField<bool>>().Value;
             swapUI_button_pressed.Target = holder.AttachComponent<ValueField<bool>>().Value;
@@ -138,9 +142,11 @@ namespace FrooxEngine
             this._generateBvhCheckbox.Target = generate_bvh_checkbox;
 
             //Video checkbox
+#if NOHL
             Checkbox video_checkbox;
             space.TryReadValue<Checkbox>("video_checkbox", out video_checkbox);
             this._videoCheckbox.Target = video_checkbox;
+#endif
 
             //Record button
             Button record_button;
@@ -268,8 +274,10 @@ namespace FrooxEngine
 
             //video checkbox
             //Checkbox videoCheckbox = uiBuilder1.Checkbox("Record vision",true);
+#if NOHL
             Checkbox videoCheckbox = uiBuilder1.Checkbox("Record vision",false);
             this._videoCheckbox.Target = videoCheckbox;
+#endif
 
             //record button
             uiBuilder1.Style.PreferredHeight = 120f;
@@ -280,6 +288,17 @@ namespace FrooxEngine
             ButtonValueSet<bool> comp1 = button1.Slot.AttachComponent<ButtonValueSet<bool>>();
             comp1.SetValue.Value = true;
             comp1.TargetValue.Target = record_button_pressed.Target;
+
+            ////Hiding for now as its WIP
+            ////interact button
+            //uiBuilder1.Style.PreferredHeight = 120f;
+            //uiBuilder1.Style.MinHeight = 120f;
+            //SyncRef<Button> interactButton = this._interactButton;
+            //Button button1b = uiBuilder1.Button("Toggle Interaction");
+            //interactButton.Target = button1b;
+            //ButtonValueSet<bool> comp1b = button1b.Slot.AttachComponent<ButtonValueSet<bool>>();
+            //comp1b.SetValue.Value = true;
+            //comp1b.TargetValue.Target = interact_button_pressed.Target;
 
             //Text for debug play section
             uiBuilder1.Style.PreferredHeight = 200f;
@@ -341,25 +360,25 @@ namespace FrooxEngine
             comp2.SetValue.Value = true;
             comp2.TargetValue.Target = play_button_pressed.Target;
 
-            //UI slot ref
-            uiBuilder1.Style.PreferredHeight = 75f;
-            uiBuilder1.Style.MinHeight = 75f;
-            Text text8 = uiBuilder1.Text("UI slot:");
-            uiBuilder1.Next("Root");
-            ReferenceField<Slot> refField2 = uiBuilder1.Current.AttachComponent<ReferenceField<Slot>>();
-            this._uiTemplateRefField.Target = refField2;
-            RefEditor uiTemplateRefEditor = uiBuilder1.Current.AttachComponent<RefEditor>();
-            uiTemplateRefEditor.Setup(refField2.Reference);
+            ////UI slot ref
+            //uiBuilder1.Style.PreferredHeight = 75f;
+            //uiBuilder1.Style.MinHeight = 75f;
+            //Text text8 = uiBuilder1.Text("UI slot:");
+            //uiBuilder1.Next("Root");
+            //ReferenceField<Slot> refField2 = uiBuilder1.Current.AttachComponent<ReferenceField<Slot>>();
+            //this._uiTemplateRefField.Target = refField2;
+            //RefEditor uiTemplateRefEditor = uiBuilder1.Current.AttachComponent<RefEditor>();
+            //uiTemplateRefEditor.Setup(refField2.Reference);
 
-            uiBuilder1.Style.MinHeight = 100f;
-            uiBuilder1.Style.PreferredHeight = 100f;
+            //uiBuilder1.Style.MinHeight = 100f;
+            //uiBuilder1.Style.PreferredHeight = 100f;
 
-            //swapUI button
-            Button button3 = uiBuilder1.Button("");
-            this._swapUIButton.Target = button3;
-            ButtonValueSet<bool> comp3 = button3.Slot.AttachComponent<ButtonValueSet<bool>>();
-            comp3.SetValue.Value = true;
-            comp3.TargetValue.Target = swapUI_button_pressed.Target;
+            ////swapUI button
+            //Button button3 = uiBuilder1.Button("");
+            //this._swapUIButton.Target = button3;
+            //ButtonValueSet<bool> comp3 = button3.Slot.AttachComponent<ButtonValueSet<bool>>();
+            //comp3.SetValue.Value = true;
+            //comp3.TargetValue.Target = swapUI_button_pressed.Target;
 
         }
         protected override void OnCommonUpdate()
@@ -372,17 +391,24 @@ namespace FrooxEngine
                 record_button_pressed.Target.Value = false;
                 ToggleRecording?.Invoke();
             }
+
+            if (interact_button_pressed.Target != null && interact_button_pressed.Target.Value)
+            {
+                interact_button_pressed.Target.Value = false;
+                ToggleInteracting?.Invoke();
+            }
+
             if (play_button_pressed.Target != null && play_button_pressed.Target.Value)
             {
                 play_button_pressed.Target.Value = false;
                 TogglePlaying?.Invoke();
             }
-            if (swapUI_button_pressed.Target != null && swapUI_button_pressed.Target.Value)
-            {
-                UniLog.Log("swap UI button pressed!");
-                swapUI_button_pressed.Target.Value = false;
-                SwapUI?.Invoke();
-            }
+            //if (swapUI_button_pressed.Target != null && swapUI_button_pressed.Target.Value)
+            //{
+            //    UniLog.Log("swap UI button pressed!");
+            //    swapUI_button_pressed.Target.Value = false;
+            //    SwapUI?.Invoke();
+            //}
         }
     }
 }

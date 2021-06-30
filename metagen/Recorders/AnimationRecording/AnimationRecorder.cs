@@ -243,56 +243,67 @@ namespace NeosAnimationToolset
                 }
             }
             Slot extra_meshes_holder = metagen_comp.extra_meshes_slot;
-            if (record_smr)
+            List<Slot> extraMeshesHolders= extra_meshes_holder?.GetAllChildren();
+            if (extraMeshesHolders != null)
             {
-                List<SkinnedMeshRenderer> skinnedMeshRenderers = new List<SkinnedMeshRenderer>();
-                if (track_extra_meshes)
+                foreach (Slot s in extraMeshesHolders)
                 {
-                    List<SkinnedMeshRenderer> extraSkinnedMeshRenderers = extra_meshes_holder?.GetComponentsInChildren<SkinnedMeshRenderer>();
-                    if (extraSkinnedMeshRenderers != null)
+                    List<ReferenceField<Slot>> referenceSources = s.GetComponentsInChildren<ReferenceField<Slot>>();
+                    foreach(ReferenceField<Slot> referenceSource in referenceSources)
                     {
-                        skinnedMeshRenderers.AddRange(extraSkinnedMeshRenderers);
-                    }
-                }
-                if (skinnedMeshRenderers != null)
-                {
-                    foreach (SkinnedMeshRenderer meshRenderer in skinnedMeshRenderers)
-                    {
-                        if (meshRenderer.Enabled && meshRenderer.Slot.IsActive)
+                        Slot slot = referenceSource.Reference.Target;
+                        if (record_smr)
                         {
-                            TrackedSkinnedMeshRenderer trackedRenderer = recordedSMR.Add();
-                            trackedRenderer.renderer.Target = meshRenderer;
-                            trackedRenderer.recordBlendshapes.Value = true;
-                            //trackedRenderer.recordScales.Value = true;
+                            List<SkinnedMeshRenderer> skinnedMeshRenderers = new List<SkinnedMeshRenderer>();
+                            if (track_extra_meshes)
+                            {
+                                List<SkinnedMeshRenderer> extraSkinnedMeshRenderers = slot?.GetComponentsInChildren<SkinnedMeshRenderer>();
+                                if (extraSkinnedMeshRenderers != null)
+                                {
+                                    skinnedMeshRenderers.AddRange(extraSkinnedMeshRenderers);
+                                }
+                            }
+                            if (skinnedMeshRenderers != null)
+                            {
+                                foreach (SkinnedMeshRenderer meshRenderer in skinnedMeshRenderers)
+                                {
+                                    if (meshRenderer.Enabled && meshRenderer.Slot.IsActive)
+                                    {
+                                        TrackedSkinnedMeshRenderer trackedRenderer = recordedSMR.Add();
+                                        trackedRenderer.renderer.Target = meshRenderer;
+                                        trackedRenderer.recordBlendshapes.Value = true;
+                                        //trackedRenderer.recordScales.Value = true;
+                                    }
+                                }
+                            }
+                        }
+                        if (track_extra_meshes)
+                        {
+                            List<MeshRenderer> meshRenderers = meshRenderers = new List<MeshRenderer>();
+                            List<MeshRenderer> extraMeshRenderers = slot?.GetComponentsInChildren<MeshRenderer>();
+                            if (extraMeshRenderers != null)
+                            {
+                                meshRenderers.AddRange(extraMeshRenderers);
+                            }
+                            if (meshRenderers != null)
+                            {
+                                foreach(MeshRenderer meshRenderer in meshRenderers)
+                                {
+                                    if (meshRenderer.Enabled && meshRenderer.Slot.IsActive && !(meshRenderer is SkinnedMeshRenderer))
+                                    {
+                                        if (meshRenderer.Slot.GetComponent<InteractionLaser>() != null) continue;
+                                        if (meshRenderer.Slot.GetComponentInParents<InteractionLaser>() != null) continue;
+                                        TrackedMeshRenderer trackedRenderer = recordedMR.Add();
+                                        trackedRenderer.renderer.Target = meshRenderer;
+                                        trackedRenderer.recordScales.Value = true;
+                                    }
+                                }
+                            }
                         }
                     }
-                    UniLog.Log("Added skinned meshes for animation recorder");
                 }
+            UniLog.Log("Added meshes for animation recorder");
             }
-            List<MeshRenderer> meshRenderers = meshRenderers = new List<MeshRenderer>();
-            if (track_extra_meshes)
-            {
-                List<MeshRenderer> extraMeshRenderers = extra_meshes_holder?.GetComponentsInChildren<MeshRenderer>();
-                if (extraMeshRenderers != null)
-                {
-                    meshRenderers.AddRange(extraMeshRenderers);
-                }
-                if (meshRenderers != null)
-                {
-                    foreach(MeshRenderer meshRenderer in meshRenderers)
-                    {
-                        if (meshRenderer.Enabled && meshRenderer.Slot.IsActive && !(meshRenderer is SkinnedMeshRenderer))
-                        {
-                            if (meshRenderer.Slot.GetComponent<InteractionLaser>() != null) continue;
-                            if (meshRenderer.Slot.GetComponentInParents<InteractionLaser>() != null) continue;
-                            TrackedMeshRenderer trackedRenderer = recordedMR.Add();
-                            trackedRenderer.renderer.Target = meshRenderer;
-                            trackedRenderer.recordScales.Value = true;
-                        }
-                    }
-                }
-            }
-            UniLog.Log("Added non-skinned meshes for animation recorder");
             if (track_extra_fields)
             {
                 Slot extra_fields_holder = metagen_comp.extra_fields_slot;
@@ -536,7 +547,9 @@ namespace NeosAnimationToolset
             UniLog.Log("Creating parent/unparent button");
             CreateParentUnparentButton(holder);
             UniLog.Log("Creating on off hearing button");
+#if NOHL
             CreateActivateDeactivateHearingButton(holder);
+#endif
             UniLog.Log("Done creating Animation control object");
         }
         private void CreateExpandCollapseButton(Slot holder)
@@ -570,7 +583,7 @@ namespace NeosAnimationToolset
             ValueField<float3> valueField1 = logix_slot.AttachComponent<ValueField<float3>>();
             valueField1.Value.Value = new float3(1f, 1f, 1f);
             ValueField<float3> valueField2 = logix_slot.AttachComponent<ValueField<float3>>();
-            valueField2.Value.Value = new float3(0f, 0f, 0f);
+            valueField2.Value.Value = new float3(0.07f, 0.07f, 0.07f);
             ValueField<float> tweenDuration = logix_slot.AttachComponent<ValueField<float>>();
             tweenDuration.Value.Value = 1.0f;
             tween.From.Target = valueField1.Value;
@@ -582,7 +595,7 @@ namespace NeosAnimationToolset
             refNode3b.RefTarget.Target = rootSlot.Target.Scale_Field;
             tweenUp.Target.Target = refNode3b;
             ValueField<float3> tweenUpFrom = logix_slot.AttachComponent<ValueField<float3>>();
-            tweenUpFrom.Value.Value = new float3(0f, 0f, 0f);
+            tweenUpFrom.Value.Value = new float3(0.07f, 0.07f, 0.07f);
             ValueField<float3> tweenUpTo = logix_slot.AttachComponent<ValueField<float3>>();
             tweenUpTo.Value.Value = new float3(1f, 1f, 1f);
             ValueField<float> tweenUpDuration = logix_slot.AttachComponent<ValueField<float>>();
@@ -757,7 +770,7 @@ namespace NeosAnimationToolset
                 UniLog.Log(Directory.GetFiles(reading_directory, "*"));
                 //string[] files2 = Directory.GetFiles(reading_directory, user_id.ToString() + "*_voice.ogg");
                 //String audio_file2 = files2.Length > 0 ? files2[0] : null;
-                string audio_file2 = reading_directory + "\\" + user_id.ToString() + "_voice.ogg";
+                string audio_file2 = reading_directory + "/" + user_id.ToString() + "_voice.ogg";
                 UniLog.Log("audio_file2");
                 UniLog.Log(audio_file2);
                 if (File.Exists(audio_file2))

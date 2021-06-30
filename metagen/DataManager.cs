@@ -21,6 +21,15 @@ namespace metagen
         private int section = 0;
         public bool have_started_recording_session = false;
         public MetaGen metagen_comp;
+
+        public string temp_folder
+        {
+            get
+            {
+                return root_saving_folder + "/tmp";
+            }
+        }
+
         public string saving_folder
         {
             get

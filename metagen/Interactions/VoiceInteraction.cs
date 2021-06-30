@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,31 +15,32 @@ using RefID = BaseX.RefID;
 //using UnityNeos;
 //using UnityEngine;
 
-namespace metagen
+namespace metagen.Interactions
 {
-    public class VoiceRecorder : IRecorder
+    public class VoiceInteraction : IInteraction
     {
         public Dictionary<RefID, AudioOutput> audio_outputs = new Dictionary<RefID, AudioOutput>();
         private Dictionary<RefID, AudioRecorder> audio_recorders = new Dictionary<RefID, AudioRecorder>();
         private List<string> current_users_ids = new List<string>();
+        public bool isInteracting = false;
         public bool isRecording = false;
         private MetaGen metagen_comp;
         private float[] buffer;
         public bool audio_sources_ready = false;
         public string saving_folder {
             get {
-                return metagen_comp.dataManager.saving_folder;
+                return metagen_comp.dataManager.temp_folder;
             }
         }
 
-        public VoiceRecorder(MetaGen component)
+        public VoiceInteraction(MetaGen component)
         {
             metagen_comp = component;
             this.buffer = new float[metagen_comp.Engine.AudioSystem.BufferSize];
         }
 
         //Record one chunk from the voice audio of each user
-        public void RecordAudio()
+        public void InteractAudio()
         {
             //Debug.Log("Recording audio");
             foreach (var item in audio_outputs)
@@ -55,20 +57,33 @@ namespace metagen
                         audio_sources_ready = true;
                         AudioStream<MonoSample> stream = (AudioStream<MonoSample>)audio_output.Source.Target;
                         stream.Read<MonoSample>(buffer.AsMonoBuffer());
-                        //if (buffer.Length > stream.MissedSamples)
-                        //{
-                        //    buffer = buffer.Take(buffer.Length - stream.MissedSamples).ToArray();
-                        //buffer[0] = 0f;
-                        //buffer[1] = 0f;
-                        //buffer[2] = 0f;
-                        //buffer[3] = 0f;
-                        //Console.WriteLine("[{0}]", string.Join(", ", buffer));
                         for (int i = 0; i < buffer.Length; i++)
                         {
                             buffer[i] = MathX.Clamp(buffer[i], -1, 1);
                         }
-                        //UniLog.Log(buffer.Length);
-                        audio_recorders[user_id].ConvertAndWrite(buffer);
+                        float max_val = 0;
+                        for (int i = 0; i < buffer.Length; i++)
+                        {
+                            float val_squared = (float) Math.Pow((double)buffer[i], (double)2);
+                            if (val_squared > max_val) max_val = val_squared;
+                        }
+                        if (isRecording)
+                        {
+                            audio_recorders[user_id].ConvertAndWrite(buffer);
+                            if (max_val == 0)
+                            {
+                                StopWritingFile(user_id);
+                            }
+                        }
+                        else
+                        {
+                            UniLog.Log(max_val);
+                            if (max_val > 0)
+                            {
+                                StartWritingFile(user_id);
+                                audio_recorders[user_id].ConvertAndWrite(buffer);
+                            }
+                        }
                             //Task.Run(() => { audio_recorders[user_id].ConvertAndWrite(buffer); });
                             //metagen_comp.StartTask(async () => { audio_recorders[user_id].ConvertAndWrite(buffer); });
                         //}
@@ -83,7 +98,20 @@ namespace metagen
             }
         }
 
-        public void StartRecording()
+        void StartWritingFile(RefID user_id)
+        {
+            Guid g = Guid.NewGuid();
+            audio_recorders[user_id] = new AudioRecorder(saving_folder + "/" + user_id.ToString() + "_voice_tmp_"+g.ToString(), metagen_comp.Engine.AudioSystem.BufferSize, 1, metagen_comp.Engine.AudioSystem.SampleRate, 1);
+            audio_recorders[user_id].StartWriting();
+            isRecording = true;
+        }
+        void StopWritingFile(RefID user_id)
+        {
+            isRecording = false;
+            audio_recorders[user_id].WriteHeader();
+        }
+
+        public void StartInteracting()
         {
             foreach (var item in metagen_comp.userMetaData)
             {
@@ -103,48 +131,18 @@ namespace metagen
                 {
                     UniLog.Log("Sample rate");
                     UniLog.Log(metagen_comp.Engine.AudioSystem.Connector.SampleRate.ToString());
-                    audio_recorders[user_id] = new AudioRecorder(saving_folder + "/" + user_id.ToString() + "_voice_tmp", metagen_comp.Engine.AudioSystem.BufferSize, 1, metagen_comp.Engine.AudioSystem.SampleRate, 1);
-                    audio_recorders[user_id].StartWriting();
                 }
             }
-            isRecording = true;
+            isInteracting = true;
         }
-        public void StopRecording()
+        public void StopInteracting()
         {
-            isRecording = false;
-            foreach (var item in audio_recorders)
-            {
-                item.Value.WriteHeader();
-            }
-            Task task1 = Task.Run(() =>
-            {
-                foreach (string user_id in current_users_ids)
-                {
-                    File.Move(saving_folder + "/" + user_id + "_voice_tmp.wav", saving_folder + "/" + user_id + "_voice.wav");
-                }
-                //current_users_ids = new List<string>();
-            });
-            task1.Wait();
-
             audio_outputs = new Dictionary<RefID, AudioOutput>();
             audio_recorders = new Dictionary<RefID, AudioRecorder>();
+            isInteracting = false;
         }
-        public void WaitForFinish()
-        {
-            Task[] tasks = new Task[current_users_ids.Count];
-            int MAX_WAIT_ITERS = 100000;
-            for (int i = 0; i < current_users_ids.Count; i++)
-            {
-                string user_id = current_users_ids[i];
-                Task task2 = Task.Run(() =>
-                {
-                    int iter = 0;
-                    while (!File.Exists(saving_folder + "/" + user_id + "_voice.ogg") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
-                });
-                tasks[i] = task2;
-            }
-            Task.WaitAll(tasks);
-            current_users_ids = new List<string>();
-        }
+        //public void WaitForFinish()
+        //{
+        //}
     }
 }

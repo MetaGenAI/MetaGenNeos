@@ -49,8 +49,19 @@ namespace metagen
                 {
                     mg.recording_animation = panelUI._animationsCheckbox.Target.State.Value;
                     mg.recording_bvh = panelUI._generateBvhCheckbox.Target.State.Value;
-                    mg.recording_vision = panelUI._videoCheckbox.Target.State.Value;
+                    mg.recording_vision = panelUI._videoCheckbox.Target == null ? false: panelUI._videoCheckbox.Target.State.Value;
                     mg.StartRecording();
+                }
+            };
+
+            panelUI.ToggleInteracting += () =>
+            {
+                if (mg.interacting)
+                {
+                    mg.StopInteracting();
+                } else
+                {
+                    mg.StartInteracting();
                 }
             };
             panelUI.TogglePlaying += () =>
@@ -71,10 +82,10 @@ namespace metagen
                 }
             };
 
-            panelUI.SwapUI += () =>
-            {
-                panelUI.LinkUISlot();
-            };
+            //panelUI.SwapUI += () =>
+            //{
+            //    panelUI.LinkUISlot();
+            //};
 
             //if (!mg.admin_mode)
             //{

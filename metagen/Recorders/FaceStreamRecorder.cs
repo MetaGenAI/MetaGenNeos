@@ -12,7 +12,7 @@ using RefID = BaseX.RefID;
 
 namespace metagen
 {
-    class FaceStreamRecorder : IRecorder
+    public class FaceStreamRecorder : IRecorder
     {
         public Dictionary<RefID, BitBinaryWriterX> eye_output_writers = new Dictionary<RefID, BitBinaryWriterX>();
         public Dictionary<RefID, BitBinaryWriterX> mouth_output_writers = new Dictionary<RefID, BitBinaryWriterX>();
