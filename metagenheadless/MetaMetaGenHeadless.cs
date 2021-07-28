@@ -36,7 +36,7 @@ namespace FrooxEngine.LogiX
         bool is_in_VR_mode = false;
         bool auto_set_status = false;
         bool record_everyone = false;
-        bool admin_mode = true;
+        bool admin_mode = false;
         bool use_bot_ui = true;
         bool use_silent_mode = false;
         bool has_run_setup = false;

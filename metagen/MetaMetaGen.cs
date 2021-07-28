@@ -53,7 +53,7 @@ namespace FrooxEngine.LogiX
             //Job<Slot> awaiter = SlotHelper.TransferToWorld(this.Slot, Userspace.UserspaceWorld).GetAwaiter();
             //awaiter.GetResult();
             Setup();
-            
+
             //Start the co-routine which checks for newly generated media files, and converts them
             this.StartTask(() => Task.Run(metagen.Util.MediaConverter.Run));
         }
@@ -407,11 +407,11 @@ namespace FrooxEngine.LogiX
         {
             world.RunSynchronously(() =>
             {
-                Slot metagen_slot = world.RootSlot.Find("5013598197metagen local slot");
-                if (metagen_slot == null)
-                {
-                    metagen_slot = world.AddLocalSlot("5013598197metagen local slot");
-                }
+                Slot metagen_slot = world.RootSlot.FindLocalOrAdd("5013598197metagen local slot");
+                //if (metagen_slot == null)
+                //{
+                //    metagen_slot = world.AddLocalSlot("5013598197metagen local slot");
+                //}
                 MetaGen metagen = metagen_slot.GetComponent<MetaGen>();
                 if (metagen == null)
                 {

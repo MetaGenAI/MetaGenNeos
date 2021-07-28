@@ -22,6 +22,8 @@ namespace FrooxEngine
         public readonly SyncRef<TextField> _recordIndexField;
         public readonly SyncRef<Checkbox> _animationsCheckbox;
         public readonly SyncRef<Checkbox> _generateBvhCheckbox;
+        public readonly SyncRef<Checkbox> _recordVoicesCheckbox;
+        public readonly SyncRef<Checkbox> _recordHearingCheckbox;
         public readonly SyncRef<Checkbox> _animationsCheckbox2;
         public readonly SyncRef<Checkbox> _generateBvhCheckbox2;
         public readonly SyncRef<Checkbox> _videoCheckbox;
@@ -59,7 +61,7 @@ namespace FrooxEngine
             //mg = this.Slot.GetComponent<BotLogic>().mg;
             mg = FrooxEngine.LogiX.MetaMetaGen.current_metagen;
             //float2 float2 = new float2(2300f, 8000f);
-            float2 float2 = new float2(2300f, 6000f);
+            float2 float2 = new float2(2300f, 6400f);
             this.CanvasSize = float2 * 1.0f;
             this.PhysicalHeight = this.Slot.Parent.LocalScaleToGlobal(0.3f);
             this.Panel.ShowHeader.Value = false;
@@ -141,8 +143,20 @@ namespace FrooxEngine
             space.TryReadValue<Checkbox>("generate_bvh_checkbox", out generate_bvh_checkbox);
             this._generateBvhCheckbox.Target = generate_bvh_checkbox;
 
-            //Video checkbox
+            //Record voices checkbox
+            Checkbox record_voices_checkbox;
+            space.TryReadValue<Checkbox>("record_voices_checkbox", out record_voices_checkbox);
+            this._recordVoicesCheckbox.Target = record_voices_checkbox;
+
 #if NOHL
+            //Record voices checkbox
+            Checkbox record_hearing_checkbox;
+            space.TryReadValue<Checkbox>("record_hearing_checkbox", out record_hearing_checkbox);
+            this._recordHearingCheckbox.Target = record_hearing_checkbox;
+#endif
+
+#if NOHL
+            //Video checkbox
             Checkbox video_checkbox;
             space.TryReadValue<Checkbox>("video_checkbox", out video_checkbox);
             this._videoCheckbox.Target = video_checkbox;
@@ -217,13 +231,13 @@ namespace FrooxEngine
 
             //Title
             uiBuilder1.Style.PreferredHeight = 200f;
-            Text text4 = uiBuilder1.Text("MetaGen Bot");
+            Text text4 = uiBuilder1.Text("MetaGenNeos");
             text4.AutoSizeMax.Value = 150f;
             text4.Size.Value = 150f;
 
             //Description
             uiBuilder1.Style.MinHeight = 350f;
-            Text text1 = uiBuilder1.Text("<b>This recording system is currenlty in Beta. Expect bugs</b>. MetaGen is a project to generate a public dataset of VR experiences, for use in scientific research, and development of AI technologies.");
+            Text text1 = uiBuilder1.Text("<b>This recording system is currenlty in Beta. Expect bugs</b>. MetaGen is a project to explore the intersection between AI and VR technologies, for Science, Art, and Wonder");
             uiBuilder1.Style.MinHeight = 32f;
 
             ////Recording checkbox
@@ -267,10 +281,19 @@ namespace FrooxEngine
             Checkbox animCheckbox = uiBuilder1.Checkbox("Generate animation",true);
             this._animationsCheckbox.Target = animCheckbox;
 
-            //Generate bvh checkpoint
+            //Generate bvh checkbox
             Checkbox checkbox5 = uiBuilder1.Checkbox("Generate bvh", false);
             this._generateBvhCheckbox.Target = checkbox5;
 
+            //Recording voices checkbox
+            Checkbox recording_voices_checkbox = uiBuilder1.Checkbox("Record voices", true);
+            this._recordVoicesCheckbox.Target = recording_voices_checkbox;
+
+#if NOHL
+            //Recording hearing checkbox
+            Checkbox recording_hearing_checkbox = uiBuilder1.Checkbox("Record hearing", true);
+            this._recordHearingCheckbox.Target = recording_hearing_checkbox;
+#endif
 
             //video checkbox
             //Checkbox videoCheckbox = uiBuilder1.Checkbox("Record vision",true);
@@ -319,11 +342,11 @@ namespace FrooxEngine
             uiBuilder1.Style.MinHeight = 100f;
             uiBuilder1.Style.PreferredHeight = 100f;
 
-            //Voices checkpoint
+            //Voices checkbox
             Checkbox checkbox1 = uiBuilder1.Checkbox("Voices",true);
             this._voicesCheckbox.Target = checkbox1;
 
-            //Hearing checkpoint
+            //Hearing checkbox
             Checkbox checkbox2 = uiBuilder1.Checkbox("Hearing", false);
             this._hearingCheckbox.Target = checkbox2;
 

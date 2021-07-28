@@ -272,7 +272,8 @@ namespace metagen
                     RefID user_id = RefID.Parse(user.userRefId);
                     UniLog.Log(user_id.ToString());
                     user_ids.Add(user_id);
-                    output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory, user_id.ToString() + "*_streams.dat")[0], FileMode.Open, FileAccess.Read);
+                    //output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory, user_id.ToString() + "*_streams.dat")[0], FileMode.Open, FileAccess.Read);
+                    output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory, user_id.ToString() + "_streams.dat")[0], FileMode.Open, FileAccess.Read);
                     BitReaderStream bitstream = new BitReaderStream(output_fss[user_id]);
                     output_readers[user_id] = new BitBinaryReaderX(bitstream);
                     fake_proxies[user_id] = new List<Tuple<BodyNode, AvatarObjectSlot>>();

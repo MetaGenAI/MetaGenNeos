@@ -37,6 +37,7 @@ namespace metagen
         public bool record_everyone = false;
         public bool admin_mode = false;
         public OutputState recording_state = OutputState.Stopped;
+        public OutputState interacting_state = OutputState.Stopped;
         private DateTime utcNow;
         private DateTime recordingBeginTime;
         private DateTime playingBeginTime;
@@ -86,8 +87,12 @@ namespace metagen
         private List<User> current_users = new List<User>();
 
         public Slot config_slot = null;
+        public Slot interaction_slot = null;
+        public Slot text_interaction_slot = null;
         private Slot users_config_slot = null;
         public DynamicVariableSpace users_config_space = null;
+        public DynamicVariableSpace config_space = null;
+        public DynamicVariableSpace interaction_space = null;
         public Slot extra_meshes_slot = null;
         public Slot extra_slots_slot = null;
         public Slot extra_fields_slot = null;
@@ -175,29 +180,7 @@ namespace metagen
             metaDataManager = new MetaDataManager(this);
             if (!silent_mode)
             {
-                config_slot = World.RootSlot.FindChild((Slot s) => s.Name == "metagen config");
-                if (config_slot == null) config_slot = World.RootSlot.AddSlot("metagen config");
-                extra_meshes_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra meshes");
-                if (extra_meshes_slot == null) extra_meshes_slot = config_slot.AddSlot("metagen extra meshes");
-                extra_meshes_slot.ChildAdded += Extra_meshes_slot_ChildAdded;
-                extra_slots_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra slots");
-                if (extra_slots_slot == null) extra_slots_slot = config_slot.AddSlot("metagen extra slots");
-                extra_slots_slot.ChildAdded += Extra_slots_slot_ChildAdded;
-                extra_fields_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra fields");
-                if (extra_fields_slot == null) extra_fields_slot = config_slot.AddSlot("metagen extra fields");
-                extra_fields_slot.ChildAdded += Extra_fields_slot_ChildAdded;
-                users_config_slot = config_slot.FindChild((Slot s) => s.Name == "metagen users config");
-                if (users_config_slot == null)
-                {
-                    users_config_slot = config_slot.AddSlot("metagen users config");
-                    users_config_space = users_config_slot.AttachComponent<DynamicVariableSpace>();
-                }
-                users_config_space = users_config_slot.GetComponent<DynamicVariableSpace>();
-                if (users_config_space == null)
-                {
-                    users_config_space = users_config_slot.AttachComponent<DynamicVariableSpace>();
-                    users_config_space.SpaceName.Value = "metagen users config space";
-                }
+                SetUpConfigSlot();
             }
             foreach (User user in World.AllUsers)
             {
@@ -205,6 +188,65 @@ namespace metagen
             }
             UpdateLocalUserConfigSlot();
             metaDataManager.GetUserMetaData();
+        }
+        private void SetUpConfigSlot()
+        {
+            config_slot = World.RootSlot.FindChild((Slot s) => s.Name == "metagen config");
+            if (config_slot == null)
+            {
+                config_slot = World.RootSlot.AddSlot("metagen config");
+            }
+            config_space = config_slot.GetComponent<DynamicVariableSpace>();
+            if (config_space == null)
+            {
+                config_space = config_slot.AttachComponent<DynamicVariableSpace>();
+            }
+            config_space.SpaceName.Value = "metagen config space";
+            interaction_slot = config_slot.FindChild((Slot s) => s.Name == "metagen interaction");
+            if (interaction_slot == null)
+            {
+                interaction_slot = config_slot.AddSlot("metagen interaction");
+            }
+            interaction_space = interaction_slot.GetComponent<DynamicVariableSpace>();
+            if (interaction_space == null)
+            {
+                interaction_space = interaction_slot.AttachComponent<DynamicVariableSpace>();
+            }
+            interaction_space.SpaceName.Value = "metagen interaction space";
+
+            text_interaction_slot = interaction_slot.FindChild((Slot s) => s.Name == "metagen text interaction");
+            if (text_interaction_slot == null)
+            {
+                text_interaction_slot = interaction_slot.AddSlot("metagen text interaction");
+                text_interaction_slot.CreateVariable<Sync<string>>("output field", null);
+                text_interaction_slot.CreateVariable<Sync<string>>("input field", null);
+            }
+
+            extra_meshes_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra meshes");
+            if (extra_meshes_slot == null) extra_meshes_slot = config_slot.AddSlot("metagen extra meshes");
+            extra_meshes_slot.ChildAdded -= Extra_meshes_slot_ChildAdded;
+            extra_meshes_slot.ChildAdded += Extra_meshes_slot_ChildAdded;
+            extra_slots_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra slots");
+            if (extra_slots_slot == null) extra_slots_slot = config_slot.AddSlot("metagen extra slots");
+            extra_slots_slot.ChildAdded -= Extra_slots_slot_ChildAdded;
+            extra_slots_slot.ChildAdded += Extra_slots_slot_ChildAdded;
+            extra_fields_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra fields");
+            if (extra_fields_slot == null) extra_fields_slot = config_slot.AddSlot("metagen extra fields");
+            extra_fields_slot.ChildAdded -= Extra_fields_slot_ChildAdded;
+            extra_fields_slot.ChildAdded += Extra_fields_slot_ChildAdded;
+            users_config_slot = config_slot.FindChild((Slot s) => s.Name == "metagen users config");
+            if (users_config_slot == null)
+            {
+                users_config_slot = config_slot.AddSlot("metagen users config");
+                users_config_space = users_config_slot.AttachComponent<DynamicVariableSpace>();
+            }
+            users_config_space = users_config_slot.GetComponent<DynamicVariableSpace>();
+            users_config_space.SpaceName.Value = "metagen users config space";
+            if (users_config_space == null)
+            {
+                users_config_space = users_config_slot.AttachComponent<DynamicVariableSpace>();
+                users_config_space.SpaceName.Value = "metagen users config space";
+            }
         }
         //protected override void OnDispose()
         //{
@@ -236,10 +278,10 @@ namespace metagen
 
 //Start / Stop recording
 #if NOHL
-            if (this.InputInterface.GetKeyDown(Key.R))
-            {
-                ToggleRecording();
-            }
+            //if (this.InputInterface.GetKeyDown(Key.R))
+            //{
+            //    ToggleRecording();
+            //}
 #endif
 
             //Start a new chunk, if we have been recording for 30 minutes, or start a new section, if a new user has left or joined
@@ -253,10 +295,10 @@ namespace metagen
 
 //Start / Stop playing
 #if NOHL
-            if (this.InputInterface.GetKeyDown(Key.P))
-            {
-                TogglePlaying();
-            }
+            //if (this.InputInterface.GetKeyDown(Key.P))
+            //{
+            //    TogglePlaying();
+            //}
 #endif
 
             //TODO: record haptics, and biometric data via some standard dynamic variables and things?
@@ -342,9 +384,10 @@ namespace metagen
         public void StartInteracting()
         {
             UniLog.Log("Start interacting");
+            SetUpConfigSlot();
             interacting = true;
             //TODO: need to add these if we are gonna have interaction with a certain fps?
-            //recording_state = OutputState.Starting;
+            interacting_state = OutputState.Starting;
             //recording_frame_index = 0;
             //Set the recordings time to now
             //utcNow = DateTime.UtcNow;
@@ -353,25 +396,24 @@ namespace metagen
             {
                 metaInteraction.StartInteracting();
             }
+            interacting_state = OutputState.Started;
         }
         public void StopInteracting()
         {
             UniLog.Log("Stop interacting");
             interacting = false;
-            //recording_state = OutputState.Starting;
-            //recording_frame_index = 0;
-            //Set the recordings time to now
-            //utcNow = DateTime.UtcNow;
-            //recordingBeginTime = DateTime.UtcNow;
+            interacting_state = OutputState.Stopping;
             if (metaInteraction.isInteracting)
             {
                 metaInteraction.StopInteracting();
             }
+            interacting_state = OutputState.Stopped;
         }
 
         public void StartRecording()
         {
             UniLog.Log("Start recording");
+            SetUpConfigSlot();
             if (!dataManager.have_started_recording_session)
                 dataManager.StartRecordingSession();
             if (!recording)
@@ -423,6 +465,7 @@ namespace metagen
         public void StartPlaying(int recording_index = 0, Slot avatar_template = null)
         {
             UniLog.Log("Start playing");
+            SetUpConfigSlot();
             playing = true;
             playing_state = OutputState.Started;
             playingBeginTime = DateTime.UtcNow;

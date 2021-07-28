@@ -35,6 +35,10 @@ namespace metagen
         protected override void OnAttach()
         {
             base.OnAttach();
+            CreatePanelUI();
+        }
+        private void CreatePanelUI()
+        {
             mg = FrooxEngine.LogiX.MetaMetaGen.current_metagen;
 
             panelUI = this.Slot.AttachComponent<MetaGenBotPanelUI>();
@@ -49,6 +53,8 @@ namespace metagen
                 {
                     mg.recording_animation = panelUI._animationsCheckbox.Target.State.Value;
                     mg.recording_bvh = panelUI._generateBvhCheckbox.Target.State.Value;
+                    mg.recording_voice = panelUI._recordVoicesCheckbox.Target.State.Value;
+                    mg.recording_hearing = panelUI._recordHearingCheckbox.Target == null ? false: panelUI._videoCheckbox.Target.State.Value;
                     mg.recording_vision = panelUI._videoCheckbox.Target == null ? false: panelUI._videoCheckbox.Target.State.Value;
                     mg.StartRecording();
                 }
@@ -187,11 +193,15 @@ namespace metagen
             int num2 = num1 / 3600;
             int num3 = num1 / 60 % 60;
             int num4 = num1 % 60;
-            if (panelUI != null)
+            if (panelUI != null && !panelUI.panelSlot.IsDestroyed)
             {
                 this.panelUI._recordingTime.Target.Content.Value = string.Format("{0}: {1:00}:{2:00}:{3:00}", (object)localized1, (object)num2, (object)num3, (object)num4);
                 this.UpdateButton((Button)this.panelUI._playButton, mg.playing_state, "Playing");
                 this.UpdateButton((Button)this.panelUI._recordButton, mg.recording_state, "Recording");
+                this.UpdateButton((Button)this.panelUI._interactButton, mg.interacting_state, "Interacting");
+            } else
+            {
+                CreatePanelUI();
             }
         }
 
@@ -204,19 +214,23 @@ namespace metagen
             {
                 case OutputState.Starting:
                     color1 = color.Yellow;
-                    key = label=="Recording"?"CameraControl.OBS." + label + ".Starting" : "Play Started";
+                    //key = label=="Recording"?"CameraControl.OBS." + label + ".Starting" : "Play Starting";
+                    key = "Starting " + label;
                     break;
                 case OutputState.Started:
                     color1 = color.Green;
-                    key = label=="Recording"?"CameraControl.OBS." + label + ".Stop" : "Stop Play";
+                    //key = label=="Recording"?"CameraControl.OBS." + label + ".Stop" : "Stop Play";
+                    key = "Stop " + label;
                     break;
                 case OutputState.Stopping:
                     color1 = color.Orange;
-                    key = label=="Recording"?"CameraControl.OBS." + label + ".Stopping" : "Stopping Play";
+                    //key = label=="Recording"?"CameraControl.OBS." + label + ".Stopping" : "Stopping Play";
+                    key = "Stopping " + label;
                     break;
                 case OutputState.Stopped:
                     color1 = color.Red;
-                    key = label=="Recording"?"CameraControl.OBS." + label + ".Start" : "Start Play";
+                    //key = label=="Recording"?"CameraControl.OBS." + label + ".Start" : "Start Play";
+                    key = "Start " + label;
                     break;
             }
             Button button1 = button;

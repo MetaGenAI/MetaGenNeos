@@ -11,7 +11,11 @@ namespace metagen
         private int numChannels;
         private int numBuffers;
         private int outputRate = 44100;
-        private String fileName;
+        public String fileName
+        {
+            get;
+            private set;
+        }
         private int headerSize = 44; //default for uncompressed wav
         private bool recOutput;
         private FileStream fileStream;
