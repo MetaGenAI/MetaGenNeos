@@ -4,6 +4,7 @@
 using System;
 using BaseX;
 using FrooxEngine;
+using FrooxEngine.LogiX;
 using CodeX;
 using System.Collections.Generic;
 using System.Text;
@@ -793,11 +794,16 @@ namespace NeosAnimationToolset
                     playbackDrive.NormalizedPosition.Target = playbackState.NormalizedPosition;
                     playbackDrive.Play.Target = playbackState.IsPlaying;
                     playbackDrive.Loop.Target = playbackState.Loop;
-                    FrooxEngine.LogiX.ReferenceNode<SyncPlayback> refNode = ruut.AttachComponent<FrooxEngine.LogiX.ReferenceNode<SyncPlayback>>();
-                    refNode.RefTarget.Target = (SyncPlayback) player.GetSyncMember(4);
+                    //FrooxEngine.LogiX.ReferenceNode<SyncPlayback> refNode = LogixHelper.GetReferenceNode(player,SyncPlayback);
+                    //FrooxEngine.LogiX.ReferenceNode<SyncPlayback> refNode = (ReferenceNode<SyncPlayback>) player.GetReferenceNode(typeof(SyncPlayback));
+                    FrooxEngine.LogiX.ReferenceNode<SyncPlayback> refNode = (ReferenceNode<SyncPlayback>)player.GetSyncMember(3).GetReferenceNode(typeof(SyncPlayback));
+
+                    //below seems to not be working
+                    //FrooxEngine.LogiX.ReferenceNode<SyncPlayback> refNode = ruut.AttachComponent<FrooxEngine.LogiX.ReferenceNode<SyncPlayback>>();
+                    //refNode.RefTarget.Target = (SyncPlayback)player.GetSyncMember(4);
                     playbackDrive.DriveTarget.Target = refNode;
                     DriveRef<SyncPlayback> driveRef = (DriveRef<SyncPlayback>)playbackDrive.GetSyncMember(13);
-                    driveRef.Target = (SyncPlayback)player.GetSyncMember(4);
+                    driveRef.Target = refNode.RefTarget.Target;
                 }
             }
             hearing_slot = rootSlot.Target.AddSlot("heard sound");
