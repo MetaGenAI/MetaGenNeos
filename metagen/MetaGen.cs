@@ -78,7 +78,7 @@ namespace metagen
         public DataBase dataBase;
         int recording_frame_index = 0;
         int playing_frame_index = 0;
-        float MAX_CHUNK_LEN_MIN = 0.2f;
+        float MAX_CHUNK_LEN_MIN = 10f;
         public event Action<User> OnUserLeftCallback;
         public event Action<User> OnUserJoinedCallback;
 
