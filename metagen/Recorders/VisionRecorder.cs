@@ -116,12 +116,14 @@ namespace metagen
             cameras = new Dictionary<RefID, FrooxEngine.Camera>();
             visual_recorders = new Dictionary<RefID, VideoRecorder>();
             isRecording = false;
+            string saving_folder_inner = saving_folder;
+            var current_users_ids_inner = current_users_ids;
             Task task1 = Task.Run(() =>
             {
-                foreach (string user_id in current_users_ids)
+                foreach (string user_id in current_users_ids_inner)
                 {
-                    UniLog.Log("Moving " + Path.Combine(saving_folder, user_id + "_vision_tmp.avi"));
-                    File.Move(Path.Combine(saving_folder,user_id + "_vision_tmp.avi"), Path.Combine(saving_folder,user_id + "_vision.avi"));
+                    UniLog.Log("Moving " + Path.Combine(saving_folder_inner, user_id + "_vision_tmp.avi"));
+                    File.Move(Path.Combine(saving_folder_inner,user_id + "_vision_tmp.avi"), Path.Combine(saving_folder_inner,user_id + "_vision.avi"));
                 }
             });
             task1.Wait();
@@ -142,7 +144,6 @@ namespace metagen
                 tasks[i] = task2;
             }
             Task.WaitAll(tasks);
-            current_users_ids = new List<string>();
         }
     }
 }

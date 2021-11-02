@@ -25,11 +25,12 @@ namespace metagen
         private MetaGen metagen_comp;
         private float[] buffer;
         public bool audio_sources_ready = false;
-        public string saving_folder {
-            get {
-                return metagen_comp.dataManager.saving_folder;
-            }
-        }
+        public string saving_folder;
+        //public string saving_folder {
+        //    get {
+        //        return metagen_comp.dataManager.saving_folder;
+        //    }
+        //}
 
         public VoiceRecorder(MetaGen component)
         {
@@ -85,6 +86,8 @@ namespace metagen
 
         public void StartRecording()
         {
+            current_users_ids = new List<string>();
+            saving_folder = metagen_comp.dataManager.saving_folder;
             foreach (var item in metagen_comp.userMetaData)
             {
                 User user = item.Key;
@@ -116,11 +119,15 @@ namespace metagen
             {
                 item.Value.WriteHeader();
             }
+            string saving_folder_inner = saving_folder;
+            var current_users_ids_inner = current_users_ids;
             Task task1 = Task.Run(() =>
             {
-                foreach (string user_id in current_users_ids)
+                foreach (string user_id in current_users_ids_inner)
                 {
-                    File.Move(saving_folder + "/" + user_id + "_voice_tmp.wav", saving_folder + "/" + user_id + "_voice.wav");
+                    UniLog.Log("Moving " + Path.Combine(saving_folder_inner, user_id + "_voice_tmp.wav"));
+                    //File.Move(saving_folder_inner + "/" + user_id + "_voice_tmp.wav", saving_folder_inner + "/" + user_id + "_voice.wav");
+                    File.Move(Path.Combine(saving_folder_inner,user_id + "_voice_tmp.wav"), Path.Combine(saving_folder_inner,user_id + "_voice.wav"));
                 }
                 //current_users_ids = new List<string>();
             });
@@ -144,7 +151,6 @@ namespace metagen
                 tasks[i] = task2;
             }
             Task.WaitAll(tasks);
-            current_users_ids = new List<string>();
         }
     }
 }

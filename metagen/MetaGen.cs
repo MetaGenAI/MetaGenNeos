@@ -78,7 +78,7 @@ namespace metagen
         public DataBase dataBase;
         int recording_frame_index = 0;
         int playing_frame_index = 0;
-        float MAX_CHUNK_LEN_MIN = 10f;
+        float MAX_CHUNK_LEN_MIN = 0.2f;
         public event Action<User> OnUserLeftCallback;
         public event Action<User> OnUserJoinedCallback;
 
@@ -337,9 +337,11 @@ namespace metagen
                 playing_frame_index += 1;
             }
 #if NOHL
-            Slot slot = recording_hearing_user.Root.HeadSlot;
-            hearingRecorder.earSlot.GlobalPosition = slot.GlobalPosition;
-            hearingRecorder.earSlot.GlobalRotation = slot.GlobalRotation;
+            if (World == Engine.Current.WorldManager.FocusedWorld) {
+                Slot slot = recording_hearing_user.Root.HeadSlot;
+                hearingRecorder.earSlot.GlobalPosition = slot.GlobalPosition;
+                hearingRecorder.earSlot.GlobalRotation = slot.GlobalRotation;
+                }
 #endif
         }
 

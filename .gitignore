@@ -1,4 +1,4 @@
-VersionBypasser.cs
+#VersionBypasser.cs
 .vs/*
 metagen/obj/*
 metagen/bin/*
