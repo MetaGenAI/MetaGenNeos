@@ -135,16 +135,40 @@ namespace metagen
         }
         public void StartRecording()
         {
+            StartRecording("file");
+        }
+        public void StartRecording(string stream_type)
+        {
+            if (stream_type=="file")
+            {
+                foreach (var userItem in metagen_comp.userMetaData)
+                {
+                    User user = userItem.Key;
+                    RefID user_id = user.ReferenceID;
+                    output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_streams.dat", FileMode.Create, FileAccess.ReadWrite);
+
+                    BitWriterStream bitstream = new BitWriterStream(output_fss[user_id]);
+                    output_writers[user_id] = new BitBinaryWriterX(bitstream);
+                }
+            }
+            if (stream_type == "memory")
+            {
+                foreach (var userItem in metagen_comp.userMetaData)
+                {
+                    User user = userItem.Key;
+                    RefID user_id = user.ReferenceID;
+                    MemoryStream memory_stream = new MemoryStream();
+
+                    BitWriterStream bitstream = new BitWriterStream(memory_stream);
+                    output_writers[user_id] = new BitBinaryWriterX(bitstream);
+                }
+            }
             foreach (var userItem in metagen_comp.userMetaData)
             {
                 User user = userItem.Key;
                 UserMetadata metadata = userItem.Value;
                 if (!(metadata.isRecording || metagen_comp.record_everyone)) continue;
                 RefID user_id = user.ReferenceID;
-                output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_streams.dat", FileMode.Create, FileAccess.ReadWrite);
-
-                BitWriterStream bitstream = new BitWriterStream(output_fss[user_id]);
-                output_writers[user_id] = new BitBinaryWriterX(bitstream);
                 avatar_stream_drivers[user_id] = new List<Tuple<BodyNode, TransformStreamDriver>>();
                 List<AvatarObjectSlot> components = user.Root.Slot.GetComponentsInChildren<AvatarObjectSlot>();
                 finger_stream_drivers[user_id] = user.Root.Slot.GetComponent<FingerPoseStreamManager>();

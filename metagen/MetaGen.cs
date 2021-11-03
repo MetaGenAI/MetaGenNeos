@@ -61,7 +61,7 @@ namespace metagen
 
         public bool recording_streams = false;
         public bool play_streams = true;
-        private UnifiedPayer streamPlayer;
+        public UnifiedPayer streamPlayer;
         public bool use_grpc_player = false;
         public bool generate_animation_play = true;
         private GrpcPlayer grpcStreamPlayer;

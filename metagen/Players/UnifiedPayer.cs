@@ -17,7 +17,7 @@ using RefID = BaseX.RefID;
 
 namespace metagen
 {
-    class UnifiedPayer : IPlayer
+    public class UnifiedPayer : IPlayer
     {
         private DateTime utcNow;
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
@@ -45,6 +45,8 @@ namespace metagen
         bool avatars_finished_loading = false;
         World World;
         public bool isPlaying { get; set; }
+        public bool external_play_control = false;
+        public Source source_type;
 
         public bool generateAnimation = false;
         public bool generateBvh = false;
@@ -52,7 +54,13 @@ namespace metagen
         MetaGen metagen_comp;
         RecordingTool animationRecorder;
         BvhRecorder bvhRecorder;
-        //TODO
+        public string reading_directory
+        {
+            get
+            {
+                return this.recording_index == -1 ? null : dataManager.GetRecordingForWorld(metagen_comp.World, this.recording_index);
+            }
+        }
         public UnifiedPayer(DataManager dataMan, MetaGen component)
         {
             dataManager = dataMan;
@@ -193,7 +201,8 @@ namespace metagen
                     try
                     {
                         animationRecorder.RecordFrame();
-                    } catch (Exception e)
+                    }
+                    catch (Exception e)
                     {
                         UniLog.Log("Error at animation recording: " + e.Message);
                         UniLog.Log(e.StackTrace);
@@ -205,13 +214,15 @@ namespace metagen
                     try
                     {
                         bvhRecorder.RecordFrame();
-                    } catch (Exception e)
+                    }
+                    catch (Exception e)
                     {
                         UniLog.Log("Error at Bvh recording: " + e.Message);
                         UniLog.Log(e.StackTrace);
                     }
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 UniLog.Log("OwO: " + e.Message);
                 //this.StopPlaying();
@@ -230,12 +241,90 @@ namespace metagen
         public void StartPlaying(int recording_index = 0, Slot avatar_template = null)
         {
             this.recording_index = recording_index;
-            avatar_loading_task = Task.Run(StartPlayingInternal);
             this.play_voice = metagen_comp.play_voice;
             this.play_hearing = metagen_comp.play_hearing;
             this.avatar_template = avatar_template;
+            this.source_type = Source.FILE;
+            avatar_loading_task = Task.Run(StartPlayingInternal);
+        }
+        public void StartPlayingExternal(int num_meta_datas = 1, Slot avatar_template = null)
+        {
+            this.recording_index = -1;
+            this.play_voice = false;
+            this.play_hearing = false;
+            this.avatar_template = avatar_template;
+            this.source_type = Source.STREAM;
+            List<UserMetadata> userMetadatas = PrepareMetadatas(num_meta_datas);
+            this.external_play_control = true;
+            Task.Run(() => StartPlayingInternal(userMetadatas));
+        }
+        private List<UserMetadata> PrepareMetadatas(int num_meta_datas=1)
+        {
+            List<UserMetadata> userMetadatas = new List<UserMetadata>();
+            if (this.source_type == Source.FILE)
+            {
+                if (reading_directory == null) return null;
+
+                using (var reader = new StreamReader(Path.Combine(reading_directory, "user_metadata.csv")))
+                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    userMetadatas = csv.GetRecords<UserMetadata>().ToList();
+                }
+                if (userMetadatas.Where((u, i) => (u.isPublic && u.isRecording)).Count() == 0)
+                {
+                    UniLog.Log("UwU playing an emtpy (or private) recording");
+                    metagen_comp.StopPlaying();
+                }
+            } else if (this.source_type == Source.STREAM) {
+                userMetadatas = new List<UserMetadata>();
+                for (int i = 0; i < num_meta_datas; i++)
+                {
+                    UserMetadata userMetadata = new UserMetadata();
+                    userMetadata.userRefId = "ID2C0"+i.ToString();
+                    userMetadata.userId = "null";
+                    userMetadata.isPublic = true;
+                    userMetadata.isRecording = true;
+                    userMetadatas.Add(userMetadata);
+                }
+            }
+            return userMetadatas;
         }
         private async void StartPlayingInternal()
+        {
+            List<UserMetadata> userMetadatas = PrepareMetadatas();
+            PrepareStreams(userMetadatas);
+            await Task.Run(()=>StartPlayingInternal(userMetadatas));
+        }
+        public void PrepareStreamsExternal(int num_meta_datas=1)
+        {
+            this.source_type = Source.STREAM;
+            List<UserMetadata> userMetadatas = PrepareMetadatas(num_meta_datas);
+            PrepareStreams(userMetadatas);
+        }
+        private void PrepareStreams(List<UserMetadata> userMetadatas)
+        {
+            foreach (UserMetadata user in userMetadatas)
+            {
+                if (!user.isRecording || (!user.isPublic && !metagen_comp.admin_mode)) continue; //at the moment we only allow playing back of public recording, for privacy reasons. In the future, we'll allow private access to the data
+                RefID user_id = RefID.Parse(user.userRefId);
+                UniLog.Log(user_id.ToString());
+                user_ids.Add(user_id);
+                //output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory, user_id.ToString() + "*_streams.dat")[0], FileMode.Open, FileAccess.Read);
+                BitReaderStream bitstream = null;
+                if (this.source_type == Source.FILE)
+                {
+                    output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory, user_id.ToString() + "_streams.dat")[0], FileMode.Open, FileAccess.Read);
+                    bitstream = new BitReaderStream(output_fss[user_id]);
+                }
+                else if (this.source_type == Source.STREAM)
+                {
+                    MemoryStream memoryStream = new MemoryStream();
+                    bitstream = new BitReaderStream(memoryStream);
+                }
+                output_readers[user_id] = new BitBinaryReaderX(bitstream);
+            }
+        }
+        private async void StartPlayingInternal(List<UserMetadata> userMetadatas)
         {
             try
             {
@@ -251,20 +340,7 @@ namespace metagen
                 //if (avatarManager==null) avatarManager = new metagen.AvatarManager();
                 avatarManager = new metagen.AvatarManager();
                 //string reading_directory = dataManager.LastRecordingForWorld(metagen_comp.World);
-                string reading_directory = dataManager.GetRecordingForWorld(metagen_comp.World, this.recording_index);
-                if (reading_directory == null) return;
-
-                List<UserMetadata> userMetadatas;
-                using (var reader = new StreamReader(Path.Combine(reading_directory, "user_metadata.csv")))
-                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                {
-                    userMetadatas = csv.GetRecords<UserMetadata>().ToList();
-                }
-                if (userMetadatas.Where((u, i) => (u.isPublic && u.isRecording)).Count() == 0)
-                {
-                    UniLog.Log("UwU playing an emtpy (or private) recording");
-                    metagen_comp.StopPlaying();
-                }
+                if (userMetadatas == null) return;
                 Dictionary<RefID, AudioOutput> audio_outputs = new Dictionary<RefID, AudioOutput>();
                 foreach (UserMetadata user in userMetadatas)
                 {
@@ -272,10 +348,6 @@ namespace metagen
                     RefID user_id = RefID.Parse(user.userRefId);
                     UniLog.Log(user_id.ToString());
                     user_ids.Add(user_id);
-                    //output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory, user_id.ToString() + "*_streams.dat")[0], FileMode.Open, FileAccess.Read);
-                    output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory, user_id.ToString() + "_streams.dat")[0], FileMode.Open, FileAccess.Read);
-                    BitReaderStream bitstream = new BitReaderStream(output_fss[user_id]);
-                    output_readers[user_id] = new BitBinaryReaderX(bitstream);
                     fake_proxies[user_id] = new List<Tuple<BodyNode, AvatarObjectSlot>>();
                     avatar_pose_nodes[user_id] = new List<Tuple<BodyNode, IAvatarObject>>();
                     avatar_stream_channels[user_id] = new Dictionary<BodyNode, Tuple<bool, bool, bool>>();
@@ -455,7 +527,8 @@ namespace metagen
                             if (!play_hearing) continue;
                             string[] files = Directory.GetFiles(reading_directory, user_id.ToString() + "*_hearing.ogg");
                             audio_file = files.Length > 0 ? files[0] : null;
-                        } else
+                        }
+                        else
                         {
                             if (!play_voice) continue;
                             string[] files = Directory.GetFiles(reading_directory, user_id.ToString() + "*_voice.ogg");
@@ -497,7 +570,7 @@ namespace metagen
                     }
                 }
                 avatars_finished_loading = true;
-                isPlaying = true;
+                if (!external_play_control) isPlaying = true;
                 if (generateAnimation)
                 {
                     animationRecorder.StartRecordingAvatars(avatars, audio_outputs);
@@ -507,7 +580,8 @@ namespace metagen
                     Guid g = Guid.NewGuid();
                     bvhRecorder.StartRecordingAvatars(avatars, g.ToString());
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 UniLog.Log("TwT: " + e.Message);
             }
@@ -570,7 +644,8 @@ namespace metagen
                         finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
                     });
                 });
-            } else
+            }
+            else
             {
                 UniLog.Log("AVATARS COUNT KEK");
                 UniLog.Log(avatars.Count);
@@ -595,5 +670,10 @@ namespace metagen
             avatarManager.has_prepared_avatar = false;
             isPlaying = false;
         }
+        public enum Source
+        {
+            FILE = 0,
+            STREAM = 1,
+        };
     }
 }
