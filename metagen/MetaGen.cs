@@ -315,6 +315,10 @@ namespace metagen
                 {
                     metaRecorder.RecordFrame(deltaT);
                 }
+                if (interacting)
+                {
+                    metaInteraction.InteractionStep(deltaT);
+                }
                 recording_frame_index += 1;
                 utcNow = DateTime.UtcNow;
             }

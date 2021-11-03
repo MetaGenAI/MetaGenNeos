@@ -21,7 +21,10 @@ namespace metagen
         public Dictionary<RefID, FingerPoseStreamManager> finger_stream_drivers = new Dictionary<RefID, FingerPoseStreamManager>();
         public List<RefID> current_users = new List<RefID>();
         public bool isRecording = false;
+        public bool external_control = false;
+        public Source source_type;
         private MetaGen metagen_comp;
+
         public string saving_folder {
             get {
                 return metagen_comp.dataManager.saving_folder;
@@ -135,11 +138,18 @@ namespace metagen
         }
         public void StartRecording()
         {
-            StartRecording("file");
+            this.source_type = Source.FILE;
+            StartRecordingInternal();
         }
-        public void StartRecording(string stream_type)
+        public void StartRecordingExternal()
         {
-            if (stream_type=="file")
+            external_control = true;
+            this.source_type = Source.STREAM;
+            StartRecordingInternal();
+        }
+        public void StartRecordingInternal()
+        {
+            if (this.source_type == Source.FILE)
             {
                 foreach (var userItem in metagen_comp.userMetaData)
                 {
@@ -151,7 +161,7 @@ namespace metagen
                     output_writers[user_id] = new BitBinaryWriterX(bitstream);
                 }
             }
-            if (stream_type == "memory")
+            if (this.source_type == Source.STREAM)
             {
                 foreach (var userItem in metagen_comp.userMetaData)
                 {
@@ -230,8 +240,9 @@ namespace metagen
                 }
                 current_users.Add(user_id);
             }
-            isRecording = true;
+            if (!external_control) isRecording = true;
         }
+
         public void StopRecording()
         {
             foreach (var item in output_writers)
@@ -253,5 +264,10 @@ namespace metagen
         {
 
         }
+        public enum Source
+        {
+            FILE = 0,
+            STREAM = 1,
+        };
     }
 }

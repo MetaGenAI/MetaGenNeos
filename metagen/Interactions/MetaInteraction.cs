@@ -13,15 +13,29 @@ namespace metagen.Interactions
         private MetaGen metagen_comp;
         public VoiceInteraction voiceInteraction;
         public TextInteraction textInteraction;
+        public PoseStreamInteraction poseStreamInteraction;
         public MetaInteraction(MetaGen component)
         {
             metagen_comp = component;
             voiceInteraction = new VoiceInteraction(metagen_comp);
             textInteraction = new TextInteraction(metagen_comp);
+            poseStreamInteraction = new PoseStreamInteraction(metagen_comp);
+        }
+
+        public void InteractionStep(float deltaT)
+        {
+            if (poseStreamInteraction.isInteracting)
+            {
+                poseStreamInteraction.InteractPoseStreams(deltaT);
+            }
         }
 
         public void StartInteracting()
         {
+            if (!poseStreamInteraction.isInteracting)
+            {
+                poseStreamInteraction.StartInteracting();
+            }
             if (!voiceInteraction.isInteracting)
             {
                 voiceInteraction.StartInteracting();
@@ -34,6 +48,10 @@ namespace metagen.Interactions
         }
         public void StopInteracting()
         {
+            if (poseStreamInteraction.isInteracting)
+            {
+                poseStreamInteraction.StopInteracting();
+            }
             if (voiceInteraction.isInteracting)
             {
                 voiceInteraction.StopInteracting();

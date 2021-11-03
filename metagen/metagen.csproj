@@ -18,12 +18,20 @@
 
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="18.0.0" />
-    <PackageReference Include="Google.Protobuf" Version="3.15.6" />
-    <PackageReference Include="Grpc.Core" Version="2.35.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.19.1" />
+    <PackageReference Include="Grpc.Core" Version="2.41.1" />
+    <PackageReference Include="Grpc.Tools" Version="2.41.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Lib.Harmony" Version="2.0.4" />
     <PackageReference Include="SharpAvi" Version="2.1.2" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
+  </ItemGroup>
+
+    <ItemGroup>
+    <Protobuf Include="**/*.proto" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,6 +77,10 @@
     <Reference Include="WindowsBase">
       <HintPath>C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF\WindowsBase.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Update="Interactions\protos\pose_interaction.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

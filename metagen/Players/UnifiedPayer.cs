@@ -45,7 +45,7 @@ namespace metagen
         bool avatars_finished_loading = false;
         World World;
         public bool isPlaying { get; set; }
-        public bool external_play_control = false;
+        public bool external_control = false;
         public Source source_type;
 
         public bool generateAnimation = false;
@@ -255,7 +255,7 @@ namespace metagen
             this.avatar_template = avatar_template;
             this.source_type = Source.STREAM;
             List<UserMetadata> userMetadatas = PrepareMetadatas(num_meta_datas);
-            this.external_play_control = true;
+            this.external_control = true;
             Task.Run(() => StartPlayingInternal(userMetadatas));
         }
         private List<UserMetadata> PrepareMetadatas(int num_meta_datas=1)
@@ -570,7 +570,7 @@ namespace metagen
                     }
                 }
                 avatars_finished_loading = true;
-                if (!external_play_control) isPlaying = true;
+                if (!external_control) isPlaying = true;
                 if (generateAnimation)
                 {
                     animationRecorder.StartRecordingAvatars(avatars, audio_outputs);

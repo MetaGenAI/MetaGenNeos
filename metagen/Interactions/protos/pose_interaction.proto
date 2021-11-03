@@ -1,0 +1,28 @@
+﻿syntax = "proto3";
+
+service PoseInteraction {
+
+rpc SendHeadingBytes(Heading) returns (EmptyMessage);
+rpc GetHeadingBytes(RefIDMessage) returns (Heading);
+rpc SendFrameBytes(Frame) returns (EmptyMessage);
+rpc GetFrameBytes(RefIDMessage) returns (Frame);
+
+}
+
+message EmptyMessage {
+
+}
+
+message RefIDMessage {
+	string ref_id = 1;
+}
+
+message Heading {
+	string ref_id = 1;
+	bytes data = 2;
+}
+
+message Frame {
+	string ref_id = 1;
+	bytes data = 2;
+}
