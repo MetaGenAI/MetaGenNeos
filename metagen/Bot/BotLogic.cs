@@ -185,6 +185,7 @@ namespace metagen
             if (mg.recording_state == OutputState.Started)
             {
                 localized1 = this.GetLocalized("CameraCOntrol.OBS.Recording", (string)null, (Dictionary<string, object>)null);
+                //localized1 = "Recording";
             } else if (mg.playing_state == OutputState.Started)
             {
                 localized1 = "PLAY";
@@ -241,6 +242,7 @@ namespace metagen
             ref color local3 = ref color2;
             button1.SetColors(in local3);
             button.LabelText = this.GetLocalized(key, (string)null, (Dictionary<string, object>)null);
+            //button.LabelText = key;
         }
         protected override void OnDestroy()
         {

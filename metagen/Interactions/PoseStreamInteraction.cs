@@ -7,6 +7,7 @@ using BaseX;
 using FrooxEngine;
 using System.IO;
 using Grpc.Core;
+using Google.Protobuf;
 using RefID = BaseX.RefID;
 
 namespace metagen
@@ -14,6 +15,7 @@ namespace metagen
     public class PoseStreamInteraction : IInteraction
     {
         MetaGen metagen_comp;
+        WebsocketClient wsclient;
         public Dictionary<RefID, BitBinaryReaderX> pose_readers = new Dictionary<RefID, BitBinaryReaderX>();
         public Dictionary<RefID, BitBinaryWriterX> pose_writers = new Dictionary<RefID, BitBinaryWriterX>();
         public bool isInteracting = false;
@@ -31,8 +33,9 @@ namespace metagen
                 BinaryWriterX writer = item.Value;
                 //read heading bytes from GRPC
                 byte[] bs = null;
-                client.GetFrameBytes(new RefIDMessage{ RefId=refID.ToString()}).Data.CopyTo(bs,0);
+                client.GetFrameBytes(new RefIDMessage { RefId = refID.ToString() }).Data.CopyTo(bs, 0);
                 writer.Write(bs);
+                //writer.Write(frame_bs);
             }
             metagen_comp.streamPlayer.PlayStreams();
             metagen_comp.metaRecorder.streamRecorder.RecordStreams(deltaT);
@@ -43,7 +46,7 @@ namespace metagen
                 //send heading bytes to GRPC
                 byte[] byteArray = reader.ReadBytes((int) reader.BaseStream.Length);
                 Google.Protobuf.ByteString byteString = Google.Protobuf.ByteString.CopyFrom(byteArray, 0, byteArray.Length);
-                client.SendFrameBytes(new Frame{ RefId=refID.ToString(), Data=byteString });
+                client.SendFrameBytes(new Frame { RefId = refID.ToString(), Data = byteString });
             }
         }
         private void WriteHeadings()
@@ -54,7 +57,7 @@ namespace metagen
                 BinaryWriterX writer = item.Value;
                 //read heading bytes from GRPC
                 byte[] bs = null;
-                client.GetHeadingBytes(new RefIDMessage{ RefId=refID.ToString()}).Data.CopyTo(bs,0);
+                client.GetHeadingBytes(new RefIDMessage { RefId = refID.ToString() }).Data.CopyTo(bs, 0);
                 writer.Write(bs);
             }
         }
@@ -67,7 +70,7 @@ namespace metagen
                 //send heading bytes to GRPC
                 byte[] byteArray = reader.ReadBytes((int) reader.BaseStream.Length);
                 Google.Protobuf.ByteString byteString = Google.Protobuf.ByteString.CopyFrom(byteArray, 0, byteArray.Length);
-                client.SendHeadingBytes(new Heading{ RefId=refID.ToString(), Data=byteString });
+                client.SendHeadingBytes(new Heading { RefId = refID.ToString(), Data = byteString });
             }
         }
         public void StartInteracting()
@@ -76,6 +79,8 @@ namespace metagen
             channel = new Channel("127.0.0.1:" + (40052).ToString(), ChannelCredentials.Insecure);
             UniLog.Log("Started grpc channel");
             client = new PoseInteraction.PoseInteractionClient(channel);
+            //wsclient = metagen_comp.Slot.AttachComponent<WebsocketClient>();
+            //wsclient.URL.Value = new Uri("http://127.0.0.1:" + (40052).ToString());
             //Acting
             metagen_comp.streamPlayer.PrepareStreamsExternal();
             //RefID user_id = RefID.Parse("IDC00");
