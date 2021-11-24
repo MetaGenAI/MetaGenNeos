@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BaseX;
 
 namespace metagen.Interactions
 {
@@ -24,6 +25,7 @@ namespace metagen.Interactions
 
         public void InteractionStep(float deltaT)
         {
+            //UniLog.Log("InteractionStep");
             if (poseStreamInteraction.isInteracting)
             {
                 poseStreamInteraction.InteractPoseStreams(deltaT);

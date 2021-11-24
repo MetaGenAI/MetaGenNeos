@@ -36,7 +36,10 @@ namespace metagen
             foreach (User user in metagen_comp.World.AllUsers)
             {
                 //if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser) continue;
-                users[user] = dataBase.GetUserData(user.UserID);
+                if (user.UserID != null)
+                    users[user] = dataBase.GetUserData(user.UserID);
+                else
+                    users[user] = dataBase.GetUserData(user.UserName);
             }
         }
         public void AddUserMetaData(User user)
@@ -65,8 +68,11 @@ namespace metagen
             foreach(var item in users)
             {
                 User user = item.Key;
-                bool isRecording = users[user].default_recording;
-                bool isPublic = users[user].default_public;
+                UniLog.Log(item.Value);
+                bool isRecording = item.Value.default_recording;
+                bool isPublic = item.Value.default_public;
+                UniLog.Log(isRecording);
+                UniLog.Log(isPublic);
                 //if (!metagen_comp.record_local_user && user == metagen_comp.World.LocalUser)
                 //{
                 //    isRecording = false;

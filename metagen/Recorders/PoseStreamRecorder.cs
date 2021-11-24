@@ -15,6 +15,7 @@ namespace metagen
     public class PoseStreamRecorder : IRecorder
     {
         public Dictionary<RefID, BitBinaryWriterX> output_writers = new Dictionary<RefID, BitBinaryWriterX>();
+        public Dictionary<RefID, BitBinaryReaderX> output_readers = new Dictionary<RefID, BitBinaryReaderX>();
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
         public Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>> avatar_stream_drivers = new Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>>();
         public Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>>();
@@ -171,6 +172,7 @@ namespace metagen
 
                     BitWriterStream bitstream = new BitWriterStream(memory_stream);
                     output_writers[user_id] = new BitBinaryWriterX(bitstream);
+                    output_readers[user_id] = new BitBinaryReaderX(new BitReaderStream(memory_stream));
                 }
             }
             foreach (var userItem in metagen_comp.userMetaData)

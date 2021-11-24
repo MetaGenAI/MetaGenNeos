@@ -19,7 +19,6 @@
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="18.0.0" />
     <PackageReference Include="Google.Protobuf" Version="3.19.1" />
-    <PackageReference Include="Google.Protobuf.Tools" Version="3.19.1" />
     <PackageReference Include="Grpc.Core" Version="2.41.1" />
     <PackageReference Include="Grpc.Tools" Version="2.41.1">
       <PrivateAssets>all</PrivateAssets>

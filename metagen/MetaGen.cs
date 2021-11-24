@@ -40,6 +40,7 @@ namespace metagen
         public OutputState interacting_state = OutputState.Stopped;
         private DateTime utcNow;
         private DateTime recordingBeginTime;
+        private DateTime interactingBeginTime;
         private DateTime playingBeginTime;
         public DataManager dataManager;
 
@@ -77,6 +78,7 @@ namespace metagen
         public MetaDataManager metaDataManager;
         public DataBase dataBase;
         int recording_frame_index = 0;
+        int interacting_frame_index = 0;
         int playing_frame_index = 0;
         float MAX_CHUNK_LEN_MIN = 10f;
         public event Action<User> OnUserLeftCallback;
@@ -147,6 +149,13 @@ namespace metagen
             get
             {
                 return (float)(recording ? (DateTime.UtcNow - recordingBeginTime).TotalMilliseconds : 0f);
+            }
+        }
+        public float interacting_time
+        {
+            get
+            {
+                return (float)(interacting ? (DateTime.UtcNow - interactingBeginTime).TotalMilliseconds : 0f);
             }
         }
         public float playing_time
@@ -311,15 +320,22 @@ namespace metagen
             int new_frame = (int)Math.Floor(recording_time / 33.33333f);
             if (new_frame > recording_frame_index)
             {
+                //UniLog.Log(interacting);
                 if (recording)
                 {
                     metaRecorder.RecordFrame(deltaT);
                 }
+                recording_frame_index += 1;
+                utcNow = DateTime.UtcNow;
+            }
+            new_frame = (int)Math.Floor(interacting_time / 33.33333f);
+            if (new_frame > interacting_frame_index)
+            {
                 if (interacting)
                 {
                     metaInteraction.InteractionStep(deltaT);
                 }
-                recording_frame_index += 1;
+                interacting_frame_index += 1;
                 utcNow = DateTime.UtcNow;
             }
 
@@ -394,10 +410,10 @@ namespace metagen
             interacting = true;
             //TODO: need to add these if we are gonna have interaction with a certain fps?
             interacting_state = OutputState.Starting;
-            //recording_frame_index = 0;
+            interacting_frame_index = 0;
             //Set the recordings time to now
-            //utcNow = DateTime.UtcNow;
-            //recordingBeginTime = DateTime.UtcNow;
+            utcNow = DateTime.UtcNow;
+            interactingBeginTime = DateTime.UtcNow;
             if (!metaInteraction.isInteracting)
             {
                 metaInteraction.StartInteracting();

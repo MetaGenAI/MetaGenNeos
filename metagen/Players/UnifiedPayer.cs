@@ -22,6 +22,7 @@ namespace metagen
         private DateTime utcNow;
         public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
         public Dictionary<RefID, BitBinaryReaderX> output_readers = new Dictionary<RefID, BitBinaryReaderX>();
+        public Dictionary<RefID, BinaryWriter> output_writers = new Dictionary<RefID, BinaryWriter>();
         //public Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>>();
         public Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>> fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>>();
         public Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>>();
@@ -75,13 +76,15 @@ namespace metagen
             //{
             try
             {
-                foreach (RefID user_id in user_ids)
+                foreach (var item1 in output_readers)
                 {
+                    RefID user_id = item1.Key;
                     //Decode the streams
                     BinaryReaderX reader = output_readers[user_id];
 
                     //READ deltaT
                     float deltaT = reader.ReadSingle();
+                    UniLog.Log(deltaT);
                     int node_index = 0;
                     //foreach (var item in fake_proxies[user_id])
                     foreach (var item in avatar_pose_nodes[user_id])
@@ -226,7 +229,8 @@ namespace metagen
             {
                 UniLog.Log("OwO: " + e.Message);
                 //this.StopPlaying();
-                metagen_comp.StopPlaying();
+                if (!external_control)
+                    metagen_comp.StopPlaying();
             }
             //});
 
@@ -245,6 +249,7 @@ namespace metagen
             this.play_hearing = metagen_comp.play_hearing;
             this.avatar_template = avatar_template;
             this.source_type = Source.FILE;
+            this.external_control = false;
             avatar_loading_task = Task.Run(StartPlayingInternal);
         }
         public void StartPlayingExternal(int num_meta_datas = 1, Slot avatar_template = null)
@@ -270,7 +275,7 @@ namespace metagen
                 {
                     userMetadatas = csv.GetRecords<UserMetadata>().ToList();
                 }
-                if (userMetadatas.Where((u, i) => (u.isPublic && u.isRecording)).Count() == 0)
+                if (userMetadatas.Where((u, i) => ((u.isPublic || metagen_comp.admin_mode) && u.isRecording)).Count() == 0)
                 {
                     UniLog.Log("UwU playing an emtpy (or private) recording");
                     metagen_comp.StopPlaying();
@@ -319,6 +324,7 @@ namespace metagen
                 else if (this.source_type == Source.STREAM)
                 {
                     MemoryStream memoryStream = new MemoryStream();
+                    output_writers[user_id] = new BinaryWriter(memoryStream);
                     bitstream = new BitReaderStream(memoryStream);
                 }
                 output_readers[user_id] = new BitBinaryReaderX(bitstream);
@@ -368,32 +374,42 @@ namespace metagen
                     boness[user_id] = avatar.GetComponentInChildren<Rig>()?.Bones.ToList();
 
                     //READ absolute time
-                    output_readers[user_id].ReadSingle();
+                    UniLog.Log(output_readers[user_id].ReadSingle());
                     //READ version identifier
                     int version_number = output_readers[user_id].ReadInt32();
                     float3 relative_avatar_scale = new float3(1f, 1f, 1f);
                     int numBodyNodes = version_number;
+                    UniLog.Log("version_number");
+                    UniLog.Log(version_number);
                     if (version_number >= 1000)
                     {
                         //READ relative avatar scale
-                        relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 0);
-                        relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 1);
-                        relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 2);
+                        relative_avatar_scale = relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 0);
+                        UniLog.Log(relative_avatar_scale.X);
+                        relative_avatar_scale = relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 1);
+                        UniLog.Log(relative_avatar_scale.Y);
+                        relative_avatar_scale = relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 2);
+                        UniLog.Log(relative_avatar_scale.Z);
                         //READ number of body nodes
                         numBodyNodes = output_readers[user_id].ReadInt32();
+                        UniLog.Log(numBodyNodes);
                     }
                     for (int i = 0; i < numBodyNodes; i++)
                     {
                         //READ body node type
                         int nodeInt = output_readers[user_id].ReadInt32();
+                        UniLog.Log(nodeInt);
                         //READ if scale stream exists
                         bool scale_exists = output_readers[user_id].ReadBoolean();
+                        UniLog.Log(scale_exists);
                         //READ if position stream exists
                         bool pos_exists = output_readers[user_id].ReadBoolean();
+                        UniLog.Log(pos_exists);
                         //READ if rotation stream exists
                         bool rot_exists = output_readers[user_id].ReadBoolean();
+                        UniLog.Log(rot_exists);
                         BodyNode bodyNodeType = (BodyNode)nodeInt;
-                        if (version_number == 1000)
+                        if (version_number < 1000)
                         {
                             bodyNodeType = (BodyNode)Enum.Parse(typeof(BodyNode), Enum.GetName(typeof(OldBodyNodes), (OldBodyNodes)nodeInt));
                         }
@@ -473,8 +489,9 @@ namespace metagen
                     }
                     //READ whether hands are being tracked
                     hands_are_tracked[user_id] = output_readers[user_id].ReadBoolean();
+                    UniLog.Log(hands_are_tracked[user_id]);
                     //READ whether metacarpals are being tracked
-                    output_readers[user_id].ReadBoolean();
+                    UniLog.Log(output_readers[user_id].ReadBoolean());
                     //finger_sources[user_id] = avatar.GetComponentInChildren<FingerPlayerSource>(null, true);
                     List<HandPoser> these_hand_posers = avatar.GetComponentsInChildren<HandPoser>(null, excludeDisabled: false, includeLocal: false);
                     UniLog.Log("getting finger rotation vars");
