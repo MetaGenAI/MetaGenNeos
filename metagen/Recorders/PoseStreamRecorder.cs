@@ -70,7 +70,10 @@ namespace metagen
                         float3 scale = slot.LocalScale;
                         scale = slot.Parent.LocalScaleToSpace(scale,driver.Slot.Parent);
                         if (node == BodyNode.Root)
-                            scale = driver.TargetScale;
+                        {
+                            //scale = driver.TargetScale;
+                            scale = slot.Parent.LocalScaleToGlobal(scale);
+                        }
                         writer.Write((float)(scale.x));
                         writer.Write((float)(scale.y));
                         writer.Write((float)(scale.z));
@@ -81,8 +84,10 @@ namespace metagen
                         float3 position = slot.LocalPosition;
                         position = slot.Parent.LocalPointToSpace(position,driver.Slot.Parent);
                         if (node == BodyNode.Root)
-                        if (node == BodyNode.Root)
-                            position = driver.TargetPosition;
+                        {
+                            //position = driver.TargetPosition;
+                            position = slot.Parent.LocalPointToGlobal(position);
+                        }
                         writer.Write(position.x);
                         writer.Write(position.y);
                         writer.Write(position.z);
@@ -93,7 +98,10 @@ namespace metagen
                         floatQ rotation = slot.LocalRotation;
                         rotation = slot.Parent.LocalRotationToSpace(rotation,driver.Slot.Parent);
                         if (node == BodyNode.Root)
-                            rotation = driver.TargetRotation;
+                        {
+                            //rotation = driver.TargetRotation;
+                            rotation = slot.Parent.LocalRotationToGlobal(rotation);
+                        }
                         writer.Write(rotation.x);
                         writer.Write(rotation.y);
                         writer.Write(rotation.z);

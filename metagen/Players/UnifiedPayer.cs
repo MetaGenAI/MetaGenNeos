@@ -111,6 +111,10 @@ namespace metagen
                             z = reader.ReadSingle();
                             float3 scale = new float3(x, y, z);
                             scale = avatarObject.Slot.Parent.LocalScaleToSpace(scale, slot.Parent);
+                            if (node == BodyNode.Root)
+                            {
+                                scale = slot.Parent.GlobalScaleToLocal(scale);
+                            }
                             slot.LocalScale = scale;
                             //UniLog.Log(slot.LocalScale.ToString());
                         }
@@ -122,6 +126,10 @@ namespace metagen
                             z = reader.ReadSingle();
                             float3 position = new float3(x, y, z);
                             position = avatarObject.Slot.Parent.LocalPointToSpace(position, slot.Parent);
+                            if (node == BodyNode.Root)
+                            {
+                                position = slot.Parent.GlobalPointToLocal(position);
+                            }
                             slot.LocalPosition = position;
                             //UniLog.Log(slot.LocalPosition.ToString());
                         }
@@ -134,6 +142,10 @@ namespace metagen
                             w = reader.ReadSingle();
                             floatQ rotation = new floatQ(x, y, z, w);
                             rotation = avatarObject.Slot.Parent.LocalRotationToSpace(rotation, slot.Parent);
+                            if (node == BodyNode.Root)
+                            {
+                                rotation = slot.Parent.GlobalRotationToLocal(rotation);
+                            }
                             slot.LocalRotation = rotation;
                             //UniLog.Log(slot.LocalRotation.ToString());
                         }
