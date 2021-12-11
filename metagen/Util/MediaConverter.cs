@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading;
 using BaseX;
+using System.Runtime.InteropServices;
 
 namespace metagen.Util
 {
@@ -100,7 +101,7 @@ namespace metagen.Util
                         //processes.Add(ffmpegProcess);
                         ProcessStartInfo processInfo = new ProcessStartInfo();
 #if NOHL
-                        processInfo.FileName = "ffmpeg.exe";
+                        processInfo.FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "ffmpeg" : "ffmpeg.exe";
 #else
                         //processInfo.FileName = "ffmpeg.exe";
                         processInfo.FileName = "ffmpeg";
