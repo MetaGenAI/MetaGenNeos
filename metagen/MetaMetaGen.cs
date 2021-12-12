@@ -108,6 +108,12 @@ namespace FrooxEngine.LogiX
             FrooxEngine.Engine.Current.Cloud.Friends.FriendRequestCountChanged += ProcessFriendRequest2;
             FrooxEngine.Engine.Current.Cloud.Friends.FriendRemoved += ProcessFriendRemoved;
             dataBase = new DataBase();
+            
+            if (!is_in_VR_mode && this.Engine.WorldManager.FocusedWorld?.LocalUser?.ActiveVoiceMode != VoiceMode.Mute)
+            {
+                this.InputInterface.IsMuted = true;
+                this.Engine.WorldManager.FocusedWorld.LocalUser.VoiceMode = VoiceMode.Mute;
+            }
         }
 
         private void ProcessFriendRemoved(Friend friend)
@@ -291,17 +297,14 @@ namespace FrooxEngine.LogiX
                     }
                 }
 
-                //if (this.Engine.WorldManager.FocusedWorld?.LocalUser?.ActiveVoiceMode != VoiceMode.Mute)
-                //{
-                //    this.InputInterface.IsMuted = true;
-                //    this.Engine.WorldManager.FocusedWorld.LocalUser.VoiceMode = VoiceMode.Mute;
-                //}
             }
 
             if (dataBase != null && dataBase.should_update)
             {
                 Task.Run(() => dataBase.SaveDatabase());
             }
+            // UniLog.Log(this.Engine.WorldManager.FocusedWorld?.LocalUser?.ActiveVoiceMode);
+
         }
         private void FocusedWorld(World world)
         {
