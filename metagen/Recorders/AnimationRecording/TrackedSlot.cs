@@ -65,7 +65,7 @@ namespace NeosAnimationToolset
                 return;
             }
 
-            Slot s = root.AddSlot((rte == ResultTypeEnum.CREATE_VISUAL || rte == ResultTypeEnum.CREATE_NON_PERSISTENT_VISUAL) ? "Visual" : "Empty Object", rte != ResultTypeEnum.CREATE_NON_PERSISTENT_VISUAL);
+            Slot s = root.AddSlot((rte == ResultTypeEnum.CREATE_VISUAL || rte == ResultTypeEnum.CREATE_NON_PERSISTENT_VISUAL) ? "Visual" : slot.Target.Name, rte != ResultTypeEnum.CREATE_NON_PERSISTENT_VISUAL);
             newSlot.Target = s;
             if (positionTrack != null) { anim.Fields.Add().Target = s.Position_Field; }
             if (rotationTrack != null) { anim.Fields.Add().Target = s.Rotation_Field; }

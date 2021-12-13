@@ -61,7 +61,7 @@ namespace FrooxEngine
             //mg = this.Slot.GetComponent<BotLogic>().mg;
             mg = FrooxEngine.LogiX.MetaMetaGen.current_metagen;
             //float2 float2 = new float2(2300f, 8000f);
-            float2 float2 = new float2(2300f, 6400f);
+            float2 float2 = new float2(2300f, 6500f);
             this.CanvasSize = float2 * 1.0f;
             this.PhysicalHeight = this.Slot.Parent.LocalScaleToGlobal(0.3f);
             this.Panel.ShowHeader.Value = false;
@@ -237,7 +237,7 @@ namespace FrooxEngine
 
             //Description
             uiBuilder1.Style.MinHeight = 350f;
-            Text text1 = uiBuilder1.Text("<b>This recording system is currenlty in Beta. Expect bugs</b>. MetaGen is a project to explore the intersection between AI and VR technologies, for Science, Art, and Wonder");
+            Text text1 = uiBuilder1.Text("<b>This recording system is currenlty in Beta. Expect bugs</b>. MetaGen is a project to explore the intersection between AI and VR technologies, for Science, Art, and Wonder. See more details at http://metagen.ai");
             uiBuilder1.Style.MinHeight = 32f;
 
             ////Recording checkbox

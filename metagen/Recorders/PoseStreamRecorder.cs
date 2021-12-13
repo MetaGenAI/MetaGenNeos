@@ -187,7 +187,7 @@ namespace metagen
             {
                 User user = userItem.Key;
                 UserMetadata metadata = userItem.Value;
-                if (!(metadata.isRecording || metagen_comp.record_everyone)) continue;
+                if (!metadata.isRecording || (metagen_comp.LocalUser == user && !metagen_comp.record_local_user)) continue;
                 RefID user_id = user.ReferenceID;
                 avatar_stream_drivers[user_id] = new List<Tuple<BodyNode, TransformStreamDriver>>();
                 List<AvatarObjectSlot> components = user.Root.Slot.GetComponentsInChildren<AvatarObjectSlot>();

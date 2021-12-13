@@ -32,7 +32,7 @@ namespace metagen
         public bool recording = false;
         public bool interacting = false;
         public bool record_local_user = false;
-        public bool record_only_local_user = true;
+        public bool record_only_local_user = false;
         public bool silent_mode = false;
         public bool record_everyone = false;
         public bool admin_mode = false;

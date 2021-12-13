@@ -36,9 +36,10 @@ namespace FrooxEngine.LogiX
         bool is_in_VR_mode = false;
         bool auto_set_status = false;
         bool record_everyone = false;
-        bool admin_mode = true;
+        bool admin_mode = false;
         bool use_bot_ui = true;
         bool use_silent_mode = false;
+        bool first_common_update = true;
         Slot earsSlot;
         public static MetaGen current_metagen
         {
@@ -108,12 +109,6 @@ namespace FrooxEngine.LogiX
             FrooxEngine.Engine.Current.Cloud.Friends.FriendRequestCountChanged += ProcessFriendRequest2;
             FrooxEngine.Engine.Current.Cloud.Friends.FriendRemoved += ProcessFriendRemoved;
             dataBase = new DataBase();
-            
-            if (!is_in_VR_mode && this.Engine.WorldManager.FocusedWorld?.LocalUser?.ActiveVoiceMode != VoiceMode.Mute)
-            {
-                this.InputInterface.IsMuted = true;
-                this.Engine.WorldManager.FocusedWorld.LocalUser.VoiceMode = VoiceMode.Mute;
-            }
         }
 
         private void ProcessFriendRemoved(Friend friend)
@@ -281,6 +276,14 @@ namespace FrooxEngine.LogiX
 
         protected override void OnCommonUpdate()
         {
+            if (first_common_update) {
+                if (!is_in_VR_mode && this.Engine.WorldManager.FocusedWorld?.LocalUser?.ActiveVoiceMode != VoiceMode.Mute)
+                {
+                    this.InputInterface.IsMuted = true;
+                    this.Engine.WorldManager.FocusedWorld.LocalUser.VoiceMode = VoiceMode.Mute;
+                }
+                first_common_update=false;
+            }
             if (!is_in_VR_mode)
             {
                 if (auto_set_status)
@@ -296,6 +299,8 @@ namespace FrooxEngine.LogiX
                             FrooxEngine.Engine.Current.Cloud.Status.OnlineStatus = OnlineStatus.Online;
                     }
                 }
+
+            
 
             }
 

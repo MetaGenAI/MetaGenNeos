@@ -111,10 +111,10 @@ namespace NeosAnimationToolset
                 User user = item.Key;
                 UserMetadata metadata = item.Value;
                 UniLog.Log("user "+user.UserName);
-                if (!metadata.isRecording) continue;
+                if (!metadata.isRecording || (metagen_comp.LocalUser == user && !metagen_comp.record_local_user)) continue;
                 RefID user_id = user.ReferenceID;
-                Slot rootSlot = user.Root?.Slot;
-                SimpleAvatarProtection protectionComponent = rootSlot?.GetComponentInChildren<SimpleAvatarProtection>();
+                Slot userRootSlot = user.Root?.Slot;
+                SimpleAvatarProtection protectionComponent = userRootSlot?.GetComponentInChildren<SimpleAvatarProtection>();
                 if (protectionComponent != null && !metagen_comp.admin_mode) continue;
                 trackedSlots[user_id] = new List<Tuple<BodyNode, TrackedSlot>>();
 
@@ -123,7 +123,8 @@ namespace NeosAnimationToolset
 
                 if (record_audio_sources)
                 {
-                    AvatarAudioOutputManager comp = user.Root.Slot.GetComponentInChildren<AvatarAudioOutputManager>();
+                    AvatarAudioOutputManager comp = user.Root.Slot.GetComponentInChildren<AvatarRoot>().Slot?.GetComponentInChildren<AvatarAudioOutputManager>();
+                    if (comp == null) comp = user.Root.Slot.GetComponentInChildren<AvatarAudioOutputManager>();
                     if (comp != null)
                     {
                         AudioOutput audio_output = comp.AudioOutput.Target;
@@ -132,6 +133,7 @@ namespace NeosAnimationToolset
                         trackedSlot.slot.Target = containingSlot;
                         trackedSlot.ResultType.Value = ResultTypeEnum.COPY_COMPONENTS;
                         trackedSlot.position.Value = true;
+                        // trackedSlot.rotation.Value = true;
                         audioSources[user_id] = trackedSlot;
                         UniLog.Log("Added audio source for animation recorder");
                     }
@@ -139,7 +141,7 @@ namespace NeosAnimationToolset
 
                 if (record_proxies)
                 {
-                    List<AvatarObjectSlot> components = rootSlot?.GetComponentsInChildren<AvatarObjectSlot>();
+                    List<AvatarObjectSlot> components = userRootSlot?.GetComponentsInChildren<AvatarObjectSlot>();
                     //WRITE the absolute time
                     foreach (AvatarObjectSlot comp in components)
                     {
@@ -152,7 +154,7 @@ namespace NeosAnimationToolset
                                 TransformStreamDriver driver = comp.Slot.GetComponent<TransformStreamDriver>();
                                 TrackedSlot trackedSlot = recordedSlots.Add();
                                 trackedSlots[user_id].Add(new Tuple<BodyNode, TrackedSlot>(comp.Node, trackedSlot));
-                                trackedSlot.slot.Target = rootSlot;
+                                trackedSlot.slot.Target = userRootSlot;
                                 //trackedSlot.rootSlot.Target = rootSlot.Parent;
                                 trackedSlot.scale.Value = driver.ScaleStream.Target != null;
                                 trackedSlot.position.Value = driver.PositionStream.Target != null;
@@ -173,7 +175,7 @@ namespace NeosAnimationToolset
                             }
                         }
                     }
-                    List<HandPoser> these_hand_posers = rootSlot?.GetComponentsInChildren<HandPoser>(null, excludeDisabled: false, includeLocal: false);
+                    List<HandPoser> these_hand_posers = userRootSlot?.GetComponentsInChildren<HandPoser>(null, excludeDisabled: false, includeLocal: false);
                     //Fingers
                     foreach (HandPoser hand_poser in these_hand_posers)
                     {
@@ -211,7 +213,7 @@ namespace NeosAnimationToolset
                 }
                 if (record_smr)
                 {
-                    List<SkinnedMeshRenderer> skinnedMeshRenderers = rootSlot?.GetComponentsInChildren<SkinnedMeshRenderer>();
+                    List<SkinnedMeshRenderer> skinnedMeshRenderers = userRootSlot?.GetComponentsInChildren<SkinnedMeshRenderer>();
                     if (skinnedMeshRenderers != null)
                     {
                         foreach (SkinnedMeshRenderer meshRenderer in skinnedMeshRenderers)
@@ -226,7 +228,7 @@ namespace NeosAnimationToolset
                         }
                         UniLog.Log("Added skinned meshes for animation recorder");
                     }
-                    List<MeshRenderer> meshRenderersUser = rootSlot?.GetComponentInChildren<AvatarRoot>()?.Slot.GetComponentsInChildren<MeshRenderer>();
+                    List<MeshRenderer> meshRenderersUser = userRootSlot?.GetComponentInChildren<AvatarRoot>()?.Slot.GetComponentsInChildren<MeshRenderer>();
                     if (meshRenderersUser != null)
                     {
                         foreach(MeshRenderer meshRenderer in meshRenderersUser)
@@ -249,6 +251,8 @@ namespace NeosAnimationToolset
             {
                 foreach (Slot s in extraMeshesHolders)
                 {
+                    SimpleAvatarProtection protectionComponent = s?.GetComponentInChildren<SimpleAvatarProtection>();
+                    if (protectionComponent != null && !metagen_comp.admin_mode) continue;
                     List<ReferenceField<Slot>> referenceSources = s.GetComponentsInChildren<ReferenceField<Slot>>();
                     foreach(ReferenceField<Slot> referenceSource in referenceSources)
                     {

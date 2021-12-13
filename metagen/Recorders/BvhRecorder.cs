@@ -170,7 +170,7 @@ namespace metagen
                 User user = item.Key;
                 UserMetadata metadata = item.Value;
                 UniLog.Log("user " + user.UserName);
-                if (!(metadata.isRecording || metagen_comp.record_everyone)) continue;
+                if (!metadata.isRecording || (metagen_comp.LocalUser == user && !metagen_comp.record_local_user)) continue;
                 RefID user_id = user.ReferenceID;
                 Slot rootSlot = user.Root?.Slot;
                 avatar_roots[user_id] = rootSlot;

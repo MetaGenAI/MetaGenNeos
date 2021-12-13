@@ -92,7 +92,7 @@ namespace metagen
             {
                 User user = item.Key;
                 UserMetadata metadata = item.Value;
-                if (!(metadata.isRecording || metagen_comp.record_everyone)) continue;
+                if (!metadata.isRecording || (metagen_comp.LocalUser == user && !metagen_comp.record_local_user)) continue;
                 RefID user_id = user.ReferenceID;
                 current_users_ids.Add(user_id.ToString());
                 AvatarAudioOutputManager comp = user.Root.Slot.GetComponentInChildren<AvatarAudioOutputManager>();
@@ -146,7 +146,7 @@ namespace metagen
                 Task task2 = Task.Run(() =>
                 {
                     int iter = 0;
-                    while (!File.Exists(saving_folder + "/" + user_id + "_voice.ogg") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
+                    while (File.Exists(saving_folder + "/" + user_id + "_voice.wav") && !File.Exists(saving_folder + "/" + user_id + "_voice.ogg") && iter <= MAX_WAIT_ITERS) { Thread.Sleep(10); iter += 1; }
                 });
                 tasks[i] = task2;
             }

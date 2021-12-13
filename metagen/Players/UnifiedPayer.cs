@@ -256,6 +256,8 @@ namespace metagen
 
         public void StartPlaying(int recording_index = 0, Slot avatar_template = null)
         {
+            SimpleAvatarProtection protectionComponent = avatar_template?.GetComponentInChildren<SimpleAvatarProtection>();
+            if (protectionComponent != null && !metagen_comp.admin_mode) return;
             this.recording_index = recording_index;
             this.play_voice = metagen_comp.play_voice;
             this.play_hearing = metagen_comp.play_hearing;
@@ -266,6 +268,8 @@ namespace metagen
         }
         public void StartPlayingExternal(int num_meta_datas = 1, Slot avatar_template = null)
         {
+            SimpleAvatarProtection protectionComponent = avatar_template?.GetComponentInChildren<SimpleAvatarProtection>();
+            if (protectionComponent != null && !metagen_comp.admin_mode) return;
             this.recording_index = -1;
             this.play_voice = false;
             this.play_hearing = false;

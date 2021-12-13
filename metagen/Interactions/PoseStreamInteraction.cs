@@ -95,12 +95,14 @@ namespace metagen
         }
         public void StartInteracting()
         {
+            metagen_comp.StartTask(async ()=>this.StartInteractingInternal());
+        }
+        private void StartInteractingInternal() {
             try
             {
                 UniLog.Log("Start pose stream interaction");
                 channel = new Channel("127.0.0.1:" + (40052).ToString(), ChannelCredentials.Insecure);
                 UniLog.Log("Started grpc channel");
-                if (channel.State != ChannelState.Ready) return;
                 client = new PoseInteraction.PoseInteractionClient(channel);
                 //wsclient = metagen_comp.Slot.AttachComponent<WebsocketClient>();
                 //wsclient.URL.Value = new Uri("http://127.0.0.1:" + (40052).ToString());
