@@ -117,7 +117,12 @@ namespace metagen
                 WriteHeadings();
                 metagen_comp.streamPlayer.play_hearing = false;
                 metagen_comp.streamPlayer.play_voice = false;
-                metagen_comp.streamPlayer.StartPlayingExternal();
+                UniLog.Log("metagen_comp.botComponent");
+                UniLog.Log(metagen_comp.botComponent);
+                UniLog.Log("metagen_comp.botComponent.panelUI");
+                UniLog.Log(metagen_comp.botComponent.panelUI);
+                Slot avatar = metagen_comp.botComponent.panelUI._avatarRefField.Target.Reference.Target;
+                metagen_comp.streamPlayer.StartPlayingExternal(1,avatar);
                 metagen_comp.metaRecorder.streamRecorder.StartRecordingExternal();
                 foreach (var item in metagen_comp.metaRecorder.streamRecorder.output_readers)
                 {
