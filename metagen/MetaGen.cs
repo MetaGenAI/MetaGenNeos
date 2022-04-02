@@ -91,6 +91,9 @@ namespace metagen
         public Slot config_slot = null;
         public Slot interaction_slot = null;
         public Slot text_interaction_slot = null;
+        public Slot field_interaction_slot = null;
+        public Slot input_interaction_fields_slot = null;
+        public Slot output_interaction_fields_slot = null;
         private Slot users_config_slot = null;
         public DynamicVariableSpace users_config_space = null;
         public DynamicVariableSpace config_space = null;
@@ -230,6 +233,18 @@ namespace metagen
                 text_interaction_slot.CreateVariable<Sync<string>>("output field", null);
                 text_interaction_slot.CreateVariable<Sync<string>>("input field", null);
             }
+
+            field_interaction_slot = interaction_slot.FindChild((Slot s) => s.Name == "metagen field interaction");
+            if (field_interaction_slot == null)
+            {
+                field_interaction_slot = interaction_slot.AddSlot("metagen field interaction");
+                input_interaction_fields_slot = field_interaction_slot.AddSlot("input fields");
+                output_interaction_fields_slot = field_interaction_slot.AddSlot("output fields");
+            }
+            input_interaction_fields_slot.ChildAdded -= Interaction_fields_slot_ChildAdded;
+            input_interaction_fields_slot.ChildAdded += Interaction_fields_slot_ChildAdded;
+            output_interaction_fields_slot.ChildAdded -= Interaction_fields_slot_ChildAdded;
+            output_interaction_fields_slot.ChildAdded += Interaction_fields_slot_ChildAdded;
 
             extra_meshes_slot = config_slot.FindChild((Slot s) => s.Name == "metagen extra meshes");
             if (extra_meshes_slot == null) extra_meshes_slot = config_slot.AddSlot("metagen extra meshes");
@@ -530,6 +545,11 @@ namespace metagen
         {
             if (child.GetComponent<ReferenceField<Slot>>() == null)
                 child.AttachComponent<ReferenceField<Slot>>();
+        }
+        private void Interaction_fields_slot_ChildAdded(Slot slot, Slot child)
+        {
+            if (child.GetComponent<ReferenceField<IField>>() == null)
+                child.AttachComponent<ReferenceField<IField>>();
         }
         private void Extra_fields_slot_ChildAdded(Slot slot, Slot child)
         {
