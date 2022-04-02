@@ -67,17 +67,17 @@ namespace VideoConverter
                         Console.WriteLine("converting " + fi.FullName);
                         string new_name = fi.FullName.Substring(0, fi.FullName.Length - 10) + "vision.mp4";
                         string ffmpgCmdText;
-                        ffmpegProcess.StartInfo = new ProcessStartInfo
-                            {
-                                processInfo.FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "ffmpeg.exe" : "ffmpeg";
-                                processInfo.Arguments = $"-hide_banner -loglevel warning -y -i \"{fi.FullName}\" \"{new_name}\"";
-                            };
-                        ffmpegProcess.EnableRaisingEvents = true;
-                        // ffmpegProcess.Exited += (object sender, EventArgs target) => DeleteFile((string) fi.FullName.Clone());
-                        // ffmpegProcess.Exited += (object sender, EventArgs target) => DeleteFile(fi.FullName);
-                        ffmpegProcess.Exited += (object sender, EventArgs target) => fi.Delete();
-                        ffmpegProcess.Start();
-                        ffmpegProcess.WaitForExit();
+                        //ffmpegProcess.StartInfo = new ProcessStartInfo
+                        //    {
+                        //        processInfo.FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "ffmpeg.exe" : "ffmpeg";
+                        //        processInfo.Arguments = $"-hide_banner -loglevel warning -y -i \"{fi.FullName}\" \"{new_name}\"";
+                        //    };
+                        //ffmpegProcess.EnableRaisingEvents = true;
+                        //// ffmpegProcess.Exited += (object sender, EventArgs target) => DeleteFile((string) fi.FullName.Clone());
+                        //// ffmpegProcess.Exited += (object sender, EventArgs target) => DeleteFile(fi.FullName);
+                        //ffmpegProcess.Exited += (object sender, EventArgs target) => fi.Delete();
+                        //ffmpegProcess.Start();
+                        //ffmpegProcess.WaitForExit();
                         //ffmpegProcess.ErrorDataReceived += (object sender, DataReceivedEventArgs target) => DeleteFile((string) fi.FullName.Clone());
                         //ffmpegProcess.Disposed += (object sender, EventArgs target) => { DeleteFile(fi.FullName); }; 
                     }
