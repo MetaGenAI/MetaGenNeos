@@ -27,7 +27,7 @@ namespace metagen
 {
     public class MetaGen : FrooxEngine.Component
     {
-        public bool playing = false;
+        //public bool playing = false;
         public OutputState playing_state = OutputState.Stopped;
         public bool recording = false;
         public bool interacting = false;
@@ -66,6 +66,8 @@ namespace metagen
         public bool use_grpc_player = false;
         public bool generate_animation_play = true;
         private GrpcPlayer grpcStreamPlayer;
+
+        public bool recording_controllers = false;
 
         public bool recording_faces = false;
 
@@ -168,6 +170,13 @@ namespace metagen
                 return (float)(playing ? (DateTime.UtcNow - playingBeginTime).TotalMilliseconds : 0f);
             }
         }
+        public bool playing
+        {
+            get
+            {
+                return streamPlayer.isPlaying;
+            }
+        }
 
         protected override void OnAttach()
         {
@@ -177,6 +186,7 @@ namespace metagen
         {
             recording_streams = true;
             recording_faces = true;
+            recording_controllers = true;
             recording_animation = true;
             recording_voice = true;
             //recording_hearing = true;
@@ -238,11 +248,19 @@ namespace metagen
             if (field_interaction_slot == null)
             {
                 field_interaction_slot = interaction_slot.AddSlot("metagen field interaction");
+            }
+            input_interaction_fields_slot = field_interaction_slot.FindChild((Slot s) => s.Name == "input fields");
+            if (input_interaction_fields_slot == null)
+            {
                 input_interaction_fields_slot = field_interaction_slot.AddSlot("input fields");
-                output_interaction_fields_slot = field_interaction_slot.AddSlot("output fields");
             }
             input_interaction_fields_slot.ChildAdded -= Interaction_fields_slot_ChildAdded;
             input_interaction_fields_slot.ChildAdded += Interaction_fields_slot_ChildAdded;
+            output_interaction_fields_slot = field_interaction_slot.FindChild((Slot s) => s.Name == "output fields");
+            if (output_interaction_fields_slot == null)
+            {
+                output_interaction_fields_slot = field_interaction_slot.AddSlot("output fields");
+            }
             output_interaction_fields_slot.ChildAdded -= Interaction_fields_slot_ChildAdded;
             output_interaction_fields_slot.ChildAdded += Interaction_fields_slot_ChildAdded;
 
@@ -503,7 +521,7 @@ namespace metagen
         {
             UniLog.Log("Start playing");
             SetUpConfigSlot();
-            playing = true;
+            //playing = true;
             playing_state = OutputState.Started;
             playingBeginTime = DateTime.UtcNow;
             playing_frame_index = 0;
@@ -524,7 +542,7 @@ namespace metagen
         public void StopPlaying()
         {
             UniLog.Log("Stop playing");
-            playing = false;
+            //playing = false;
             if (grpcStreamPlayer.isPlaying)
                 grpcStreamPlayer.StopPlaying();
             if (streamPlayer.isPlaying)

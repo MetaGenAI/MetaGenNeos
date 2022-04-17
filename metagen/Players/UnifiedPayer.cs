@@ -20,9 +20,23 @@ namespace metagen
     public class UnifiedPayer : IPlayer
     {
         private DateTime utcNow;
-        public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
-        public Dictionary<RefID, BitBinaryReaderX> output_readers = new Dictionary<RefID, BitBinaryReaderX>();
+        public Dictionary<RefID, FileStream> pose_streams_fss = new Dictionary<RefID, FileStream>();
+        public Dictionary<RefID, FileStream> controller_streams_fss = new Dictionary<RefID, FileStream>();
+        public Dictionary<RefID, BitBinaryReaderX> pose_streams_readers = new Dictionary<RefID, BitBinaryReaderX>();
+        public Dictionary<RefID, BitBinaryReaderX> controller_streams_readers = new Dictionary<RefID, BitBinaryReaderX>();
         public Dictionary<RefID, BinaryWriter> output_writers = new Dictionary<RefID, BinaryWriter>();
+        //Controller Streams
+        public Dictionary<RefID, CommonTool> commonToolLefts = new Dictionary<RefID, CommonTool>();
+        public Dictionary<RefID, CommonTool> commonToolRights = new Dictionary<RefID, CommonTool>();
+        public Dictionary<RefID, CommonToolInputs> commonToolInputsLefts = new Dictionary<RefID, CommonToolInputs>();
+        public Dictionary<RefID, CommonToolInputs> commonToolInputsRights = new Dictionary<RefID, CommonToolInputs>();
+        public Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>> primaryBlockedStreams = new Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>>();
+        public Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>> secondaryBlockedStreams = new Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>>();
+        public Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>> laserActiveStreams = new Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>>();
+        public Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>> showLaserToOthersStreams = new Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>>();
+        public Dictionary<RefID, Tuple<ValueStream<float3>, ValueStream<float3>>> laserTargetStreams = new Dictionary<RefID, Tuple<ValueStream<float3>, ValueStream<float3>>>();
+        public Dictionary<RefID, Tuple<ValueStream<float>, ValueStream<float>>> grabDistanceStreams = new Dictionary<RefID, Tuple<ValueStream<float>, ValueStream<float>>>();
+
         //public Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode,IAvatarObject>>>();
         public Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>> fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>>();
         public Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>>();
@@ -39,6 +53,7 @@ namespace metagen
         public int recording_index = 0;
         public bool play_voice = false;
         public bool play_hearing = true;
+        public bool play_controllers = true;
         public Slot avatar_template = null;
         List<RefID> user_ids = new List<RefID>();
         metagen.AvatarManager avatarManager;
@@ -48,6 +63,7 @@ namespace metagen
         public bool isPlaying { get; set; }
         public bool external_control = false;
         public Source source_type;
+        private Action<CommonTool> onInputUpdate;
 
         public bool generateAnimation = false;
         public bool generateBvh = false;
@@ -62,6 +78,13 @@ namespace metagen
                 return this.recording_index == -1 ? null : dataManager.GetRecordingForWorld(metagen_comp.World, this.recording_index);
             }
         }
+        public User LocalUser
+        {
+            get
+            {
+                return this.metagen_comp.World.LocalUser;
+            }
+        }
         public UnifiedPayer(DataManager dataMan, MetaGen component)
         {
             dataManager = dataMan;
@@ -69,6 +92,267 @@ namespace metagen
             World = component.World;
             bvhRecorder = new BvhRecorder(metagen_comp);
         }
+        private void PlayPoseStreams()
+        {
+            foreach (var item1 in pose_streams_readers)
+            {
+                RefID user_id = item1.Key;
+                UniLog.Log("LELELELELE play pose streams: "+user_id.ToString());
+                //Decode the streams
+                BinaryReaderX reader = pose_streams_readers[user_id];
+
+                //READ deltaT
+                float deltaT = reader.ReadSingle();
+                UniLog.Log(deltaT);
+                int node_index = 0;
+                //foreach (var item in fake_proxies[user_id])
+                foreach (var item in avatar_pose_nodes[user_id])
+                {
+                    BodyNode node = item.Item1;
+                    var available_streams = avatar_stream_channels[user_id][node];
+                    //AvatarObjectSlot comp = item.Item2;
+                    AvatarObjectSlot avatarObject = fake_proxies[user_id][node_index].Item2;
+                    IAvatarObject comp = item.Item2;
+                    Slot slot = comp.Slot;
+                    if (node == BodyNode.Root)
+                    {
+                        slot = avatarObject.Slot;
+                    }
+
+                    //UniLog.Log(slot);
+                    //READ transform
+                    float x, y, z, w;
+                    //Scale stream
+                    if (available_streams.Item1)
+                    {
+                        x = reader.ReadSingle();
+                        y = reader.ReadSingle();
+                        z = reader.ReadSingle();
+                        float3 scale = new float3(x, y, z);
+                        scale = avatarObject.Slot.Parent.LocalScaleToSpace(scale, slot.Parent);
+                        if (node == BodyNode.Root)
+                        {
+                            scale = slot.Parent.GlobalScaleToLocal(scale);
+                        }
+                        slot.LocalScale = scale;
+                        //UniLog.Log(slot.LocalScale.ToString());
+                    }
+                    //Position stream
+                    if (available_streams.Item2)
+                    {
+                        x = reader.ReadSingle();
+                        y = reader.ReadSingle();
+                        z = reader.ReadSingle();
+                        float3 position = new float3(x, y, z);
+                        position = avatarObject.Slot.Parent.LocalPointToSpace(position, slot.Parent);
+                        if (node == BodyNode.Root)
+                        {
+                            position = slot.Parent.GlobalPointToLocal(position);
+                        }
+                        slot.LocalPosition = position;
+                        //UniLog.Log(slot.LocalPosition.ToString());
+                    }
+                    //Rotation stream
+                    if (available_streams.Item3)
+                    {
+                        x = reader.ReadSingle();
+                        y = reader.ReadSingle();
+                        z = reader.ReadSingle();
+                        w = reader.ReadSingle();
+                        floatQ rotation = new floatQ(x, y, z, w);
+                        rotation = avatarObject.Slot.Parent.LocalRotationToSpace(rotation, slot.Parent);
+                        if (node == BodyNode.Root)
+                        {
+                            rotation = slot.Parent.GlobalRotationToLocal(rotation);
+                        }
+                        slot.LocalRotation = rotation;
+                        //UniLog.Log(slot.LocalRotation.ToString());
+                    }
+                    node_index++;
+                }
+
+                //READ finger pose
+                var finger_slot = finger_slots[user_id];
+                if (hands_are_tracked[user_id])
+                {
+                    //UniLog.Log("UPDATING HANDS");
+                    //FingerPlayerSource finger_source = finger_sources[user_id];
+                    float x, y, z, w;
+                    //Left Hand
+                    HandPoser hand_poser = hand_posers[user_id][Chirality.Left];
+                    floatQ lookRot = floatQ.LookRotation(hand_poser.HandForward, hand_poser.HandUp);
+                    for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
+                    {
+                        BodyNode node = (BodyNode)(18 + index);
+                        //READ whether finger data was obtained
+                        bool was_succesful = reader.ReadBoolean();
+                        x = reader.ReadSingle();
+                        y = reader.ReadSingle();
+                        z = reader.ReadSingle();
+                        w = reader.ReadSingle();
+                        //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
+                        //UniLog.Log(x);
+                        //UniLog.Log(y);
+                        //UniLog.Log(z);
+                        //UniLog.Log(w);
+                        if (finger_slot.ContainsKey(node))
+                        {
+                            floatQ rot = new floatQ(x, y, z, w);
+                            rot = lookRot * rot;
+                            Slot root = hand_poser.HandRoot.Target ?? hand_poser.Slot;
+                            rot = finger_slot[node].Parent.SpaceRotationToLocal(rot, root);
+                            rot = rot * finger_compensations[user_id][node];
+                            finger_slot[node].LocalRotation = rot;
+                        }
+                    }
+                    //Right Hand
+                    hand_poser = hand_posers[user_id][Chirality.Right];
+                    lookRot = floatQ.LookRotation(hand_poser.HandForward, hand_poser.HandUp);
+                    for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
+                    {
+                        BodyNode node = (BodyNode)(47 + index);
+                        //READ whether finger data was obtained
+                        bool was_succesful = reader.ReadBoolean();
+                        x = reader.ReadSingle();
+                        y = reader.ReadSingle();
+                        z = reader.ReadSingle();
+                        w = reader.ReadSingle();
+                        //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
+                        if (finger_slot.ContainsKey(node))
+                        {
+                            floatQ rot = new floatQ(x, y, z, w);
+                            rot = lookRot * rot;
+                            Slot root = hand_poser.HandRoot.Target ?? hand_poser.Slot;
+                            rot = finger_slot[node].Parent.SpaceRotationToLocal(rot, root);
+                            rot = rot * finger_compensations[user_id][node];
+                            finger_slot[node].LocalRotation = rot;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void PlayControllerStreams()
+        {
+            foreach(var item in controller_streams_readers)
+            {
+                RefID user_id = item.Key;
+                UniLog.Log("LOLOLOLOL play controller streams: "+user_id.ToString());
+                BinaryReaderX reader = item.Value;
+                CommonToolInputs commonToolInputsLeft = commonToolInputsLefts[user_id];
+                CommonToolInputs commonToolInputsRight = commonToolInputsRights[user_id];
+                Tuple<ValueStream<bool>,ValueStream<bool>> primaryBlockedStreamBoth = primaryBlockedStreams[user_id];
+                Tuple<ValueStream<bool>,ValueStream<bool>> secondaryBlockedStreamBoth = secondaryBlockedStreams[user_id];
+                Tuple<ValueStream<bool>,ValueStream<bool>> laserActiveStreamBoth = laserActiveStreams[user_id];
+                Tuple<ValueStream<bool>,ValueStream<bool>> showLaserToOthersStreamBoth = showLaserToOthersStreams[user_id];
+                Tuple<ValueStream<float3>,ValueStream<float3>> laserTargetStreamBoth = laserTargetStreams[user_id];
+                Tuple<ValueStream<float>,ValueStream<float>> grabDistanceStreamBoth = grabDistanceStreams[user_id];
+                //READ deltaT
+                float deltaT = reader.ReadSingle();
+
+                //READ primaryStreams
+                bool primaryLeft = reader.ReadBoolean(); //Left
+                bool primaryRight = reader.ReadBoolean(); //Right
+                commonToolInputsLeft.Interact.Value.UpdateState(primaryLeft);
+                commonToolInputsRight.Interact.Value.UpdateState(primaryRight);
+                
+                //READ secondaryStreams
+                bool secondaryLeft = reader.ReadBoolean(); //Left
+                bool secondaryRight = reader.ReadBoolean(); //Right
+                commonToolInputsLeft.Secondary.Value.UpdateState(secondaryLeft);
+                commonToolInputsRight.Secondary.Value.UpdateState(secondaryRight);
+
+                //READ grabStreams
+                bool grabLeft = reader.ReadBoolean(); //Left
+                bool grabRight = reader.ReadBoolean(); //Right
+                //UniLog.Log(grabLeft.ToString());
+                //UniLog.Log(grabRight.ToString());
+                commonToolInputsLeft.Grab.Value.UpdateState(grabLeft);
+                commonToolInputsRight.Grab.Value.UpdateState(grabRight);
+
+                //READ menuStreams
+                bool menuLeft = reader.ReadBoolean(); //Left
+                bool menuRight = reader.ReadBoolean(); //Right
+                commonToolInputsLeft.Menu.Value.UpdateState(menuLeft);
+                commonToolInputsRight.Menu.Value.UpdateState(menuRight);
+
+                //READ strengthStreams
+                float strengthLeft = reader.ReadSingle(); //Left
+                float strengthRight = reader.ReadSingle(); //Right
+                commonToolInputsLeft.Strength.Value.UpdateValue(strengthLeft, deltaT);
+                commonToolInputsRight.Strength.Value.UpdateValue(strengthRight, deltaT);
+
+                //READ axisStreams
+                float2 axisLeft = reader.Read2D_Single(); //Left
+                float2 axisRight = reader.Read2D_Single(); //Right
+                commonToolInputsLeft.Axis.Value.UpdateValue(axisLeft, deltaT);
+                commonToolInputsRight.Axis.Value.UpdateValue(axisRight, deltaT);
+
+                //commonToolInputsLeft.Update(deltaT);
+                //commonToolInputsRight.Update(deltaT);
+                CommonTool commonToolLeft = commonToolLefts[user_id];
+                CommonTool commonToolRight = commonToolRights[user_id];
+                //var onInputUpdateInfo = commonToolLeft.GetType().GetMethod("OnInputUpdate", BindingFlags.NonPublic | BindingFlags.Instance);
+                //var startGrab = commonToolLeft.GetType().GetMethod("StartGrab", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (commonToolLeft.IsStarted)
+                {
+                    //UniLog.Log((commonToolLeft.Inputs == commonToolInputsLeft).ToString());
+                    UniLog.Log("uwu");
+                    //UniLog.Log(commonToolLeft.Inputs.Grab.Pressed);
+                    //if (commonToolLeft.Inputs.Grab.Pressed)
+                    //    startGrab.Invoke(commonToolLeft, null);
+                    onInputUpdate(commonToolLeft);
+                    //onInputUpdateInfo.Invoke(commonToolLeft, null);
+                }
+                if (commonToolRight.IsStarted)
+                {
+                    //UniLog.Log((commonToolRight.Inputs == commonToolInputsRight).ToString());
+                    UniLog.Log("owo");
+                    UniLog.Log(commonToolRight.Inputs.Grab.Pressed);
+                    //if (commonToolRight.Inputs.Grab.Pressed)
+                    //    startGrab.Invoke(commonToolRight, null);
+                    onInputUpdate(commonToolRight);
+                    //onInputUpdateInfo.Invoke(commonToolRight, null);
+                }
+
+                //READ primaryBlockedStreams
+                bool primaryBlockedLeft = reader.ReadBoolean(); //Left
+                bool primaryBlockedRight = reader.ReadBoolean(); //Right
+                primaryBlockedStreamBoth.Item1.Value = primaryBlockedLeft;
+                primaryBlockedStreamBoth.Item2.Value = primaryBlockedLeft;
+
+                //READ secondaryBlockedStreams
+                bool secondaryBlockedLeft = reader.ReadBoolean(); //Left
+                bool secondaryBlockedRight = reader.ReadBoolean(); //Right
+                secondaryBlockedStreamBoth.Item1.Value = secondaryBlockedLeft;
+                secondaryBlockedStreamBoth.Item2.Value = secondaryBlockedLeft;
+
+                //WRITE laserActiveStreams
+                bool laserActiveLeft = reader.ReadBoolean(); //Left
+                bool laserActiveRight = reader.ReadBoolean(); //Right
+                laserActiveStreamBoth.Item1.Value = laserActiveLeft;
+                laserActiveStreamBoth.Item2.Value = laserActiveLeft;
+
+                //READ showLaserToOthersStreams
+                bool showLaserToOthersLeft = reader.ReadBoolean(); //Left
+                bool showLaserToOthersRight = reader.ReadBoolean(); //Right
+                showLaserToOthersStreamBoth.Item1.Value = showLaserToOthersLeft;
+                showLaserToOthersStreamBoth.Item2.Value = showLaserToOthersLeft;
+
+                //READ laserTargetStreams
+                float3 laserTargetLeft = reader.Read3D_Single(); //Left
+                float3 laserTargetRight = reader.Read3D_Single(); //Right
+                laserTargetStreamBoth.Item1.Value = laserTargetLeft;
+                laserTargetStreamBoth.Item2.Value = laserTargetLeft;
+
+                //READ grabDistanceStreams
+                float grabDistanceLeft = reader.ReadSingle(); //Left
+                float grabDistanceRight = reader.ReadSingle(); //Right
+                grabDistanceStreamBoth.Item1.Value = grabDistanceLeft;
+                grabDistanceStreamBoth.Item2.Value = grabDistanceLeft;
+            }
+        }
+
         public void PlayStreams()
         {
             if (!avatars_finished_loading) return;
@@ -76,141 +360,8 @@ namespace metagen
             //{
             try
             {
-                foreach (var item1 in output_readers)
-                {
-                    RefID user_id = item1.Key;
-                    //Decode the streams
-                    BinaryReaderX reader = output_readers[user_id];
-
-                    //READ deltaT
-                    float deltaT = reader.ReadSingle();
-                    UniLog.Log(deltaT);
-                    int node_index = 0;
-                    //foreach (var item in fake_proxies[user_id])
-                    foreach (var item in avatar_pose_nodes[user_id])
-                    {
-                        BodyNode node = item.Item1;
-                        var available_streams = avatar_stream_channels[user_id][node];
-                        //AvatarObjectSlot comp = item.Item2;
-                        AvatarObjectSlot avatarObject = fake_proxies[user_id][node_index].Item2;
-                        IAvatarObject comp = item.Item2;
-                        Slot slot = comp.Slot;
-                        if (node == BodyNode.Root)
-                        {
-                            slot = avatarObject.Slot;
-                        }
-
-                        //UniLog.Log(slot);
-                        //READ transform
-                        float x, y, z, w;
-                        //Scale stream
-                        if (available_streams.Item1)
-                        {
-                            x = reader.ReadSingle();
-                            y = reader.ReadSingle();
-                            z = reader.ReadSingle();
-                            float3 scale = new float3(x, y, z);
-                            scale = avatarObject.Slot.Parent.LocalScaleToSpace(scale, slot.Parent);
-                            if (node == BodyNode.Root)
-                            {
-                                scale = slot.Parent.GlobalScaleToLocal(scale);
-                            }
-                            slot.LocalScale = scale;
-                            //UniLog.Log(slot.LocalScale.ToString());
-                        }
-                        //Position stream
-                        if (available_streams.Item2)
-                        {
-                            x = reader.ReadSingle();
-                            y = reader.ReadSingle();
-                            z = reader.ReadSingle();
-                            float3 position = new float3(x, y, z);
-                            position = avatarObject.Slot.Parent.LocalPointToSpace(position, slot.Parent);
-                            if (node == BodyNode.Root)
-                            {
-                                position = slot.Parent.GlobalPointToLocal(position);
-                            }
-                            slot.LocalPosition = position;
-                            //UniLog.Log(slot.LocalPosition.ToString());
-                        }
-                        //Rotation stream
-                        if (available_streams.Item3)
-                        {
-                            x = reader.ReadSingle();
-                            y = reader.ReadSingle();
-                            z = reader.ReadSingle();
-                            w = reader.ReadSingle();
-                            floatQ rotation = new floatQ(x, y, z, w);
-                            rotation = avatarObject.Slot.Parent.LocalRotationToSpace(rotation, slot.Parent);
-                            if (node == BodyNode.Root)
-                            {
-                                rotation = slot.Parent.GlobalRotationToLocal(rotation);
-                            }
-                            slot.LocalRotation = rotation;
-                            //UniLog.Log(slot.LocalRotation.ToString());
-                        }
-                        node_index++;
-                    }
-
-                    //READ finger pose
-                    var finger_slot = finger_slots[user_id];
-                    if (hands_are_tracked[user_id])
-                    {
-                        //UniLog.Log("UPDATING HANDS");
-                        //FingerPlayerSource finger_source = finger_sources[user_id];
-                        float x, y, z, w;
-                        //Left Hand
-                        HandPoser hand_poser = hand_posers[user_id][Chirality.Left];
-                        floatQ lookRot = floatQ.LookRotation(hand_poser.HandForward, hand_poser.HandUp);
-                        for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
-                        {
-                            BodyNode node = (BodyNode)(18 + index);
-                            //READ whether finger data was obtained
-                            bool was_succesful = reader.ReadBoolean();
-                            x = reader.ReadSingle();
-                            y = reader.ReadSingle();
-                            z = reader.ReadSingle();
-                            w = reader.ReadSingle();
-                            //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
-                            //UniLog.Log(x);
-                            //UniLog.Log(y);
-                            //UniLog.Log(z);
-                            //UniLog.Log(w);
-                            if (finger_slot.ContainsKey(node))
-                            {
-                                floatQ rot = new floatQ(x, y, z, w);
-                                rot = lookRot * rot;
-                                Slot root = hand_poser.HandRoot.Target ?? hand_poser.Slot;
-                                rot = finger_slot[node].Parent.SpaceRotationToLocal(rot, root);
-                                rot = rot * finger_compensations[user_id][node];
-                                finger_slot[node].LocalRotation = rot;
-                            }
-                        }
-                        //Right Hand
-                        hand_poser = hand_posers[user_id][Chirality.Right];
-                        lookRot = floatQ.LookRotation(hand_poser.HandForward, hand_poser.HandUp);
-                        for (int index = 0; index < FingerPoseStreamManager.FINGER_NODE_COUNT; ++index)
-                        {
-                            BodyNode node = (BodyNode)(47 + index);
-                            //READ whether finger data was obtained
-                            bool was_succesful = reader.ReadBoolean();
-                            x = reader.ReadSingle();
-                            y = reader.ReadSingle();
-                            z = reader.ReadSingle();
-                            w = reader.ReadSingle();
-                            //finger_source.UpdateFingerPose(node, new floatQ(x, y, z, w));
-                            if (finger_slot.ContainsKey(node))
-                            {
-                                floatQ rot = new floatQ(x, y, z, w);
-                                rot = lookRot * rot;
-                                Slot root = hand_poser.HandRoot.Target ?? hand_poser.Slot;
-                                rot = finger_slot[node].Parent.SpaceRotationToLocal(rot, root);
-                                rot = rot * finger_compensations[user_id][node];
-                                finger_slot[node].LocalRotation = rot;
-                            }
-                        }
-                    }
-                }
+                PlayPoseStreams();
+                PlayControllerStreams();
                 if (generateAnimation)
                 {
                     try
@@ -240,6 +391,12 @@ namespace metagen
             catch (Exception e)
             {
                 UniLog.Log("OwO: " + e.Message);
+                UniLog.Log(e.StackTrace);
+                if (e.InnerException != null)
+                {
+                    UniLog.Log(e.InnerException.Message);
+                    UniLog.Log(e.InnerException.StackTrace);
+                }
                 //this.StopPlaying();
                 if (!external_control)
                     metagen_comp.StopPlaying();
@@ -330,12 +487,11 @@ namespace metagen
                 RefID user_id = RefID.Parse(user.userRefId);
                 UniLog.Log(user_id.ToString());
                 user_ids.Add(user_id);
-                //output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory, user_id.ToString() + "*_streams.dat")[0], FileMode.Open, FileAccess.Read);
                 BitReaderStream bitstream = null;
                 if (this.source_type == Source.FILE)
                 {
-                    output_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory, user_id.ToString() + "_streams.dat")[0], FileMode.Open, FileAccess.Read);
-                    bitstream = new BitReaderStream(output_fss[user_id]);
+                    pose_streams_fss[user_id] = new FileStream(Directory.GetFiles(reading_directory, user_id.ToString() + "_streams.dat")[0], FileMode.Open, FileAccess.Read);
+                    bitstream = new BitReaderStream(pose_streams_fss[user_id]);
                 }
                 else if (this.source_type == Source.STREAM)
                 {
@@ -343,7 +499,7 @@ namespace metagen
                     output_writers[user_id] = new BinaryWriter(memoryStream);
                     bitstream = new BitReaderStream(memoryStream);
                 }
-                output_readers[user_id] = new BitBinaryReaderX(bitstream);
+                pose_streams_readers[user_id] = new BitBinaryReaderX(bitstream);
             }
         }
         private async void StartPlayingInternal(List<UserMetadata> userMetadatas)
@@ -390,9 +546,9 @@ namespace metagen
                     boness[user_id] = avatar.GetComponentInChildren<Rig>()?.Bones.ToList();
 
                     //READ absolute time
-                    UniLog.Log(output_readers[user_id].ReadSingle());
+                    UniLog.Log(pose_streams_readers[user_id].ReadSingle());
                     //READ version identifier
-                    int version_number = output_readers[user_id].ReadInt32();
+                    int version_number = pose_streams_readers[user_id].ReadInt32();
                     float3 relative_avatar_scale = new float3(1f, 1f, 1f);
                     int numBodyNodes = version_number;
                     UniLog.Log("version_number");
@@ -400,29 +556,34 @@ namespace metagen
                     if (version_number >= 1000)
                     {
                         //READ relative avatar scale
-                        relative_avatar_scale = relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 0);
+                        relative_avatar_scale = relative_avatar_scale.SetComponent(pose_streams_readers[user_id].ReadSingle(), 0);
                         UniLog.Log(relative_avatar_scale.X);
-                        relative_avatar_scale = relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 1);
+                        relative_avatar_scale = relative_avatar_scale.SetComponent(pose_streams_readers[user_id].ReadSingle(), 1);
                         UniLog.Log(relative_avatar_scale.Y);
-                        relative_avatar_scale = relative_avatar_scale.SetComponent(output_readers[user_id].ReadSingle(), 2);
+                        relative_avatar_scale = relative_avatar_scale.SetComponent(pose_streams_readers[user_id].ReadSingle(), 2);
                         UniLog.Log(relative_avatar_scale.Z);
                         //READ number of body nodes
-                        numBodyNodes = output_readers[user_id].ReadInt32();
+                        numBodyNodes = pose_streams_readers[user_id].ReadInt32();
                         UniLog.Log(numBodyNodes);
                     }
+                    Slot left_hand_slot = null;
+                    Slot right_hand_slot = null;
+                    Slot left_controller_slot = null;
+                    Slot right_controller_slot = null;
+
                     for (int i = 0; i < numBodyNodes; i++)
                     {
                         //READ body node type
-                        int nodeInt = output_readers[user_id].ReadInt32();
+                        int nodeInt = pose_streams_readers[user_id].ReadInt32();
                         UniLog.Log(nodeInt);
                         //READ if scale stream exists
-                        bool scale_exists = output_readers[user_id].ReadBoolean();
+                        bool scale_exists = pose_streams_readers[user_id].ReadBoolean();
                         UniLog.Log(scale_exists);
                         //READ if position stream exists
-                        bool pos_exists = output_readers[user_id].ReadBoolean();
+                        bool pos_exists = pose_streams_readers[user_id].ReadBoolean();
                         UniLog.Log(pos_exists);
                         //READ if rotation stream exists
-                        bool rot_exists = output_readers[user_id].ReadBoolean();
+                        bool rot_exists = pose_streams_readers[user_id].ReadBoolean();
                         UniLog.Log(rot_exists);
                         BodyNode bodyNodeType = (BodyNode)nodeInt;
                         if (version_number < 1000)
@@ -434,6 +595,7 @@ namespace metagen
                         avatarIK.IK.Target.Solver.OffsetSpace.Target = avatar;
 
                         bool node_found = false;
+                        IAvatarObject avatarObject = null;
                         foreach (IAvatarObject comp in components)
                         {
                             foreach (AvatarObjectSlot comp2 in root_comps)
@@ -445,6 +607,7 @@ namespace metagen
                                     {
                                         comp.Slot.LocalScale = comp.Slot.LocalScale * relative_avatar_scale;
                                     }
+                                    avatarObject = comp;
                                     //if (bodyNodeType == BodyNode.Root)
                                     //{
                                     //    proxy_slots[user_id][bodyNodeType] = avatar;
@@ -500,14 +663,51 @@ namespace metagen
                                 if (node_found) break;
                             }
                         }
-                        if (!node_found) throw new Exception("Node " + bodyNodeType.ToString() + " not found in avatar!");
+                        if (!node_found)
+                        {
+                            Slot fake_proxy = avatar.AddSlot(bodyNodeType.ToString());
+                            Slot avatar_pose_node_slot = avatar.AddSlot(bodyNodeType.ToString()+"-pose_node");
+                            AvatarObjectSlot avatarObjectSlot = fake_proxy.AttachComponent<AvatarObjectSlot>();
+                            AvatarPoseNode avatarPoseNode = avatar_pose_node_slot.AttachComponent<AvatarPoseNode>();
+                            avatarObject = (IAvatarObject)avatarPoseNode;
+                            avatarPoseNode.Node.Value = bodyNodeType;
+                            //avatarPoseNode.IsTracking.Value = true;
+                            avatarObjectSlot.Node.Value = avatarPoseNode.Node;
+                            avatarObjectSlot.Equipped.ForceLink(avatarPoseNode);
+                            avatarObjectSlot.IsTracking.Value = false;
+                            fake_proxies[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(bodyNodeType, avatarObjectSlot));
+                            avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(avatarPoseNode.Node, avatarPoseNode));
+                            //throw new Exception("Node " + bodyNodeType.ToString() + " not found in avatar!");
+                        }
+                        if (bodyNodeType == BodyNode.LeftHand)
+                        {
+                            if (avatarObject != null)
+                                left_hand_slot = avatarObject.Slot;
+                        }
+                        else if (bodyNodeType == BodyNode.RightHand)
+                        {
+                            if (avatarObject != null)
+                                right_hand_slot = avatarObject.Slot;
+                        }
+                        else if (bodyNodeType == BodyNode.LeftController)
+                        {
+                            if (avatarObject != null)
+                                left_controller_slot = avatarObject.Slot;
+                        }
+                        else if (bodyNodeType == BodyNode.RightController)
+                        {
+                            if (avatarObject != null)
+                                right_controller_slot = avatarObject.Slot;
+                        }
                         avatar_stream_channels[user_id][bodyNodeType] = new Tuple<bool, bool, bool>(scale_exists, pos_exists, rot_exists);
                     }
+
+                    //HAND TRACKING
                     //READ whether hands are being tracked
-                    hands_are_tracked[user_id] = output_readers[user_id].ReadBoolean();
+                    hands_are_tracked[user_id] = pose_streams_readers[user_id].ReadBoolean();
                     UniLog.Log(hands_are_tracked[user_id]);
                     //READ whether metacarpals are being tracked
-                    UniLog.Log(output_readers[user_id].ReadBoolean());
+                    UniLog.Log(pose_streams_readers[user_id].ReadBoolean());
                     //finger_sources[user_id] = avatar.GetComponentInChildren<FingerPlayerSource>(null, true);
                     List<HandPoser> these_hand_posers = avatar.GetComponentsInChildren<HandPoser>(null, excludeDisabled: false, includeLocal: false);
                     UniLog.Log("getting finger rotation vars");
@@ -546,6 +746,7 @@ namespace metagen
                         }
                     }
                     UniLog.Log("got finger rotation vars");
+
                     //AUDIO PLAY
                     UniLog.Log("Setting up audio!");
                     avatar.GetComponentInChildren<AudioOutput>().Source.Target = null;
@@ -601,18 +802,252 @@ namespace metagen
                             player.Play();
                         }
                     }
+
+                    //CONTROLLER STREAMS
+                    UniLog.Log("Setting up controller streams!");
+                    metagen_comp.World.RunSynchronously(() =>
+                    {
+                        avatar.SetParent(LocalUser.Root.Slot);
+                    });
+                    if (play_controllers)
+                    {
+                        string[] files = Directory.GetFiles(reading_directory, user_id.ToString() + "*_controller_streams.dat");
+                        string controller_streams_file = files.Length > 0 ? files[0] : null;
+                        if (controller_streams_file != null)
+                        {
+                            //Add CommonTool
+                            CommonToolStreamDriver commonToolStreamDriverLeft = avatar.AttachComponent<CommonToolStreamDriver>();
+                            commonToolStreamDriverLeft.Side.Value = Chirality.Left;
+                            ValueStream<bool> primaryBlockedStreamLeft = LocalUser.AddStream<ValueStream<bool>>();
+                            ValueStream<bool> secondaryBlockedStreamLeft = LocalUser.AddStream<ValueStream<bool>>();
+                            ValueStream<bool> laserActiveStreamLeft = LocalUser.AddStream<ValueStream<bool>>();
+                            ValueStream<bool> showLaserToOthersStreamLeft = LocalUser.AddStream<ValueStream<bool>>();
+                            ValueStream<float3> laserTargetStreamLeft = LocalUser.AddStream<ValueStream<float3>>();
+                            ValueStream<float> grabDistanceStreamLeft = LocalUser.AddStream<ValueStream<float>>();
+                            commonToolStreamDriverLeft.PrimaryBlockedStream.Target = primaryBlockedStreamLeft;
+                            commonToolStreamDriverLeft.SecondaryBlockedStream.Target = secondaryBlockedStreamLeft;
+                            commonToolStreamDriverLeft.LaserActiveStream.Target = laserActiveStreamLeft;
+                            commonToolStreamDriverLeft.ShowLaserToOthersStream.Target = showLaserToOthersStreamLeft;
+                            commonToolStreamDriverLeft.LaserTargetStream.Target = laserTargetStreamLeft;
+                            commonToolStreamDriverLeft.GrabDistanceStream.Target = grabDistanceStreamLeft;
+                            CommonToolStreamDriver commonToolStreamDriverRight = avatar.AttachComponent<CommonToolStreamDriver>();
+                            commonToolStreamDriverRight.Side.Value = Chirality.Right;
+                            ValueStream<bool> primaryBlockedStreamRight = LocalUser.AddStream<ValueStream<bool>>();
+                            ValueStream<bool> secondaryBlockedStreamRight = LocalUser.AddStream<ValueStream<bool>>();
+                            ValueStream<bool> laserActiveStreamRight = LocalUser.AddStream<ValueStream<bool>>();
+                            ValueStream<bool> showLaserToOthersStreamRight = LocalUser.AddStream<ValueStream<bool>>();
+                            ValueStream<float3> laserTargetStreamRight = LocalUser.AddStream<ValueStream<float3>>();
+                            ValueStream<float> grabDistanceStreamRight = LocalUser.AddStream<ValueStream<float>>();
+                            commonToolStreamDriverRight.PrimaryBlockedStream.Target = primaryBlockedStreamRight;
+                            commonToolStreamDriverRight.SecondaryBlockedStream.Target = secondaryBlockedStreamRight;
+                            commonToolStreamDriverRight.LaserActiveStream.Target = laserActiveStreamRight;
+                            commonToolStreamDriverRight.ShowLaserToOthersStream.Target = showLaserToOthersStreamRight;
+                            commonToolStreamDriverRight.LaserTargetStream.Target = laserTargetStreamRight;
+                            commonToolStreamDriverRight.GrabDistanceStream.Target = grabDistanceStreamRight;
+                            primaryBlockedStreams[user_id] = new Tuple<ValueStream<bool>, ValueStream<bool>>(primaryBlockedStreamLeft, primaryBlockedStreamRight);
+                            secondaryBlockedStreams[user_id] = new Tuple<ValueStream<bool>, ValueStream<bool>>(secondaryBlockedStreamLeft, secondaryBlockedStreamRight);
+                            laserActiveStreams[user_id] = new Tuple<ValueStream<bool>, ValueStream<bool>>(laserActiveStreamLeft, laserActiveStreamRight);
+                            showLaserToOthersStreams[user_id] = new Tuple<ValueStream<bool>, ValueStream<bool>>(showLaserToOthersStreamLeft, showLaserToOthersStreamRight);
+                            laserTargetStreams[user_id] = new Tuple<ValueStream<float3>, ValueStream<float3>>(laserTargetStreamLeft, laserTargetStreamRight);
+                            grabDistanceStreams[user_id] = new Tuple<ValueStream<float>, ValueStream<float>>(grabDistanceStreamLeft, grabDistanceStreamRight);
+
+                            //var headDeviceProp = typeof(SystemInfoConnector).GetProperty("HeadDevice");
+                            //headDeviceProp = headDeviceProp.DeclaringType.GetProperty("HeadDevice");
+                            //headDeviceProp.SetValue(metagen_comp.Engine.SystemInfo, HeadOutputDevice.SteamVR, BindingFlags.NonPublic | BindingFlags.Instance, null, null, null);
+                            //metagen_comp.InputInterface.VR_Active = true;
+
+                            CommonTool commonToolLeft = left_controller_slot.AddSlot("Common Tool").AttachComponent<CommonTool>(false);
+                            //ContextMenu contextMenuLeft = left_hand_slot.AddSlot("Context Menu", true).AttachComponent<ContextMenu>(true, (Action<ContextMenu>)null);
+                            //contextMenuLeft.Owner.Target = LocalUser;
+                            commonToolLeft.Side.Value = Chirality.Left;
+                            commonToolLeft.InitializeTool(commonToolStreamDriverLeft);
+                            Grabber grabberLeft = commonToolLeft.Grabber;
+                            PropertyInfo linkingkey_prop = typeof(Grabber).GetProperty("LinkingKey");
+                            linkingkey_prop = linkingkey_prop.DeclaringType.GetProperty("LinkingKey");
+                            linkingkey_prop.SetValue(grabberLeft, Grabber.LEFT_HAND_KEY, BindingFlags.NonPublic | BindingFlags.Instance, null, null, null);
+                            //commonToolLeft.ContextMenu.Target = contextMenuLeft;
+                            AvatarObjectSlot objectSlotLeft = left_hand_slot.GetComponent<AvatarPoseNode>().EquippingSlot;
+                            Slot proxy_slot_left = left_hand_slot.GetComponent<AvatarObjectComponentProxy>()?.Target.Target;
+                            metagen_comp.World.RunSynchronously(() => {
+                                foreach (Slot slot in new List<Slot> { left_hand_slot, proxy_slot_left }) {
+                                    AvatarObjectSlot.ForeachObjectComponent(slot, (Action<IAvatarObjectComponent>)(c =>
+                                    {
+                                        //UniLog.Log(c);
+                                        try
+                                        {
+                                            if (c is AvatarToolAnchor anchor)
+                                            {
+                                                if (anchor != null)
+                                                {
+                                                        switch (anchor.AnchorPoint.Value)
+                                                    {
+                                                        case AvatarToolAnchor.Point.Tooltip:
+                                                            UniLog.Log(anchor.Slot);
+                                                            UniLog.Log(anchor.AnchorPoint.Value);
+                                                            commonToolLeft.SetTooltipAnchor(anchor.Slot);
+                                                            break;
+                                                        case AvatarToolAnchor.Point.GrabArea:
+                                                            UniLog.Log(anchor.Slot);
+                                                            UniLog.Log(anchor.AnchorPoint.Value);
+                                                            commonToolLeft.SetGrabberAnchor(anchor.Slot);
+                                                            break;
+                                                        case AvatarToolAnchor.Point.Toolshelf:
+                                                            UniLog.Log(anchor.Slot);
+                                                            UniLog.Log(anchor.AnchorPoint.Value);
+                                                            commonToolLeft.SetToolshelfAnchor(anchor.Slot);
+                                                            break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                                //objectSlot.Debug.Error((object)(string.Format("Exception in OnEquip on {0}\n", (object)c) + DebugManager.PreprocessException<Exception>(ex)?.ToString()), true);
+                                                UniLog.Log((object)(string.Format("Exception in OnEquip on {0}\n", (object)c) + DebugManager.PreprocessException<Exception>(ex)?.ToString()), true);
+                                        }
+                                    }));
+                                }
+                            });
+                            CommonTool commonToolRight = right_controller_slot.AddSlot("Common Tool").AttachComponent<CommonTool>(false);
+                            //ContextMenu contextMenuRight = right_hand_slot.AddSlot("Context Menu", true).AttachComponent<ContextMenu>(true, (Action<ContextMenu>)null);
+                            //contextMenuRight.Owner.Target = LocalUser;
+                            commonToolRight.Side.Value = Chirality.Right;
+                            commonToolRight.InitializeTool(commonToolStreamDriverRight);
+                            Grabber grabberRight = commonToolRight.Grabber;
+                            linkingkey_prop.SetValue(grabberRight, Grabber.RIGHT_HAND_KEY, BindingFlags.NonPublic | BindingFlags.Instance, null, null, null);
+                            //commonToolRight.ContextMenu.Target = contextMenuRight;
+                            AvatarObjectSlot objectSlotRight = right_hand_slot.GetComponent<AvatarPoseNode>().EquippingSlot;
+                            Slot proxy_slot_right = right_hand_slot.GetComponent<AvatarObjectComponentProxy>()?.Target.Target;
+                            metagen_comp.World.RunSynchronously(() =>
+                            {
+                                foreach (Slot slot in new List<Slot> { right_hand_slot, proxy_slot_right })
+                                {
+                                    AvatarObjectSlot.ForeachObjectComponent(slot, (Action<IAvatarObjectComponent>)(c =>
+                                    {
+                                        //UniLog.Log(c);
+                                        try
+                                        {
+                                            if (c is AvatarToolAnchor anchor)
+                                            {
+                                                //c.OnEquip(objectSlotLeft);
+                                                if (anchor != null)
+                                                {
+                                                    switch (anchor.AnchorPoint.Value)
+                                                    {
+                                                        case AvatarToolAnchor.Point.Tooltip:
+                                                            UniLog.Log(anchor.Slot);
+                                                            UniLog.Log(anchor.AnchorPoint.Value);
+                                                            commonToolRight.SetTooltipAnchor(anchor.Slot);
+                                                            break;
+                                                        case AvatarToolAnchor.Point.GrabArea:
+                                                            UniLog.Log(anchor.Slot);
+                                                            UniLog.Log(anchor.AnchorPoint.Value);
+                                                            commonToolRight.SetGrabberAnchor(anchor.Slot);
+                                                            break;
+                                                        case AvatarToolAnchor.Point.Toolshelf:
+                                                            UniLog.Log(anchor.Slot);
+                                                            UniLog.Log(anchor.AnchorPoint.Value);
+                                                            commonToolRight.SetToolshelfAnchor(anchor.Slot);
+                                                            break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            //objectSlot.Debug.Error((object)(string.Format("Exception in OnEquip on {0}\n", (object)c) + DebugManager.PreprocessException<Exception>(ex)?.ToString()), true);
+                                            UniLog.Log((object)(string.Format("Exception in OnEquip on {0}\n", (object)c) + DebugManager.PreprocessException<Exception>(ex)?.ToString()), true);
+                                        }
+                                    }));
+                                }
+                            });
+                            CommonToolInputs commonToolInputsLeft = new CommonToolInputs(Chirality.Left);
+                            CommonToolInputs commonToolInputsRight = new CommonToolInputs(Chirality.Right);
+
+                            var prop = commonToolLeft.GetType().GetField("_inputs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            //if (onInputUpdate == null)
+                            onInputUpdate = (Action<CommonTool>) Delegate.CreateDelegate(typeof(Action<CommonTool>), commonToolLeft.GetType().GetMethod("OnInputUpdate", BindingFlags.NonPublic | BindingFlags.Instance));
+                            //var onInputEvaluate = commonToolLeft.GetType().GetMethod("OnInputEvaluate", BindingFlags.NonPublic | BindingFlags.Instance);
+                            //prop.SetValue(commonToolLeft, commonToolInputsLeft);
+                            //commonToolInputsLeft.RegisterManager(metagen_comp.Input, commonToolLeft, new Action(()=>onInputUpdate.Invoke(commonToolLeft,null)), new Action(()=>onInputEvaluate.Invoke(commonToolLeft, null)));
+                            //prop.SetValue(commonToolRight, commonToolInputsRight);
+                            //commonToolInputsRight.RegisterManager(metagen_comp.Input, commonToolRight, new Action(()=>onInputUpdate.Invoke(commonToolRight, null)), new Action(()=>onInputEvaluate.Invoke(commonToolRight, null)));
+                            commonToolLeft.Changed += new Action<IChangeable>(target =>
+                            {
+                                if (((CommonTool)target).Inputs != commonToolInputsLeft)
+                                {
+                                    UniLog.Log("updating fields of Common Tool Left " + target.ToString());
+                                    prop.SetValue(target, commonToolInputsLeft);
+                                    //commonToolInputsLeft.RegisterManager(metagen_comp.Input, target, new Action(()=>onInputUpdate.Invoke(target,null)), new Action(()=>onInputEvaluate.Invoke(target, null)));
+                                }
+                            });
+                            commonToolRight.Changed += new Action<IChangeable>(target =>
+                            {
+                                if (((CommonTool)target).Inputs != commonToolInputsRight)
+                                {
+                                    UniLog.Log("updating fields of Common Tool Right " + target.ToString());
+                                    prop.SetValue(target, commonToolInputsRight);
+                                    //commonToolInputsRight.RegisterManager(metagen_comp.Input, target, new Action(()=>onInputUpdate.Invoke(target, null)), new Action(()=>onInputEvaluate.Invoke(target, null)));
+                                }
+                            });
+
+                            commonToolInputsLefts[user_id] = commonToolInputsLeft;
+                            commonToolInputsRights[user_id] = commonToolInputsRight;
+                            commonToolLefts[user_id] = commonToolLeft;
+                            commonToolRights[user_id] = commonToolRight;
+
+
+                            //commonToolInputsLeft.Interact.Value.UpdateState(true);
+
+                            controller_streams_fss[user_id] = new FileStream(controller_streams_file, FileMode.Open, FileAccess.Read);
+                            BitReaderStream bitstream2 = new BitReaderStream(controller_streams_fss[user_id]);
+                            controller_streams_readers[user_id] = new BitBinaryReaderX(bitstream2);
+                        }
+                    }
                 }
-                avatars_finished_loading = true;
-                if (!external_control) isPlaying = true;
-                if (generateAnimation)
+                World currentWorld = metagen_comp.World;
+                int currentTotalUpdates = currentWorld.TotalUpdates;
+                metagen_comp.StartTask(async () =>
                 {
-                    animationRecorder.StartRecordingAvatars(avatars, audio_outputs);
-                }
-                if (generateBvh)
-                {
-                    Guid g = Guid.NewGuid();
-                    bvhRecorder.StartRecordingAvatars(avatars, g.ToString());
-                }
+                    await Task.Run(() =>
+                    {
+                        bool all_commontools_loaded = false;
+                        while (!all_commontools_loaded & currentWorld.TotalUpdates <= currentTotalUpdates + 60)
+                        {
+                            all_commontools_loaded = true;
+                            foreach (var item in commonToolLefts)
+                            {
+                                CommonTool ct = item.Value;
+                                all_commontools_loaded &= ct.IsStarted;
+                            }
+                            foreach (var item in commonToolRights)
+                            {
+                                CommonTool ct = item.Value;
+                                all_commontools_loaded &= ct.IsStarted;
+                            }
+                        }
+
+                        foreach (var item in avatars)
+                        {
+                            Slot avatar = item.Value;
+                            metagen_comp.World.RunSynchronously(() => {
+                                avatar.SetParent(metagen_comp.World.RootSlot);
+                            });
+                        }
+
+                        avatars_finished_loading = true;
+                        if (!external_control) isPlaying = true;
+                        if (generateAnimation)
+                        {
+                            animationRecorder.StartRecordingAvatars(avatars, audio_outputs);
+                        }
+                        if (generateBvh)
+                        {
+                            Guid g = Guid.NewGuid();
+                            bvhRecorder.StartRecordingAvatars(avatars, g.ToString());
+                        }
+                    });
+                });
             }
             catch (Exception e)
             {
@@ -621,7 +1056,11 @@ namespace metagen
         }
         public void StopPlaying()
         {
-            foreach (var item in output_fss)
+            foreach (var item in pose_streams_fss)
+            {
+                item.Value.Close();
+            }
+            foreach (var item in controller_streams_fss)
             {
                 item.Value.Close();
             }
@@ -685,6 +1124,7 @@ namespace metagen
                 foreach (var item in avatars)
                 {
                     Slot slot = item.Value;
+                    UniLog.Log("Removing avatar " + slot.ToString());
                     slot.Destroy();
                 }
                 avatars = new Dictionary<RefID, Slot>();
@@ -692,8 +1132,42 @@ namespace metagen
                 hand_posers = new Dictionary<RefID, Dictionary<Chirality, HandPoser>>();
                 finger_compensations = new Dictionary<RefID, Dictionary<BodyNode, floatQ>>();
             }
-            output_fss = new Dictionary<RefID, FileStream>();
-            output_readers = new Dictionary<RefID, BitBinaryReaderX>();
+            foreach (var item in primaryBlockedStreams) {
+                LocalUser.RemoveStream(item.Value.Item1);
+                LocalUser.RemoveStream(item.Value.Item2);
+            }
+            primaryBlockedStreams = new Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>>();
+            foreach (var item in secondaryBlockedStreams) {
+                LocalUser.RemoveStream(item.Value.Item1);
+                LocalUser.RemoveStream(item.Value.Item2);
+            }
+            secondaryBlockedStreams = new Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>>();
+            foreach (var item in laserActiveStreams) {
+                LocalUser.RemoveStream(item.Value.Item1);
+                LocalUser.RemoveStream(item.Value.Item2);
+            }
+            laserActiveStreams = new Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>>();
+            foreach (var item in showLaserToOthersStreams) {
+                LocalUser.RemoveStream(item.Value.Item1);
+                LocalUser.RemoveStream(item.Value.Item2);
+            }
+            showLaserToOthersStreams = new Dictionary<RefID, Tuple<ValueStream<bool>, ValueStream<bool>>>();
+            foreach (var item in laserTargetStreams) {
+                LocalUser.RemoveStream(item.Value.Item1);
+                LocalUser.RemoveStream(item.Value.Item2);
+            }
+            laserTargetStreams = new Dictionary<RefID, Tuple<ValueStream<float3>, ValueStream<float3>>>();
+            foreach (var item in grabDistanceStreams) {
+                LocalUser.RemoveStream(item.Value.Item1);
+                LocalUser.RemoveStream(item.Value.Item2);
+            }
+            grabDistanceStreams = new Dictionary<RefID, Tuple<ValueStream<float>, ValueStream<float>>>();
+            controller_streams_fss = new Dictionary<RefID, FileStream>();
+            controller_streams_readers = new Dictionary<RefID, BitBinaryReaderX>();
+            commonToolInputsLefts = new Dictionary<RefID, CommonToolInputs>();
+            commonToolInputsRights = new Dictionary<RefID, CommonToolInputs>();
+            pose_streams_fss = new Dictionary<RefID, FileStream>();
+            pose_streams_readers = new Dictionary<RefID, BitBinaryReaderX>();
             fake_proxies = new Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>>();
             avatar_stream_channels = new Dictionary<RefID, Dictionary<BodyNode, Tuple<bool, bool, bool>>>();
             hands_are_tracked = new Dictionary<RefID, bool>();
