@@ -97,7 +97,7 @@ namespace metagen
             foreach (var item1 in pose_streams_readers)
             {
                 RefID user_id = item1.Key;
-                UniLog.Log("LELELELELE play pose streams: "+user_id.ToString());
+                //UniLog.Log("LELELELELE play pose streams: "+user_id.ToString());
                 //Decode the streams
                 BinaryReaderX reader = pose_streams_readers[user_id];
 
@@ -237,7 +237,7 @@ namespace metagen
             foreach(var item in controller_streams_readers)
             {
                 RefID user_id = item.Key;
-                UniLog.Log("LOLOLOLOL play controller streams: "+user_id.ToString());
+                //UniLog.Log("LOLOLOLOL play controller streams: "+user_id.ToString());
                 BinaryReaderX reader = item.Value;
                 CommonToolInputs commonToolInputsLeft = commonToolInputsLefts[user_id];
                 CommonToolInputs commonToolInputsRight = commonToolInputsRights[user_id];

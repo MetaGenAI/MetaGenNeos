@@ -67,12 +67,12 @@ namespace metagen
                 writer.Write(deltaT); //float
 
                 //WRITE primaryStreams
-                UniLog.Log("write primaryStreams");
+                //UniLog.Log("write primaryStreams");
                 writer.Write(primaryStreams[user_id].Item1.Value); //Left
                 writer.Write(primaryStreams[user_id].Item2.Value); //Right
 
                 //WRITE secondaryStreams
-                UniLog.Log("write secondaryStreams");
+                //UniLog.Log("write secondaryStreams");
                 writer.Write(secondaryStreams[user_id].Item1.Value); //Left
                 writer.Write(secondaryStreams[user_id].Item2.Value); //Right
 
