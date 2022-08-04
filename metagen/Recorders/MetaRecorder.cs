@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using NeosAnimationToolset;
 using BaseX;
 using FrooxEngine;
+//TODO: make this work with IRecorders automatically or something
 
 namespace metagen
 {
@@ -15,7 +16,10 @@ namespace metagen
         public VisionRecorder visionRecorder;
         public int2 camera_resolution = new int2(64,64);
         public PoseStreamRecorder streamRecorder;
-        public FaceStreamRecorder faceRecorder;
+        public EyeStreamRecorder eyeRecorder;
+        public MouthStreamRecorder mouthRecorder;
+        //public InputDeviceStreamRecorder inputDeviceRecorder;
+        public ControllerStreamRecorder controllerRecorder;
         public RecordingTool animationRecorder;
         public BvhRecorder bvhRecorder;
         private MetaGen metagen_comp;
@@ -25,7 +29,9 @@ namespace metagen
         {
             metagen_comp = component;
             streamRecorder = new PoseStreamRecorder(metagen_comp);
-            faceRecorder = new FaceStreamRecorder(metagen_comp);
+            eyeRecorder = new EyeStreamRecorder(metagen_comp);
+            mouthRecorder = new MouthStreamRecorder(metagen_comp);
+            controllerRecorder = new ControllerStreamRecorder(metagen_comp);
             voiceRecorder = new VoiceRecorder(metagen_comp);
             bvhRecorder = new BvhRecorder(metagen_comp);
             visionRecorder = new VisionRecorder(camera_resolution, metagen_comp);
@@ -36,21 +42,36 @@ namespace metagen
         public void RecordFrame(float deltaT)
         {
             bool streams_ok = (streamRecorder == null ? false : streamRecorder.isRecording) || !metagen_comp.recording_streams;
+            bool eye_streams_ok = (eyeRecorder == null ? false : eyeRecorder.isRecording) || !metagen_comp.recording_faces;
+            bool mouth_streams_ok = (mouthRecorder == null ? false : mouthRecorder.isRecording) || !metagen_comp.recording_faces;
+            bool controller_streams_ok = (controllerRecorder == null ? false : controllerRecorder.isRecording) || !metagen_comp.recording_controllers;
             bool vision_ok = (visionRecorder == null ? false : visionRecorder.isRecording) || !metagen_comp.recording_vision;
             bool hearing_ok = (metagen_comp.hearingRecorder == null ? false : metagen_comp.hearingRecorder.isRecording) || !metagen_comp.recording_hearing;
             bool voice_ok = (voiceRecorder == null ? false : (voiceRecorder.isRecording && voiceRecorder.audio_sources_ready)) || !metagen_comp.recording_voice;
-            bool all_ready = voice_ok && streams_ok && vision_ok && hearing_ok;
+            bool all_ready = voice_ok && streams_ok && controller_streams_ok && eye_streams_ok && mouth_streams_ok && vision_ok && hearing_ok;
             //bool all_ready = hearing_ok;
             if (all_ready && streamRecorder==null? false : streamRecorder.isRecording)
             {
-                //UniLog.Log("recording streams");
+                UniLog.Log("recording pose streams");
                 streamRecorder.RecordStreams(deltaT);
             }
 
-            if (all_ready && faceRecorder==null? false : faceRecorder.isRecording)
+            if (all_ready && controllerRecorder==null? false : controllerRecorder.isRecording)
+            {
+                UniLog.Log("recording controller streams");
+                controllerRecorder.RecordStreams(deltaT);
+            }
+
+            if (all_ready && eyeRecorder==null? false : eyeRecorder.isRecording)
             {
                 //UniLog.Log("recording streams");
-                faceRecorder.RecordStreams(deltaT);
+                eyeRecorder.RecordStreams(deltaT);
+            }
+
+            if (all_ready && mouthRecorder==null? false : mouthRecorder.isRecording)
+            {
+                //UniLog.Log("recording streams");
+                mouthRecorder.RecordStreams(deltaT);
             }
 
             if (all_ready && visionRecorder==null? false : visionRecorder.isRecording)
@@ -82,15 +103,31 @@ namespace metagen
             {
                 streamRecorder.StartRecording();
                 //Record the first frame
-                streamRecorder.RecordStreams(0f);
+                //streamRecorder.RecordStreams(0f);
             }
 
-            //FACE STREAMS
-            if (metagen_comp.recording_faces && !faceRecorder.isRecording)
+            //CONTROLLER STREAMS
+            if (metagen_comp.recording_controllers && !controllerRecorder.isRecording)
             {
-                faceRecorder.StartRecording();
+                controllerRecorder.StartRecording();
                 //Record the first frame
-                faceRecorder.RecordStreams(0f);
+                //controllerRecorder.RecordStreams(0f);
+            }
+
+            //EYE STREAMS
+            if (metagen_comp.recording_faces && !eyeRecorder.isRecording)
+            {
+                eyeRecorder.StartRecording();
+                //Record the first frame
+                //eyeRecorder.RecordStreams(0f);
+            }
+
+            //MOUTH STREAMS
+            if (metagen_comp.recording_faces && !mouthRecorder.isRecording)
+            {
+                mouthRecorder.StartRecording();
+                //Record the first frame
+                //mouthRecorder.RecordStreams(0f);
             }
 
             //ANIMATION
@@ -100,7 +137,7 @@ namespace metagen
                 animationRecorder.metagen_comp = metagen_comp;
                 animationRecorder.StartRecording();
                 //Record the first frame
-                animationRecorder.RecordFrame();
+                //animationRecorder.RecordFrame();
             }
 
             //BVH
@@ -126,7 +163,7 @@ namespace metagen
             {
                 visionRecorder.StartRecording();
                 //Record the first frame
-                visionRecorder.RecordVision();
+                //visionRecorder.RecordVision();
             }
 
             isRecording = true;
@@ -134,7 +171,9 @@ namespace metagen
         public void StopRecording()
         {
             bool wait_streams = false;
-            bool wait_face_streams = false;
+            bool wait_controller_streams = false;
+            bool wait_eye_streams = false;
+            bool wait_mouth_streams = false;
             bool wait_voices = false;
             bool wait_hearing = false;
             bool wait_vision = false;
@@ -147,11 +186,25 @@ namespace metagen
                 wait_streams = true;
             }
 
-            //FACE STREAMS
-            if (faceRecorder.isRecording)
+            //CONTROLLER STREAMS
+            if (controllerRecorder.isRecording)
             {
-                faceRecorder.StopRecording();
-                wait_face_streams = true;
+                controllerRecorder.StopRecording();
+                wait_controller_streams = true;
+            }
+
+            //EYE STREAMS
+            if (eyeRecorder.isRecording)
+            {
+                eyeRecorder.StopRecording();
+                wait_eye_streams = true;
+            }
+
+            //MOUTH STREAMS
+            if (mouthRecorder.isRecording)
+            {
+                mouthRecorder.StopRecording();
+                wait_mouth_streams = true;
             }
 
             //VOICES
@@ -205,11 +258,25 @@ namespace metagen
                         wait_streams = false;
                     }
 
-                    //FACE STREAMS
-                    if (wait_face_streams)
+                    //CONTROLLER STREAMS
+                    if (wait_controller_streams)
                     {
-                        faceRecorder.WaitForFinish();
-                        wait_face_streams = false;
+                        controllerRecorder.WaitForFinish();
+                        wait_controller_streams = false;
+                    }
+
+                    //EYE STREAMS
+                    if (wait_eye_streams)
+                    {
+                        eyeRecorder.WaitForFinish();
+                        wait_eye_streams = false;
+                    }
+
+                    //MOUTH STREAMS
+                    if (wait_mouth_streams)
+                    {
+                        mouthRecorder.WaitForFinish();
+                        wait_mouth_streams = false;
                     }
 
                     //VOICES

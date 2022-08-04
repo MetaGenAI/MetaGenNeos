@@ -12,26 +12,17 @@ using RefID = BaseX.RefID;
 
 namespace metagen
 {
-    public class PoseStreamRecorder : IRecorder
+    public class PoseStreamRecorder : UserBinaryDataRecorder, IRecorder
     {
-        public Dictionary<RefID, BitBinaryWriterX> output_writers = new Dictionary<RefID, BitBinaryWriterX>();
-        public Dictionary<RefID, BitBinaryReaderX> output_readers = new Dictionary<RefID, BitBinaryReaderX>();
-        public Dictionary<RefID, FileStream> output_fss = new Dictionary<RefID, FileStream>();
         public Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>> avatar_stream_drivers = new Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>>();
-        public Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>> avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>>();
+        public Dictionary<RefID, List<Tuple<BodyNode, TrackedDevicePositioner>>> tracked_device_positioners = new Dictionary<RefID, List<Tuple<BodyNode, TrackedDevicePositioner>>>();
+        public Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>> avatar_object_slots = new Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>>();
         public Dictionary<RefID, FingerPoseStreamManager> finger_stream_drivers = new Dictionary<RefID, FingerPoseStreamManager>();
         public List<RefID> current_users = new List<RefID>();
         public bool isRecording = false;
         public bool external_control = false;
-        public Source source_type;
-        private MetaGen metagen_comp;
 
-        public string saving_folder {
-            get {
-                return metagen_comp.dataManager.saving_folder;
-                }
-        }
-        public PoseStreamRecorder(MetaGen component)
+        public PoseStreamRecorder(MetaGen component) : base(component)
         {
             metagen_comp = component;
         }
@@ -46,20 +37,23 @@ namespace metagen
                 writer.Write(deltaT); //float
                 int node_index = 0;
                 //foreach (var item in avatar_stream_drivers[user_id])
-                foreach (var item in avatar_pose_nodes[user_id])
+                foreach (var item in avatar_object_slots[user_id])
                 {
                     BodyNode node = item.Item1;
                     //UniLog.Log(node);
                     //TransformStreamDriver driver = item.Item2;
                     TransformStreamDriver driver = avatar_stream_drivers[user_id][node_index].Item2;
-                    IAvatarObject avatarObject = item.Item2;
+                    IAvatarObject avatarObject = item.Item2.Equipped?.Target;
                     Slot slot = null;
                     if (node == BodyNode.Root)
                     {
                         slot = driver.Slot;
-                    } else
+                    } else if (avatarObject != null)
                     {
                         slot = avatarObject.Slot;
+                    } else
+                    {
+                        slot = tracked_device_positioners[user_id][node_index].Item2.BodyNodeRoot.Target;
                     }
 
                     //WRITE the transform
@@ -156,33 +150,10 @@ namespace metagen
             this.source_type = Source.STREAM;
             StartRecordingInternal();
         }
+
         public void StartRecordingInternal()
         {
-            if (this.source_type == Source.FILE)
-            {
-                foreach (var userItem in metagen_comp.userMetaData)
-                {
-                    User user = userItem.Key;
-                    RefID user_id = user.ReferenceID;
-                    output_fss[user_id] = new FileStream(saving_folder + "/" + user_id.ToString() + "_streams.dat", FileMode.Create, FileAccess.ReadWrite);
-
-                    BitWriterStream bitstream = new BitWriterStream(output_fss[user_id]);
-                    output_writers[user_id] = new BitBinaryWriterX(bitstream);
-                }
-            }
-            if (this.source_type == Source.STREAM)
-            {
-                foreach (var userItem in metagen_comp.userMetaData)
-                {
-                    User user = userItem.Key;
-                    RefID user_id = user.ReferenceID;
-                    MemoryStream memory_stream = new MemoryStream();
-
-                    BitWriterStream bitstream = new BitWriterStream(memory_stream);
-                    output_writers[user_id] = new BitBinaryWriterX(bitstream);
-                    output_readers[user_id] = new BitBinaryReaderX(new BitReaderStream(memory_stream));
-                }
-            }
+            RegisterUserStreams("streams");
             foreach (var userItem in metagen_comp.userMetaData)
             {
                 User user = userItem.Key;
@@ -192,7 +163,8 @@ namespace metagen
                 avatar_stream_drivers[user_id] = new List<Tuple<BodyNode, TransformStreamDriver>>();
                 List<AvatarObjectSlot> components = user.Root.Slot.GetComponentsInChildren<AvatarObjectSlot>();
                 finger_stream_drivers[user_id] = user.Root.Slot.GetComponent<FingerPoseStreamManager>();
-                avatar_pose_nodes[user_id] = new List<Tuple<BodyNode, IAvatarObject>>();
+                avatar_object_slots[user_id] = new List<Tuple<BodyNode, AvatarObjectSlot>>();
+                tracked_device_positioners[user_id] = new List<Tuple<BodyNode, TrackedDevicePositioner>>();
                 //WRITE the absolute time
                 output_writers[user_id].Write((float)DateTimeOffset.Now.ToUnixTimeMilliseconds()); //absolute time
                 int numValidNodes = 0;
@@ -200,9 +172,19 @@ namespace metagen
                 {
                     if (comp.IsTracking.Value)
                     {
-                        if (comp.Node.Value == BodyNode.LeftController || comp.Node.Value == BodyNode.RightController || comp.Node.Value == BodyNode.NONE) continue;
-                        avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(comp.Node, comp.Equipped?.Target));
+                        if (comp.Node.Value == BodyNode.NONE) continue;
+                        //if (comp.Node.Value == BodyNode.LeftController || comp.Node.Value == BodyNode.RightController || comp.Node.Value == BodyNode.NONE) continue;
+                        //if (comp.Node.Value == BodyNode.LeftHand || comp.Node.Value == BodyNode.RightHand)
+                        //{
+                        //    TrackedDevicePositioner positioner = comp.Slot.Parent.GetComponent<TrackedDevicePositioner>();
+                        //    UniLog.Log(positioner.TrackedDevice.BodyNodePositionOffset);
+                        //    UniLog.Log(positioner.TrackedDevice.BodyNodeRotationOffset);
+                        //}
+                        //avatar_pose_nodes[user_id].Add(new Tuple<BodyNode, IAvatarObject>(comp.Node, comp.Equipped?.Target));
+                        avatar_object_slots[user_id].Add(new Tuple<BodyNode, AvatarObjectSlot>(comp.Node, comp));
                         TransformStreamDriver driver = comp.Slot.Parent.GetComponent<TransformStreamDriver>();
+                        TrackedDevicePositioner positioner = comp.Slot.Parent.GetComponent<TrackedDevicePositioner>();
+                        tracked_device_positioners[user_id].Add(new Tuple<BodyNode, TrackedDevicePositioner>(comp.Node.Value, positioner));
                         if (driver != null)
                         {
                             avatar_stream_drivers[user_id].Add(new Tuple<BodyNode, TransformStreamDriver>(comp.Node.Value, driver));
@@ -255,18 +237,10 @@ namespace metagen
 
         public void StopRecording()
         {
-            foreach (var item in output_writers)
-            {
-                item.Value.Flush();
-            }
-            foreach (var item in output_fss)
-            {
-                item.Value.Close();
-            }
-            output_writers = new Dictionary<RefID, BitBinaryWriterX>();
-            output_fss = new Dictionary<RefID, FileStream>();
+            UnregisterUserStreams();
             avatar_stream_drivers = new Dictionary<RefID, List<Tuple<BodyNode, TransformStreamDriver>>>();
-            avatar_pose_nodes = new Dictionary<RefID, List<Tuple<BodyNode, IAvatarObject>>>();
+            avatar_object_slots = new Dictionary<RefID, List<Tuple<BodyNode, AvatarObjectSlot>>>();
+            tracked_device_positioners = new Dictionary<RefID, List<Tuple<BodyNode, TrackedDevicePositioner>>>();
             current_users = new List<RefID>();
             isRecording = false;
         }
@@ -274,10 +248,5 @@ namespace metagen
         {
 
         }
-        public enum Source
-        {
-            FILE = 0,
-            STREAM = 1,
-        };
     }
 }

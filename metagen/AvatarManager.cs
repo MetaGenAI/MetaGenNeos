@@ -131,6 +131,7 @@ namespace metagen
             //TaskCompletionSource<Slot> task = new TaskCompletionSource<Slot>();
             //currentWorld.RunSynchronously(() =>
             //{
+            slot.AttachComponent<GrabBlock>();
             float3 originalScale = slot.LocalScale;
             slot.SetParent(holder_slot.Parent);
             List<IAvatarObject> components = slot.GetComponentsInChildren<IAvatarObject>();
@@ -158,7 +159,7 @@ namespace metagen
                 }
                 else
                 {
-                    Slot new_proxy = fake_root.AddSlot(comp.Name);
+                    Slot new_proxy = fake_root.AddSlot(comp.Node.ToString());
                     comp2 = new_proxy.AttachComponent<AvatarObjectSlot>();
                     comp2.Node.Value = comp.Node;
                     comp2.Equipped.ForceLink(comp);
