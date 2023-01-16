@@ -132,7 +132,8 @@ namespace metagen
                 {
                     User user = userItem.Key;
                     UserMetadata metadata = userItem.Value;
-                    if (!metadata.isRecording || (metagen_comp.LocalUser == user && !metagen_comp.record_local_user)) continue;
+                    //if (!metadata.isRecording || (metagen_comp.LocalUser == user && !metagen_comp.record_local_user)) continue;
+                    if (!metadata.isRecording) continue;
                     RefID user_id = user.ReferenceID;
 
                     current_tracked_users.Add(user_id);

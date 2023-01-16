@@ -62,7 +62,8 @@ namespace metagen
             {
                 User user = userItem.Key;
                 UserMetadata metadata = userItem.Value;
-                if (!metadata.isRecording || (metagen_comp.LocalUser == user && !metagen_comp.record_local_user)) continue;
+                //if (!metadata.isRecording || (metagen_comp.LocalUser == user && !metagen_comp.record_local_user)) continue;
+                if (!metadata.isRecording) continue;
                 RefID user_id = user.ReferenceID;
                 bool has_eye_tracking = user.Devices.Where<SyncVar>((Func<SyncVar, bool>)(i => i.IsDictionary)).Any<SyncVar>((Func<SyncVar, bool>)(i => i["Type"].GetValue<string>(true) == "Eye Tracking"));
 

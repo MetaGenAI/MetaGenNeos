@@ -76,7 +76,8 @@ namespace metagen
                 {
                 User user = item.Key;
                 UserMetadata metadata = item.Value;
-                if (!metadata.isRecording || (metagen_comp.LocalUser == user && !metagen_comp.record_local_user)) continue;
+                //if (!metadata.isRecording || (metagen_comp.LocalUser == user && !metagen_comp.record_local_user)) continue;
+                if (!metadata.isRecording) continue;
                 RefID user_id = user.ReferenceID;
                 current_users_ids.Add(user_id.ToString());
                 Slot localSlot = user.Root.HeadSlot.AddLocalSlot("vision recorder camera");

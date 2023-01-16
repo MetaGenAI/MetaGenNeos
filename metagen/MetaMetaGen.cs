@@ -32,6 +32,7 @@ namespace FrooxEngine.LogiX
         DataBase dataBase;
         User recording_hearing_user;
         World currentWorld;
+        //bool default_record_local_user = false;
         bool default_record_local_user = false;
         bool is_in_VR_mode = false;
         bool auto_set_status = false;

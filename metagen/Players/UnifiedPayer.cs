@@ -53,7 +53,8 @@ namespace metagen
         public int recording_index = 0;
         public bool play_voice = false;
         public bool play_hearing = true;
-        public bool play_controllers = true;
+        //public bool play_controllers = true;
+        public bool play_controllers = false;
         public Slot avatar_template = null;
         List<RefID> user_ids = new List<RefID>();
         metagen.AvatarManager avatarManager;

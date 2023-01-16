@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <Platforms>AnyCPU;x86</Platforms>
   </PropertyGroup>
 
@@ -46,9 +46,6 @@
     </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\Assembly-CSharp.dll</HintPath>
-    </Reference>
     <Reference Include="BaseX">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\BaseX.dll</HintPath>
     </Reference>
@@ -70,6 +67,7 @@
     <Reference Include="System.Threading.Tasks">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\System.Threading.Tasks.dll</HintPath>
     </Reference>
+    <Reference Include="C:\Program Files (x86)\Steam\steamapps\common\NeosVR\System.ValueTuple.dll"/>
     <Reference Include="UnityEngine">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
