@@ -67,7 +67,7 @@
     <Reference Include="System.Threading.Tasks">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\System.Threading.Tasks.dll</HintPath>
     </Reference>
-    <Reference Include="C:\Program Files (x86)\Steam\steamapps\common\NeosVR\System.ValueTuple.dll"/>
+    <Reference Include="C:\Program Files (x86)\Steam\steamapps\common\NeosVR\System.ValueTuple.dll" />
     <Reference Include="UnityEngine">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\NeosVR\Neos_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>

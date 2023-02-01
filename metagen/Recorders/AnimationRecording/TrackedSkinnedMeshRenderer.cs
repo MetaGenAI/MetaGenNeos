@@ -67,15 +67,18 @@ namespace NeosAnimationToolset
                 if (bone == null)
                 {
                     positions[i].InsertKeyFrame(new float3(0,0,0), T);
-                    rotations[i].InsertKeyFrame(new floatQ(0, 0, 0, 1), T);
+                    //rotations[i].InsertKeyFrame(new floatQ(0, 0, 0, 1), T);
+                    rotations[i].InsertKeyFrame(new floatQ(0, 0, 0, 1), T, interpolation: KeyframeInterpolation.Hold);
                     if (scl) scales[i].InsertKeyFrame(new float3(1, 1, 1), T);
                 } else if (localSpace[i]) {
                     positions[i].InsertKeyFrame(bone.LocalPosition, T);
-                    rotations[i].InsertKeyFrame(bone.LocalRotation, T);
+                    //rotations[i].InsertKeyFrame(bone.LocalRotation, T);
+                    rotations[i].InsertKeyFrame(bone.LocalRotation, T, interpolation: KeyframeInterpolation.Hold);
                     if (scl) scales[i].InsertKeyFrame(bone.LocalScale, T);
                 } else {
                     positions[i].InsertKeyFrame(ruut.GlobalPointToLocal(bone.GlobalPosition), T);
-                    rotations[i].InsertKeyFrame(ruut.GlobalRotationToLocal(bone.GlobalRotation), T);
+                    //rotations[i].InsertKeyFrame(ruut.GlobalRotationToLocal(bone.GlobalRotation), T);
+                    rotations[i].InsertKeyFrame(ruut.GlobalRotationToLocal(bone.GlobalRotation), T, interpolation: KeyframeInterpolation.Hold);
                     if (scl) scales[i].InsertKeyFrame(ruut.GlobalScaleToLocal(bone.GlobalScale), T);
                 }
             }
