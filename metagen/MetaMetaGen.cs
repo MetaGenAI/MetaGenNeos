@@ -16,6 +16,7 @@ using BaseX;
 using UnityEngine;
 using CloudX;
 using CloudX.Shared;
+using System.IO;
 
 namespace FrooxEngine.LogiX
 {

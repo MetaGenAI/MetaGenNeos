@@ -1,0 +1,3 @@
+[submodule "NeosModLoader"]
+	path = NeosModLoader
+	url = git@github.com:guillefix/NeosModLoader.git
